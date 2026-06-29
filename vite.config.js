@@ -4,8 +4,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // オフライン対応の PWA 設定。
 // Android タブレットのブラウザで「ホームに追加」してアプリのように使える。
-export default defineConfig({
-  base: './',
+//
+// base: GitHub Pages（https://<user>.github.io/kids-quest/）で動くよう、
+// 本番ビルドだけ '/kids-quest/' を基準にする。開発サーバは '/' のまま。
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/kids-quest/' : '/',
   plugins: [
     react(),
     VitePWA({
@@ -35,4 +38,4 @@ export default defineConfig({
       }
     })
   ]
-})
+}))

@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+# このブランチ（または main）に push されたら、ビルドして GitHub Pages に公開する。
+# 公開後の URL: https://<ユーザー名>.github.io/kids-quest/
+on:
+  push:
+    branches:
+      - main
+      - claude/kids-learning-mission-app-p9a2v6
+  workflow_dispatch: {}
+
+# GitHub Pages へのデプロイに必要な権限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時実行は最新のものだけにする
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        # Pages がまだ有効化されていなければ自動で有効化を試みる
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
