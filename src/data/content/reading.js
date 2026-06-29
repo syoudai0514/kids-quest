@@ -1,70 +1,71 @@
 // ============================================================
 // 「よむ」分野のコンテンツ（ひらがな/カタカナの単語）
-// 題材は宇宙（ほし・ロケット・つき…）と恐竜中心。食いつき重視。
 //
-// 追加方法:
-//   WORDS にエントリを足すだけ。
-//     text   : 読ませる単語
-//     emoji  : 絵（オフラインで使えるよう絵文字）
-//     kana   : 'hira' | 'kata'
-//     tier   : 1(やさしい) 〜 5(むずかしい) 目安
-//     theme  : 'space' | 'dino' | 'life'
+// 重要な原則（絵と言葉のマッチングなので必須）:
+//   1) 絵文字は、その単語を「ぱっと見て分かる」ものだけを使う。
+//      （宇宙・火星・空のような“絵で表せない/紛らわしい”語は入れない）
+//   2) 同じ意味・同じ見た目の語を入れない。
+//      （例: ほし と スター、つき と ムーン は同義で混乱するので片方だけ）
+//   3) 1つの絵文字は1つの単語だけに使う（絵文字は重複させない）。
+//
+// 題材は宇宙・恐竜・いきもの中心。追加するときも上の原則を守ること。
+//   text  : 読ませる単語 / emoji : 絵（その語と1対1） / kana : 'hira'|'kata'
+//   tier  : 1(やさしい)〜6(むずかしい) / theme : 'space'|'dino'|'animal'|'life'
 // ============================================================
 
 export const WORDS = [
-  // --- やさしい（短い・宇宙）---
+  // --- 宇宙（絵で分かるものだけ）---
   { text: 'ほし', emoji: '⭐', kana: 'hira', tier: 1, theme: 'space' },
   { text: 'つき', emoji: '🌙', kana: 'hira', tier: 1, theme: 'space' },
-  { text: 'ひ', emoji: '☀️', kana: 'hira', tier: 1, theme: 'space' },
-  { text: 'そら', emoji: '🌌', kana: 'hira', tier: 1, theme: 'space' },
+  { text: 'たいよう', emoji: '☀️', kana: 'hira', tier: 3, theme: 'space' },
+  { text: 'ちきゅう', emoji: '🌍', kana: 'hira', tier: 4, theme: 'space' },
+  { text: 'どせい', emoji: '🪐', kana: 'hira', tier: 4, theme: 'space' },
+  { text: 'ロケット', emoji: '🚀', kana: 'kata', tier: 3, theme: 'space' },
+  { text: 'うちゅうじん', emoji: '👽', kana: 'hira', tier: 5, theme: 'space' },
+  { text: 'うちゅうひこうし', emoji: '👨‍🚀', kana: 'hira', tier: 6, theme: 'space' },
+  { text: 'ぎんが', emoji: '🌌', kana: 'hira', tier: 4, theme: 'space' },
+  { text: 'にじ', emoji: '🌈', kana: 'hira', tier: 2, theme: 'space' },
   { text: 'くも', emoji: '☁️', kana: 'hira', tier: 1, theme: 'space' },
 
-  // --- やさしい（恐竜・いきもの）---
+  // --- 恐竜（本物に見える絵文字だけ＝🦕🦖と関連物）---
+  { text: 'きょうりゅう', emoji: '🦕', kana: 'hira', tier: 5, theme: 'dino' },
+  { text: 'ティラノサウルス', emoji: '🦖', kana: 'kata', tier: 6, theme: 'dino' },
   { text: 'たまご', emoji: '🥚', kana: 'hira', tier: 2, theme: 'dino' },
-  { text: 'あし', emoji: '🦶', kana: 'hira', tier: 1, theme: 'life' },
-  { text: 'め', emoji: '👁️', kana: 'hira', tier: 1, theme: 'life' },
-  { text: 'は', emoji: '🦷', kana: 'hira', tier: 1, theme: 'dino' },
+  { text: 'ほね', emoji: '🦴', kana: 'hira', tier: 2, theme: 'dino' },
+  { text: 'あしあと', emoji: '🐾', kana: 'hira', tier: 3, theme: 'dino' },
 
-  // --- ふつう（宇宙）---
-  { text: 'ロケット', emoji: '🚀', kana: 'kata', tier: 3, theme: 'space' },
-  { text: 'うちゅう', emoji: '🌠', kana: 'hira', tier: 3, theme: 'space' },
-  { text: 'いんせき', emoji: '☄️', kana: 'hira', tier: 3, theme: 'space' },
-  { text: 'わくせい', emoji: '🪐', kana: 'hira', tier: 4, theme: 'space' },
-  { text: 'ちきゅう', emoji: '🌍', kana: 'hira', tier: 4, theme: 'space' },
+  // --- いきもの（はっきり分かる絵。良いダミーにもなる）---
+  { text: 'サイ', emoji: '🦏', kana: 'kata', tier: 2, theme: 'animal' },
+  { text: 'ライオン', emoji: '🦁', kana: 'kata', tier: 4, theme: 'animal' },
+  { text: 'ぞう', emoji: '🐘', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'きりん', emoji: '🦒', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'へび', emoji: '🐍', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'かめ', emoji: '🐢', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'さかな', emoji: '🐟', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'とり', emoji: '🐦', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'いぬ', emoji: '🐶', kana: 'hira', tier: 1, theme: 'animal' },
+  { text: 'ねこ', emoji: '🐱', kana: 'hira', tier: 1, theme: 'animal' },
+  { text: 'うさぎ', emoji: '🐰', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'くま', emoji: '🐻', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'ペンギン', emoji: '🐧', kana: 'kata', tier: 4, theme: 'animal' },
+  { text: 'たこ', emoji: '🐙', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'かに', emoji: '🦀', kana: 'hira', tier: 2, theme: 'animal' },
 
-  // --- ふつう（恐竜）---
-  { text: 'きょうりゅう', emoji: '🦕', kana: 'hira', tier: 4, theme: 'dino' },
-  { text: 'トリケラ', emoji: '🦖', kana: 'kata', tier: 4, theme: 'dino' },
-  { text: 'つの', emoji: '🦏', kana: 'hira', tier: 2, theme: 'dino' },
-  { text: 'しっぽ', emoji: '🦎', kana: 'hira', tier: 2, theme: 'dino' },
-
-  // --- カタカナの宇宙ことば ---
-  { text: 'スター', emoji: '🌟', kana: 'kata', tier: 3, theme: 'space' },
-  { text: 'ムーン', emoji: '🌕', kana: 'kata', tier: 3, theme: 'space' },
-  { text: 'コメット', emoji: '☄️', kana: 'kata', tier: 5, theme: 'space' },
-
-  // --- いきもの・みのまわり（語彙を広げる）---
+  // --- みのまわり・しぜん ---
   { text: 'みず', emoji: '💧', kana: 'hira', tier: 1, theme: 'life' },
   { text: 'き', emoji: '🌳', kana: 'hira', tier: 1, theme: 'life' },
   { text: 'はな', emoji: '🌸', kana: 'hira', tier: 1, theme: 'life' },
-  { text: 'やま', emoji: '⛰️', kana: 'hira', tier: 1, theme: 'life' },
+  { text: 'やま', emoji: '⛰️', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'くるま', emoji: '🚗', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'でんしゃ', emoji: '🚃', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'りんご', emoji: '🍎', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'ばなな', emoji: '🍌', kana: 'hira', tier: 3, theme: 'life' },
 
-  // --- むずかしい（長め・恐竜の名前・カタカナ多め）---
-  { text: 'ステゴサウルス', emoji: '🦕', kana: 'kata', tier: 6, theme: 'dino' },
-  { text: 'プテラノドン', emoji: '🦅', kana: 'kata', tier: 6, theme: 'dino' },
-  { text: 'ティラノサウルス', emoji: '🦖', kana: 'kata', tier: 6, theme: 'dino' },
-  { text: 'トリケラトプス', emoji: '🦏', kana: 'kata', tier: 6, theme: 'dino' },
-  { text: 'ブラキオサウルス', emoji: '🦕', kana: 'kata', tier: 6, theme: 'dino' },
-  { text: 'うちゅうひこうし', emoji: '👨‍🚀', kana: 'hira', tier: 6, theme: 'space' },
-  { text: 'ぎんが', emoji: '🌌', kana: 'hira', tier: 5, theme: 'space' },
-  { text: 'ブラックホール', emoji: '🕳️', kana: 'kata', tier: 6, theme: 'space' },
-  { text: 'たいよう', emoji: '☀️', kana: 'hira', tier: 4, theme: 'space' },
-  { text: 'どせいのわ', emoji: '🪐', kana: 'hira', tier: 5, theme: 'space' },
-  { text: 'かせい', emoji: '🔴', kana: 'hira', tier: 4, theme: 'space' },
-  { text: 'たんけん', emoji: '🔭', kana: 'hira', tier: 5, theme: 'space' },
-  { text: 'かせき', emoji: '🦴', kana: 'hira', tier: 4, theme: 'dino' },
-  { text: 'にくしょく', emoji: '🍖', kana: 'hira', tier: 5, theme: 'dino' },
-  { text: 'そうしょく', emoji: '🌿', kana: 'hira', tier: 5, theme: 'dino' }
+  // --- からだ（みじかい語＝やさしい） ---
+  { text: 'め', emoji: '👁️', kana: 'hira', tier: 1, theme: 'life' },
+  { text: 'は', emoji: '🦷', kana: 'hira', tier: 1, theme: 'life' },
+  { text: 'て', emoji: '✋', kana: 'hira', tier: 1, theme: 'life' },
+  { text: 'あし', emoji: '🦶', kana: 'hira', tier: 2, theme: 'life' }
 ]
 
 // tier を難易度レベルにゆるく対応させて候補を絞る
@@ -86,19 +87,24 @@ function shuffle(arr) {
   return a
 }
 
+// 正解と「文字も絵文字も」かぶらないダミーを選ぶ
 function pickDistinct(pool, n, exclude) {
-  const filtered = pool.filter((w) => w.text !== exclude.text)
-  return shuffle(filtered).slice(0, Math.max(0, n - 1))
+  const seenEmoji = new Set([exclude.emoji])
+  const out = []
+  for (const w of shuffle(pool)) {
+    if (out.length >= n - 1) break
+    if (w.text === exclude.text) continue
+    if (seenEmoji.has(w.emoji)) continue // 同じ絵が2つ出ないように
+    seenEmoji.add(w.emoji)
+    out.push(w)
+  }
+  return out
 }
 
 /**
  * 「よむ」の問題を1問生成する。
- * 2種類のミニ課題をランダムに混ぜる:
- *   mode 'pick-word'  : 絵を見て ことば をえらぶ（よむ力）
- *   mode 'pick-pic'   : ことばを見て え をえらぶ（よむ力＋意味）
- *
- * @param {object} params difficulty.difficultyParams の戻り値
- * @returns 問題オブジェクト
+ *   mode 'pick-word' : 絵を見て ことば をえらぶ
+ *   mode 'pick-pic'  : ことばを見て え をえらぶ
  */
 export function generateReadingQuestion(params) {
   const { level, choiceCount, allowKatakana, allowHard } = params
@@ -117,16 +123,10 @@ export function generateReadingQuestion(params) {
       type: 'choice',
       mode,
       promptText: answer.text,
-      // 音声で読む内容（指示＋ことば）
       speak: `${answer.text}。 ${answer.text}は どれかな？`,
       instruction: 'おなじ えを えらんでね',
       answerId: answer.text,
-      choices: options.map((w) => ({
-        id: w.text,
-        emoji: w.emoji,
-        label: null,
-        speak: null
-      })),
+      choices: options.map((w) => ({ id: w.text, emoji: w.emoji, label: null, speak: null })),
       answerWord: answer
     }
   }
@@ -140,12 +140,7 @@ export function generateReadingQuestion(params) {
     speak: 'これは なにかな？ ことばを えらんでね',
     instruction: 'これは なに？',
     answerId: answer.text,
-    choices: options.map((w) => ({
-      id: w.text,
-      emoji: null,
-      label: w.text,
-      speak: w.text
-    })),
+    choices: options.map((w) => ({ id: w.text, emoji: null, label: w.text, speak: w.text })),
     answerWord: answer
   }
 }
