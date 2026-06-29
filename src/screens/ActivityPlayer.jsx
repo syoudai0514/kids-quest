@@ -163,11 +163,13 @@ export default function ActivityPlayer({ task, onDone }) {
       : 'choice-grid'
   // すうじの絵ならべ・式は文字サイズを調整
   const promptStyle =
-    question.promptScale === 'count' || question.promptScale === 'compare'
-      ? { fontSize: 'clamp(30px,6vw,54px)', lineHeight: 1.3, whiteSpace: 'pre-line', textAlign: 'center', maxWidth: 'min(760px,92vw)' }
-      : question.promptScale === 'add' || question.promptScale === 'addbig'
-        ? { fontSize: 'clamp(34px,6.5vw,60px)', fontWeight: 900, textAlign: 'center' }
-        : null
+    question.promptScale === 'kanji'
+      ? { fontSize: 'clamp(90px,22vw,180px)', fontWeight: 900, lineHeight: 1, textAlign: 'center' }
+      : question.promptScale === 'count' || question.promptScale === 'compare'
+        ? { fontSize: 'clamp(30px,6vw,54px)', lineHeight: 1.3, whiteSpace: 'pre-line', textAlign: 'center', maxWidth: 'min(760px,92vw)' }
+        : question.promptScale === 'add' || question.promptScale === 'addbig'
+          ? { fontSize: 'clamp(34px,6.5vw,60px)', fontWeight: 900, textAlign: 'center' }
+          : null
 
   return (
     <div className="screen fade-in">

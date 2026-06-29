@@ -35,7 +35,11 @@ export default function BattleScreen({ onBack }) {
 
   const enemy = useMemo(() => {
     const wilds = getWildMonsters()
-    return wilds[Math.floor(Math.random() * wilds.length)]
+    // まだ仲間になっていない子を優先して出す（図鑑を埋めやすく）
+    const caught = new Set(state.unlockedMonsters)
+    const fresh = wilds.filter((w) => !caught.has(w.id))
+    const pool = fresh.length ? fresh : wilds
+    return pool[Math.floor(Math.random() * pool.length)]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

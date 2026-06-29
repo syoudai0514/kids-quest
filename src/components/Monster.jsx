@@ -121,12 +121,69 @@ function ArtGhost({ c }) {
   )
 }
 
+function ArtBird({ c }) {
+  return (
+    <g>
+      {/* つばさ */}
+      <path d="M18 56 q-14 -6 -16 8 q12 4 20 -2 z" fill={c.accent} />
+      <path d="M82 56 q14 -6 16 8 q-12 4 -20 -2 z" fill={c.accent} />
+      <ellipse cx="50" cy="56" rx="28" ry="26" fill={c.body} />
+      <ellipse cx="50" cy="64" rx="15" ry="12" fill={c.belly} opacity="0.85" />
+      {/* くちばし */}
+      <path d="M44 58 l6 8 l6 -8 z" fill={c.accent} />
+      {/* あたまの羽 */}
+      <path d="M50 30 l3 -10 l4 9 z" fill={c.accent} />
+      <Eyes c={c} cx1={42} cx2={58} cy={48} r={6} />
+    </g>
+  )
+}
+
+function ArtBug({ c }) {
+  return (
+    <g>
+      {/* しょっかく */}
+      <path d="M40 30 q-6 -12 -12 -14" stroke={c.body} strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M60 30 q6 -12 12 -14" stroke={c.body} strokeWidth="3" fill="none" strokeLinecap="round" />
+      <circle cx="27" cy="15" r="3" fill={c.accent} />
+      <circle cx="73" cy="15" r="3" fill={c.accent} />
+      <ellipse cx="50" cy="56" rx="30" ry="28" fill={c.body} />
+      <line x1="50" y1="30" x2="50" y2="84" stroke={c.eye} strokeWidth="2" opacity="0.3" />
+      {/* もよう */}
+      <circle cx="36" cy="50" r="4" fill={c.accent} opacity="0.7" />
+      <circle cx="64" cy="50" r="4" fill={c.accent} opacity="0.7" />
+      <circle cx="38" cy="66" r="3.5" fill={c.accent} opacity="0.6" />
+      <circle cx="62" cy="66" r="3.5" fill={c.accent} opacity="0.6" />
+      <Eyes c={c} cx1={42} cx2={58} cy={46} r={6} />
+      <Smile c={c} y={58} />
+    </g>
+  )
+}
+
+function ArtSlime({ c }) {
+  return (
+    <g>
+      <path
+        d="M50 24 C26 24 18 52 18 66 a32 18 0 0 0 64 0 C82 52 74 24 50 24 z"
+        fill={c.body}
+      />
+      <ellipse cx="50" cy="70" rx="20" ry="9" fill={c.belly} opacity="0.7" />
+      {/* つや */}
+      <ellipse cx="40" cy="42" rx="5" ry="8" fill="#fff" opacity="0.5" />
+      <Eyes c={c} cx1={42} cx2={60} cy={56} r={7} />
+      <Smile c={c} y={70} />
+    </g>
+  )
+}
+
 const ART = {
   blob: ArtBlob,
   dino: ArtDino,
   star: ArtStar,
   rock: ArtRock,
-  ghost: ArtGhost
+  ghost: ArtGhost,
+  bird: ArtBird,
+  bug: ArtBug,
+  slime: ArtSlime
 }
 
 /**
