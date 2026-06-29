@@ -13,7 +13,10 @@
 
 依頼の「まずほしいもの」を満たした、動く骨組みです。
 
-- ✅ **「よむ」分野** … 絵⇄ことばのマッチング（ひらがな/カタカナ）。題材は宇宙・恐竜中心。
+- ✅ **3つの分野** … すべてプレイ可能：
+  - **よむ** … 絵⇄ことばのマッチング（ひらがな/カタカナ、長い恐竜名・宇宙語まで）。
+  - **かく** … 指でなぞる文字書き（お手本をなぞる→自由書き）。採点はやさしめで止まらない。
+  - **すうじ** … かぞえる・大小くらべ・たしざん・ひきざん（レベルで解禁）。
 - ✅ **相棒モンスター1体（ホッシュ）** … クリアで育つ（進化段階あり）。SVGの独自デザイン。
 - ✅ **毎日ミッションの骨組み** … コア5タスク（各4問・1〜2分）。終わると「おかわり」枠。
 - ✅ **難易度の自動調整** … 連続正解でレベルアップ／間違えても責めず、ヒントを増やし必ずできるよう支える。
@@ -94,14 +97,17 @@ src/
 **新しい惑星を足す** → `src/data/planets.js` の `PLANETS` に1件追加
 （`unlockAt` に解放する累計クリア数、`unlockMonster` に出会うモンスターID）。
 
-**「かく」「すうじ」分野を足す**（次の拡張）:
-1. `src/data/content/` に `writing.js` / `numbers.js` を作り、
-   `generateQuestion(params)` を実装（戻り値の形は `reading.js` と同じ）。
-2. `src/engine/activities.js` の対応ドメインの `available` を `true` にして
-   `generateQuestion` を差し込む。
+**新しい分野を足す**（「かく」「すうじ」と同じやり方）:
+1. `src/data/content/` に generator（`generateQuestion(params)`）を作る。
+   - 選択式なら `type:'choice'`（戻り値は `reading.js` / `numbers.js` と同じ形）。
+   - なぞり書きのような独自UIなら `type:'trace'` 等を返し、`ActivityPlayer` に分岐を足す
+     （「かく」は `components/TracingCanvas.jsx` を使用。文字はフォントから形を生成するので
+     文字データ不要、`writing.js` のプールに足すだけ）。
+2. `src/engine/activities.js` のドメインに `available:true` と `generateQuestion` を設定。
 3. ミッション・難易度調整・保護者ビューには**自動で乗ります**。
-   - 「かく」は指でなぞるトレース方式（`<canvas>` のポインタ操作）。お手本→なぞり→自由書きの段階を
-     `params.level` で切り替える想定。`ActivityPlayer` とは別に専用UIを用意してもOK。
+
+> コンテンツを大きく更新したら `src/state/GameContext.jsx` の `CONTENT_VERSION` を上げると、
+> 進捗（習熟度・収集・累計）を保ったまま「今日のミッション」を新内容で作り直します。
 
 ### 難易度ロジックの要点（`difficulty.js`）
 

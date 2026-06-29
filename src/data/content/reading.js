@@ -47,7 +47,24 @@ export const WORDS = [
   { text: 'みず', emoji: '💧', kana: 'hira', tier: 1, theme: 'life' },
   { text: 'き', emoji: '🌳', kana: 'hira', tier: 1, theme: 'life' },
   { text: 'はな', emoji: '🌸', kana: 'hira', tier: 1, theme: 'life' },
-  { text: 'やま', emoji: '⛰️', kana: 'hira', tier: 1, theme: 'life' }
+  { text: 'やま', emoji: '⛰️', kana: 'hira', tier: 1, theme: 'life' },
+
+  // --- むずかしい（長め・恐竜の名前・カタカナ多め）---
+  { text: 'ステゴサウルス', emoji: '🦕', kana: 'kata', tier: 6, theme: 'dino' },
+  { text: 'プテラノドン', emoji: '🦅', kana: 'kata', tier: 6, theme: 'dino' },
+  { text: 'ティラノサウルス', emoji: '🦖', kana: 'kata', tier: 6, theme: 'dino' },
+  { text: 'トリケラトプス', emoji: '🦏', kana: 'kata', tier: 6, theme: 'dino' },
+  { text: 'ブラキオサウルス', emoji: '🦕', kana: 'kata', tier: 6, theme: 'dino' },
+  { text: 'うちゅうひこうし', emoji: '👨‍🚀', kana: 'hira', tier: 6, theme: 'space' },
+  { text: 'ぎんが', emoji: '🌌', kana: 'hira', tier: 5, theme: 'space' },
+  { text: 'ブラックホール', emoji: '🕳️', kana: 'kata', tier: 6, theme: 'space' },
+  { text: 'たいよう', emoji: '☀️', kana: 'hira', tier: 4, theme: 'space' },
+  { text: 'どせいのわ', emoji: '🪐', kana: 'hira', tier: 5, theme: 'space' },
+  { text: 'かせい', emoji: '🔴', kana: 'hira', tier: 4, theme: 'space' },
+  { text: 'たんけん', emoji: '🔭', kana: 'hira', tier: 5, theme: 'space' },
+  { text: 'かせき', emoji: '🦴', kana: 'hira', tier: 4, theme: 'dino' },
+  { text: 'にくしょく', emoji: '🍖', kana: 'hira', tier: 5, theme: 'dino' },
+  { text: 'そうしょく', emoji: '🌿', kana: 'hira', tier: 5, theme: 'dino' }
 ]
 
 // tier を難易度レベルにゆるく対応させて候補を絞る
@@ -97,6 +114,7 @@ export function generateReadingQuestion(params) {
     // ことばを見て、絵をえらぶ
     return {
       domain: 'yomu',
+      type: 'choice',
       mode,
       promptText: answer.text,
       // 音声で読む内容（指示＋ことば）
@@ -116,6 +134,7 @@ export function generateReadingQuestion(params) {
   // pick-word: 絵を見て、ことばをえらぶ
   return {
     domain: 'yomu',
+    type: 'choice',
     mode,
     promptEmoji: answer.emoji,
     speak: 'これは なにかな？ ことばを えらんでね',

@@ -16,6 +16,7 @@ import { difficultyParams } from '../engine/difficulty.js'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 import { Starfield, ProgressDots } from '../components/common.jsx'
+import TracingCanvas from '../components/TracingCanvas.jsx'
 
 const PRAISE = ['せいかい！', 'すごい！', 'やったね！', 'てんさい！', 'かんぺき！', 'いいね！']
 const CHEER = [
@@ -84,6 +85,18 @@ export default function ActivityPlayer({ task, onDone }) {
     }
   }
 
+  // 「かく」（なぞり書き）が終わったとき
+  const handleTraceDone = (success) => {
+    if (phase === 'feedback') return
+    if (firstAttemptRef.current) {
+      dispatch({ type: 'ANSWER', domainId: task.domainId, correct: success })
+      firstAttemptRef.current = false
+    }
+    setPhase('feedback')
+    setFeedback({ good: true, word: pick(PRAISE) })
+    setTimeout(advance, 1100)
+  }
+
   const handleChoose = (choice) => {
     if (phase === 'feedback') return
     if (wrongIds.includes(choice.id)) return
@@ -142,8 +155,19 @@ export default function ActivityPlayer({ task, onDone }) {
     return c
   }
 
+  const isTrace = question.type === 'trace'
+  // 3択は3列、それ以外(2/4択)は2列(4択は2×2でそろう)
   const grid =
-    question.choices.length >= 3 ? 'choice-grid choice-grid--3' : 'choice-grid'
+    question.choices && question.choices.length === 3
+      ? 'choice-grid choice-grid--3'
+      : 'choice-grid'
+  // すうじの絵ならべ・式は文字サイズを調整
+  const promptStyle =
+    question.promptScale === 'count' || question.promptScale === 'compare'
+      ? { fontSize: 'clamp(30px,6vw,54px)', lineHeight: 1.3, whiteSpace: 'pre-line', textAlign: 'center', maxWidth: 'min(760px,92vw)' }
+      : question.promptScale === 'add' || question.promptScale === 'addbig'
+        ? { fontSize: 'clamp(34px,6.5vw,60px)', fontWeight: 900, textAlign: 'center' }
+        : null
 
   return (
     <div className="screen fade-in">
@@ -172,55 +196,71 @@ export default function ActivityPlayer({ task, onDone }) {
           {question.instruction}
         </div>
 
-        {/* 問題（絵 or ことば） */}
-        <button
-          className="card"
-          onClick={() => speak(question.speak)}
-          style={{
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 'min(420px,80vw)',
-            background: 'rgba(255,255,255,0.06)'
-          }}
-          aria-label="もういちどきく"
-        >
-          {question.promptEmoji && (
-            <span style={{ fontSize: 'clamp(70px,18vw,150px)', lineHeight: 1 }}>
-              {question.promptEmoji}
-            </span>
-          )}
-          {question.promptText && <span className="prompt-text">{question.promptText}</span>}
-        </button>
+        {/* ▼ 「かく」= 指でなぞる */}
+        {isTrace ? (
+          <TracingCanvas
+            key={`${qIndex}-${question.target}`}
+            target={question.target}
+            stage={question.stage}
+            onComplete={handleTraceDone}
+          />
+        ) : (
+          <>
+            {/* 問題（絵 or ことば or すうじ） */}
+            <button
+              className="card"
+              onClick={() => speak(question.speak)}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: 'min(420px,80vw)',
+                background: 'rgba(255,255,255,0.06)'
+              }}
+              aria-label="もういちどきく"
+            >
+              {question.promptEmoji && (
+                <span style={{ fontSize: 'clamp(70px,18vw,150px)', lineHeight: 1 }}>
+                  {question.promptEmoji}
+                </span>
+              )}
+              {question.promptText && (
+                <span className={promptStyle ? '' : 'prompt-text'} style={promptStyle || undefined}>
+                  {question.promptText}
+                </span>
+              )}
+            </button>
 
-        {/* 選択肢 */}
-        <div className={grid}>
-          {question.choices.map((choice) => {
-            const glow =
-              showAnswerHint && choice.id === question.answerId
-                ? {
-                    boxShadow: '0 0 0 4px #fff, 0 0 26px 6px var(--accent-2)',
-                    animation: 'twinkle 1s ease-in-out infinite'
-                  }
-                : null
-            return (
-              <button
-                key={choice.id}
-                className={choiceClass(choice)}
-                style={glow}
-                disabled={phase === 'feedback' && choice.id !== chosenId}
-                onClick={() => {
-                  if (choice.speak) speak(choice.speak)
-                  handleChoose(choice)
-                }}
-              >
-                {choice.emoji && <span className="choice__emoji">{choice.emoji}</span>}
-                {choice.label && <span className="choice__label">{choice.label}</span>}
-              </button>
-            )
-          })}
-        </div>
+            {/* 選択肢 */}
+            <div className={grid}>
+              {question.choices.map((choice) => {
+                const glow =
+                  showAnswerHint && choice.id === question.answerId
+                    ? {
+                        boxShadow: '0 0 0 4px #fff, 0 0 26px 6px var(--accent-2)',
+                        animation: 'twinkle 1s ease-in-out infinite'
+                      }
+                    : null
+                return (
+                  <button
+                    key={choice.id}
+                    className={choiceClass(choice)}
+                    style={glow}
+                    disabled={phase === 'feedback' && choice.id !== chosenId}
+                    onClick={() => {
+                      if (choice.speak) speak(choice.speak)
+                      handleChoose(choice)
+                    }}
+                  >
+                    {choice.emoji && <span className="choice__emoji">{choice.emoji}</span>}
+                    {choice.label && <span className="choice__label">{choice.label}</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* フィードバック演出 */}

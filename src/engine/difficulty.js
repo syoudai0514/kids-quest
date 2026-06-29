@@ -15,14 +15,18 @@
 // ============================================================
 
 export const MIN_LEVEL = 1
-export const MAX_LEVEL = 8
+export const MAX_LEVEL = 12
 
 // 何連続正解でレベルアップするか（得意ならどんどん進む）
-const LEVEL_UP_STREAK = 3
+// 2連続でどんどん上げて、物足りなさを感じさせない。
+const LEVEL_UP_STREAK = 2
+
+// 最初から少し歯ごたえのあるレベルで開始する
+const START_LEVEL = 2
 
 export function makeSkill() {
   return {
-    level: MIN_LEVEL,
+    level: START_LEVEL,
     streak: 0,
     miss: 0,
     recent: [],
@@ -86,12 +90,12 @@ export function difficultyParams(skill) {
   return {
     level: lvl,
     rawLevel: skill.level,
-    // 選択肢の数: 低レベルは2択でやさしく、上がると3〜4択。
-    choiceCount: lvl <= 1 ? 2 : lvl <= 3 ? 3 : 4,
-    // カタカナを混ぜ始めるレベル
-    allowKatakana: lvl >= 3,
+    // 選択肢の数: 最低でも3択。上がると4択でしっかり難しく。
+    choiceCount: lvl <= 2 ? 3 : 4,
+    // カタカナを早めに混ぜる
+    allowKatakana: lvl >= 2,
     // 長め・むずかしめの語を許可するレベル
-    allowHard: lvl >= 5,
+    allowHard: lvl >= 4,
     hint: hintLevel(skill)
   }
 }

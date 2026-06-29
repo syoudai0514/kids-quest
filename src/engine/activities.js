@@ -10,6 +10,8 @@
 // ============================================================
 
 import { generateReadingQuestion } from '../data/content/reading.js'
+import { generateWritingQuestion } from '../data/content/writing.js'
+import { generateNumbersQuestion } from '../data/content/numbers.js'
 
 export const DOMAINS = [
   {
@@ -25,18 +27,16 @@ export const DOMAINS = [
     name: 'かく',
     emoji: '✏️',
     color: 'linear-gradient(180deg,#ffa9c5,#ff7aa6)',
-    available: false, // 次の拡張で指なぞり書きを追加予定
-    comingSoon: 'もうすぐ あそべるよ！',
-    generateQuestion: null
+    available: true,
+    generateQuestion: generateWritingQuestion
   },
   {
     id: 'suuji',
     name: 'すうじ',
     emoji: '🔢',
     color: 'linear-gradient(180deg,#ffe08a,#ffb84d)',
-    available: false, // 次の拡張で「かぞえる・大小・たしざん」を追加予定
-    comingSoon: 'もうすぐ あそべるよ！',
-    generateQuestion: null
+    available: true,
+    generateQuestion: generateNumbersQuestion
   }
 ]
 

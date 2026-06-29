@@ -15,6 +15,10 @@ import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
 
 const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上限
 
+// コンテンツの大きな更新があったら上げる。上げると、進捗(習熟度・収集・累計)は
+// 保ったまま「今日のミッション」を新コンテンツで作り直す。
+const CONTENT_VERSION = 2
+
 function freshSkills() {
   const s = {}
   for (const d of DOMAINS) s[d.id] = makeSkill()
@@ -53,6 +57,7 @@ function createInitialState() {
   const partner = getPartner()
   return {
     version: 1,
+    contentVersion: CONTENT_VERSION,
     createdAt: Date.now(),
     partnerId: partner.id,
     skills: freshSkills(),
@@ -237,8 +242,17 @@ const GameContext = createContext(null)
 export function GameProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, () => {
     const saved = loadState()
-    const base = saved && saved.version === 1 ? saved : createInitialState()
-    return rolloverIfNeeded(base)
+    let base = saved && saved.version === 1 ? saved : createInitialState()
+    base = rolloverIfNeeded(base)
+    // コンテンツ更新時: 進捗は保ちつつ、今日のミッションだけ新内容で作り直す
+    if (base.contentVersion !== CONTENT_VERSION) {
+      base = {
+        ...base,
+        contentVersion: CONTENT_VERSION,
+        daily: freshDaily(todayKey())
+      }
+    }
+    return base
   })
 
   // 永続化
