@@ -68,6 +68,7 @@ export default function ParentScreen({ onBack }) {
                 value={d.ticketsEarnedToday}
                 sub="追加問題で獲得したチケット数"
               />
+              <Stat label="連続日数" value={`${state.streak}日`} sub="毎日つづけると🔥" />
             </div>
           </div>
 

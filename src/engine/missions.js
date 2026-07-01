@@ -1,10 +1,9 @@
 // ============================================================
 // 毎日ミッションの構造
 //
-//  - コアミッション: 最短15分で終わる量。タスク数 × 1〜2分。
-//  - 各タスク: 数問の小さなまとまり（テンポよくクリアを積む）。
-//  - おかわり: コア後に最大30分まで遊べる追加タスク。
-//  - 追加問題(extra): 息抜きバトルの「解放チケット」がもらえる枠。
+//  - コアミッション: 5タスク × 4問（各タスク1〜2分 ≒ 最短15分）
+//  - おかわり: コア後の追加タスク。1日 OKAWARI_MAX 回まで（≒最大30分）
+//  - 追加問題(extra): 3問。クリアで息抜きバトルの解放チケット
 //
 // タスクは「どの分野を何問」だけを持ち、難易度は実行時に
 // その分野の現在の習熟度から決める（＝アダプティブ）。
@@ -14,6 +13,7 @@ import { availableDomains } from './activities.js'
 
 export const QUESTIONS_PER_TASK = 4 // 1タスクの問題数（1〜2分目安）
 export const CORE_TASK_COUNT = 5 // コアのタスク数（約15分）
+export const OKAWARI_MAX = 6 // おかわりの1日上限（コアと合わせて約30分）
 
 let taskSeq = 0
 function makeTask(domainId, kind) {
@@ -25,14 +25,13 @@ function makeTask(domainId, kind) {
   }
 }
 
-// 利用可能な分野を順番に割り当てる（今は「よむ」のみ。増えれば自動で混ざる）
+// 利用可能な分野を順番に割り当てる（よむ→かく→すうじ→…と自動ローテ）
 function pickDomainId(i) {
   const doms = availableDomains()
   if (!doms.length) return 'yomu'
   return doms[i % doms.length].id
 }
 
-// 今日のコアミッションを作る
 export function buildCoreMission() {
   const tasks = []
   for (let i = 0; i < CORE_TASK_COUNT; i++) {
@@ -41,7 +40,6 @@ export function buildCoreMission() {
   return tasks
 }
 
-// おかわりタスク（コア後の追加。1つずつ生成）
 export function buildOkawariTask(index = 0) {
   return makeTask(pickDomainId(index), 'okawari')
 }

@@ -1,12 +1,14 @@
 // ============================================================
 // 画面ルーター（シンプルな state ベース）。
-// 5歳が迷わないよう、つねにホームへ戻れる構成。
+// 背景の空の色は「いまいる惑星」で変わる（--bg-a / --bg-b）。
 // ============================================================
 
 import React, { useEffect, useState } from 'react'
 import { useGame } from './state/GameContext.jsx'
+import { currentPlanet } from './data/planets.js'
 import { unlockTts, setTtsEnabled } from './engine/tts.js'
 import { unlockSfx, setSfxEnabled } from './engine/sfx.js'
+import OnboardingScreen from './screens/OnboardingScreen.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import ActivityPlayer from './screens/ActivityPlayer.jsx'
 import BattleScreen from './screens/BattleScreen.jsx'
@@ -41,32 +43,35 @@ export default function App() {
   }
 
   const finishTask = () => {
-    // タスク完了 → CLEAR_TASK は ActivityPlayer 内で dispatch 済み。
-    // ここでは画面を戻すだけ。ごほうび演出は CelebrationOverlay が拾う。
     setActiveTask(null)
     setScreen('home')
   }
 
   const go = (s) => setScreen(s)
 
-  return (
-    <div className="app-shell">
-      {screen === 'home' && (
-        <HomeScreen onStartTask={startTask} onGo={go} />
-      )}
-      {screen === 'task' && activeTask && (
-        <ActivityPlayer task={activeTask} onDone={finishTask} onQuit={finishTask} />
-      )}
-      {screen === 'battle' && <BattleScreen onBack={() => go('home')} />}
-      {screen === 'collection' && <CollectionScreen onBack={() => go('home')} />}
-      {screen === 'parent' && <ParentScreen onBack={() => go('home')} />}
+  const planet = currentPlanet(state.totalClears)
 
-      {/* ごほうび演出（惑星解放・なかま・チケット）は最前面に */}
-      {state.pendingCelebration && (
-        <CelebrationOverlay
-          celebration={state.pendingCelebration}
-          onClose={() => dispatch({ type: 'CLEAR_CELEBRATION' })}
-        />
+  return (
+    <div className="app-shell" style={{ '--bg-a': planet.bg[0], '--bg-b': planet.bg[1] }}>
+      {!state.onboarded ? (
+        <OnboardingScreen />
+      ) : (
+        <>
+          {screen === 'home' && <HomeScreen onStartTask={startTask} onGo={go} />}
+          {screen === 'task' && activeTask && (
+            <ActivityPlayer task={activeTask} onDone={finishTask} onQuit={finishTask} />
+          )}
+          {screen === 'battle' && <BattleScreen onBack={() => go('home')} />}
+          {screen === 'collection' && <CollectionScreen onBack={() => go('home')} />}
+          {screen === 'parent' && <ParentScreen onBack={() => go('home')} />}
+
+          {state.pendingCelebration && (
+            <CelebrationOverlay
+              celebration={state.pendingCelebration}
+              onClose={() => dispatch({ type: 'CLEAR_CELEBRATION' })}
+            />
+          )}
+        </>
       )}
     </div>
   )

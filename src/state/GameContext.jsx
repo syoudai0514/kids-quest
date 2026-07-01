@@ -1,8 +1,12 @@
 // ============================================================
 // ゲーム全体の状態管理（Context + Reducer + localStorage 永続化）
 //
-// ここが「毎日ミッション」「難易度」「収集」「息抜きバトル解放」の
-// ロジックの中心。UI はここの state と actions を読むだけ。
+// v2 で追加したもの:
+//   xp          : ほしのかけら。正解・クリア・バトルで貯まり相棒が育つ
+//   streak      : 連続で遊んだ日数（🔥）
+//   missed      : 分野ごとの「まちがえた問題」キュー（後日再出題＝復習）
+//   onboarded   : はじめての おはなし（オンボーディング）を見たか
+//   partnerColor: 相棒の色（はじめに選ぶ）
 // ============================================================
 
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
@@ -14,10 +18,22 @@ import { getPartner } from '../data/monsters.js'
 import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
 
 const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上限
+const MISSED_MAX = 12 // 復習キューの分野ごとの上限
 
-// コンテンツの大きな更新があったら上げる。上げると、進捗(習熟度・収集・累計)は
-// 保ったまま「今日のミッション」を新コンテンツで作り直す。
-const CONTENT_VERSION = 4
+// コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
+const CONTENT_VERSION = 5
+
+// XP → 相棒レベル（ゆるやかな二次曲線）
+export function partnerLevel(xp) {
+  return Math.min(99, Math.floor(Math.sqrt(Math.max(0, xp) / 6)) + 1)
+}
+
+// 相棒の色バリエーション（オンボーディングで選ぶ）
+export const PARTNER_COLORS = {
+  mint: { label: 'ミント', body: '#7af0d0', belly: '#bafbe9' },
+  sky: { label: 'そら', body: '#7ac9f0', belly: '#c9ecfb' },
+  peach: { label: 'もも', body: '#ffb0c9', belly: '#ffdde9' }
+}
 
 function freshSkills() {
   const s = {}
@@ -34,7 +50,7 @@ function freshDaily(date) {
     tasksClearedToday: 0,
     correctToday: 0,
     attemptsToday: 0,
-    perDomainToday: {}, // { domainId: {correct, attempts} }
+    perDomainToday: {},
     ticketsEarnedToday: 0,
     okawariIndex: 0,
     extraIndex: 0
@@ -48,7 +64,7 @@ function freshBattle(date) {
     tickets: 0,
     dailyLimit: BATTLE_DAILY_LIMIT,
     wins: 0,
-    caught: [] // 捕まえた野生モンスターの id
+    caught: []
   }
 }
 
@@ -56,27 +72,45 @@ function createInitialState() {
   const today = todayKey()
   const partner = getPartner()
   return {
-    version: 1,
+    version: 2,
     contentVersion: CONTENT_VERSION,
     createdAt: Date.now(),
+    onboarded: false,
     partnerId: partner.id,
+    partnerColor: 'mint',
+    xp: 0,
+    streak: 0,
+    lastActiveDate: null,
     skills: freshSkills(),
+    missed: {}, // { domainId: [itemKey,...] }
     unlockedMonsters: [partner.id],
     totalClears: 0,
     daily: freshDaily(today),
     battle: freshBattle(today),
     settings: { tts: true, sfx: true },
-    history: {}, // { date: {clears, correct, attempts, perDomain, ticketsEarned} }
+    history: {},
     pendingCelebration: null
   }
 }
 
-// 日付が変わっていたら今日の分をリセット（履歴は残す）
+// v1（旧バージョン）のセーブを引き継ぐ
+function migrateV1(saved) {
+  const fresh = createInitialState()
+  return {
+    ...fresh,
+    skills: { ...fresh.skills, ...(saved.skills || {}) },
+    unlockedMonsters: saved.unlockedMonsters?.length ? saved.unlockedMonsters : fresh.unlockedMonsters,
+    totalClears: saved.totalClears || 0,
+    history: saved.history || {},
+    settings: { ...fresh.settings, ...(saved.settings || {}) },
+    xp: (saved.totalClears || 0) * 10,
+    onboarded: (saved.totalClears || 0) > 0 || (saved.unlockedMonsters?.length || 0) > 1
+  }
+}
+
 function rolloverIfNeeded(state) {
   const today = todayKey()
   if (state.daily.date === today && state.battle.date === today) return state
-
-  // 前日の daily を history に保存
   const history = { ...state.history }
   if (state.daily && state.daily.attemptsToday > 0) {
     history[state.daily.date] = {
@@ -87,77 +121,86 @@ function rolloverIfNeeded(state) {
       ticketsEarned: state.daily.ticketsEarnedToday
     }
   }
-  return {
-    ...state,
-    history,
-    daily: freshDaily(today),
-    battle: freshBattle(today)
-  }
+  return { ...state, history, daily: freshDaily(today), battle: freshBattle(today) }
+}
+
+function yesterdayKey() {
+  return todayKey(new Date(Date.now() - 24 * 60 * 60 * 1000))
 }
 
 function addDomainTally(perDomain, domainId, correct) {
   const cur = perDomain[domainId] || { correct: 0, attempts: 0 }
   return {
     ...perDomain,
-    [domainId]: {
-      correct: cur.correct + (correct ? 1 : 0),
-      attempts: cur.attempts + 1
-    }
+    [domainId]: { correct: cur.correct + (correct ? 1 : 0), attempts: cur.attempts + 1 }
   }
+}
+
+function updateMissed(missed, domainId, itemKey, correct) {
+  if (!itemKey) return missed
+  const list = missed[domainId] || []
+  if (correct) {
+    if (!list.includes(itemKey)) return missed
+    return { ...missed, [domainId]: list.filter((k) => k !== itemKey) }
+  }
+  if (list.includes(itemKey)) return missed
+  return { ...missed, [domainId]: [...list, itemKey].slice(-MISSED_MAX) }
 }
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'HYDRATE':
-      return action.state
-
     case 'ROLLOVER':
       return rolloverIfNeeded(state)
 
-    // 1問の回答結果（難易度調整＋当日の集計）
+    case 'ONBOARD':
+      return { ...state, onboarded: true, partnerColor: action.color || 'mint' }
+
+    // 1問の回答結果（難易度調整＋集計＋XP＋ストリーク＋復習キュー）
     case 'ANSWER': {
-      const { domainId, correct } = action
+      const { domainId, correct, itemKey } = action
       const skill = state.skills[domainId] || makeSkill()
       const { skill: newSkill } = applyResult(skill, correct)
-      const daily = {
-        ...state.daily,
-        correctToday: state.daily.correctToday + (correct ? 1 : 0),
-        attemptsToday: state.daily.attemptsToday + 1,
-        perDomainToday: addDomainTally(state.daily.perDomainToday, domainId, correct)
+
+      const today = todayKey()
+      let streak = state.streak
+      let lastActiveDate = state.lastActiveDate
+      if (lastActiveDate !== today) {
+        streak = lastActiveDate === yesterdayKey() ? streak + 1 : 1
+        lastActiveDate = today
       }
+
       return {
         ...state,
         skills: { ...state.skills, [domainId]: newSkill },
-        daily
+        xp: state.xp + (correct ? 2 : 0),
+        streak,
+        lastActiveDate,
+        missed: updateMissed(state.missed, domainId, itemKey, correct),
+        daily: {
+          ...state.daily,
+          correctToday: state.daily.correctToday + (correct ? 1 : 0),
+          attemptsToday: state.daily.attemptsToday + 1,
+          perDomainToday: addDomainTally(state.daily.perDomainToday, domainId, correct)
+        }
       }
     }
 
     // タスク（数問のまとまり）をクリア → ごほうび進行
     case 'CLEAR_TASK': {
-      const { kind } = action // 'core' | 'okawari' | 'extra'
-      const prevClears = state.totalClears
-      const totalClears = prevClears + 1
+      const { kind } = action
+      const totalClears = state.totalClears + 1
 
-      let daily = {
-        ...state.daily,
-        tasksClearedToday: state.daily.tasksClearedToday + 1
-      }
+      let daily = { ...state.daily, tasksClearedToday: state.daily.tasksClearedToday + 1 }
       let battle = state.battle
       let unlockedMonsters = state.unlockedMonsters
-      const celebration = { ticket: false, planet: null, monster: null, partnerStageUp: false }
+      const celebration = { ticket: false, planet: null, monster: null, partnerStageUp: false, xpGain: 6 }
 
-      // コアの進行
       if (kind === 'core') {
         const coreIndex = state.daily.coreIndex + 1
-        daily = {
-          ...daily,
-          coreIndex,
-          coreDone: coreIndex >= state.daily.coreTasks.length
-        }
+        daily = { ...daily, coreIndex, coreDone: coreIndex >= state.daily.coreTasks.length }
       } else if (kind === 'okawari') {
         daily = { ...daily, okawariIndex: state.daily.okawariIndex + 1 }
       } else if (kind === 'extra') {
-        // 追加問題をクリア → 息抜きバトルの解放チケットを1枚
         daily = {
           ...daily,
           extraIndex: state.daily.extraIndex + 1,
@@ -167,7 +210,6 @@ function reducer(state, action) {
         celebration.ticket = true
       }
 
-      // 惑星の解放（累計クリア数がしきい値に達したら）
       const newPlanet = planetUnlockedAt(totalClears)
       if (newPlanet) {
         celebration.planet = newPlanet
@@ -177,7 +219,6 @@ function reducer(state, action) {
         }
       }
 
-      // 相棒の進化段階が上がったか（6, 16 クリアなどのしきい値）
       const partner = getPartner()
       if (partner.stages) {
         const crossed = partner.stages.find((st) => st.at === totalClears && st.at > 0)
@@ -187,6 +228,7 @@ function reducer(state, action) {
       return {
         ...state,
         totalClears,
+        xp: state.xp + 6,
         daily,
         battle,
         unlockedMonsters,
@@ -206,23 +248,23 @@ function reducer(state, action) {
       if (b.tickets > 0) {
         return { ...state, battle: { ...b, tickets: b.tickets - 1 } }
       }
-      return state // 遊べない（UI 側でブロック）
+      return state
     }
 
     case 'BATTLE_WON': {
       const b = state.battle
-      const caught = action.caughtId && !b.caught.includes(action.caughtId)
+      const caught = action.caughtId && !state.unlockedMonsters.includes(action.caughtId)
       return {
         ...state,
+        xp: state.xp + 12,
         battle: {
           ...b,
           wins: b.wins + 1,
           caught: caught ? [...b.caught, action.caughtId] : b.caught
         },
-        unlockedMonsters:
-          caught && !state.unlockedMonsters.includes(action.caughtId)
-            ? [...state.unlockedMonsters, action.caughtId]
-            : state.unlockedMonsters
+        unlockedMonsters: caught
+          ? [...state.unlockedMonsters, action.caughtId]
+          : state.unlockedMonsters
       }
     }
 
@@ -242,25 +284,32 @@ const GameContext = createContext(null)
 export function GameProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, () => {
     const saved = loadState()
-    let base = saved && saved.version === 1 ? saved : createInitialState()
-    base = rolloverIfNeeded(base)
-    // コンテンツ更新時: 進捗は保ちつつ、今日のミッションだけ新内容で作り直す
-    if (base.contentVersion !== CONTENT_VERSION) {
+    let base
+    if (saved && saved.version === 2) {
+      // 新フィールドが増えても壊れないよう、初期値の上に被せる
+      const fresh = createInitialState()
       base = {
-        ...base,
-        contentVersion: CONTENT_VERSION,
-        daily: freshDaily(todayKey())
+        ...fresh,
+        ...saved,
+        settings: { ...fresh.settings, ...(saved.settings || {}) },
+        missed: saved.missed || {}
       }
+    } else if (saved && saved.version === 1) {
+      base = migrateV1(saved)
+    } else {
+      base = createInitialState()
+    }
+    base = rolloverIfNeeded(base)
+    if (base.contentVersion !== CONTENT_VERSION) {
+      base = { ...base, contentVersion: CONTENT_VERSION, daily: freshDaily(todayKey()) }
     }
     return base
   })
 
-  // 永続化
   useEffect(() => {
     saveState(state)
   }, [state])
 
-  // 起動中に日付をまたいだ場合に備えてたまにチェック
   useEffect(() => {
     const id = setInterval(() => dispatch({ type: 'ROLLOVER' }), 60 * 1000)
     return () => clearInterval(id)
@@ -276,7 +325,6 @@ export function useGame() {
   return ctx
 }
 
-// 便利セレクタ
 export function useCurrentPlanet() {
   const { state } = useGame()
   return currentPlanet(state.totalClears)

@@ -1,6 +1,6 @@
 // ============================================================
 // ごほうび演出オーバーレイ
-// 惑星の解放・新しいなかま・解放チケットを、紙吹雪と音声で祝う。
+// 惑星の到着・新しいなかま・解放チケットを、紙吹雪と音声で祝う。
 // ============================================================
 
 import React, { useEffect, useMemo } from 'react'
@@ -12,10 +12,7 @@ import { sfx } from '../engine/sfx.js'
 
 export default function CelebrationOverlay({ celebration, onClose }) {
   const { planet, monster, ticket, partnerStageUp } = celebration
-
-  // 何も大きな祝い事がない（タスククリアだけ）の場合はオーバーレイを出さない
   const hasBig = planet || monster || ticket || partnerStageUp
-
   const newMonster = monster ? MONSTER_BY_ID[monster] : null
 
   const title = useMemo(() => {
@@ -31,12 +28,13 @@ export default function CelebrationOverlay({ celebration, onClose }) {
       onClose()
       return
     }
-    sfx.levelUp()
+    sfx.fanfare()
     const lines = []
     if (planet) lines.push(`${planet.name}に とうちゃく！ ${planet.story}`)
     if (newMonster) lines.push(`${newMonster.name}が なかまに なったよ！`)
     if (partnerStageUp) lines.push('あいぼうが せいちょうしたよ！')
-    if (ticket && !planet && !monster) lines.push('バトルチケットを ゲット！ いきぬきバトルが あそべるよ')
+    if (ticket && !planet && !monster)
+      lines.push('バトルチケットを ゲット！ いきぬきバトルが あそべるよ')
     speak(lines.join(' '))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -47,7 +45,9 @@ export default function CelebrationOverlay({ celebration, onClose }) {
     <div
       className="feedback fade-in"
       style={{
-        background: 'rgba(12,8,40,0.82)',
+        background: planet
+          ? `linear-gradient(165deg, ${planet.bg[0]}ee, ${planet.bg[1]}ee)`
+          : 'rgba(12,8,40,0.85)',
         pointerEvents: 'auto',
         padding: 20
       }}
@@ -55,19 +55,13 @@ export default function CelebrationOverlay({ celebration, onClose }) {
       <Confetti pieces={50} />
       <div
         className="card"
-        style={{
-          textAlign: 'center',
-          width: 'min(640px,94vw)',
-          background: 'rgba(255,255,255,0.1)'
-        }}
+        style={{ textAlign: 'center', width: 'min(640px,94vw)', background: 'rgba(255,255,255,0.1)' }}
       >
         <div style={{ fontSize: 'clamp(24px,5vw,40px)', fontWeight: 900, marginBottom: 8 }}>
           {title}
         </div>
 
-        {planet && !newMonster && (
-          <div style={{ fontSize: 'clamp(60px,14vw,120px)' }}>{planet.emoji}</div>
-        )}
+        {planet && !newMonster && <div style={{ fontSize: 'clamp(60px,14vw,120px)' }}>{planet.emoji}</div>}
 
         {newMonster && (
           <div style={{ display: 'flex', justifyContent: 'center', margin: '6px 0' }}>
@@ -75,22 +69,22 @@ export default function CelebrationOverlay({ celebration, onClose }) {
           </div>
         )}
 
-        {ticket && !planet && !newMonster && (
-          <div style={{ fontSize: 'clamp(60px,14vw,120px)' }}>🎟️</div>
-        )}
+        {ticket && !planet && !newMonster && <div style={{ fontSize: 'clamp(60px,14vw,120px)' }}>🎟️</div>}
 
         {(planet?.story || newMonster?.desc) && (
           <div
             style={{
               fontSize: 'clamp(16px,3vw,22px)',
               fontWeight: 700,
-              margin: '10px 0 18px',
+              margin: '10px 0 14px',
               lineHeight: 1.5
             }}
           >
             {newMonster ? newMonster.desc : planet.story}
           </div>
         )}
+
+        <div className="muted" style={{ fontWeight: 800, marginBottom: 14 }}>✨ ほしのかけら +6</div>
 
         <button className="btn btn--primary btn--big" onClick={onClose}>
           やったー！

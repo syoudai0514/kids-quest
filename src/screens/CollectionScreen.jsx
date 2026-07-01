@@ -17,9 +17,16 @@ export default function CollectionScreen({ onBack }) {
   const unlocked = new Set(state.unlockedMonsters)
 
   const tap = (m, isUnlocked) => {
-    sfx.star()
-    if (isUnlocked) speak(`${m.name}。 ${m.desc}`)
-    else speak('まだ であって いない なかま。たびを つづけよう！')
+    if (isUnlocked) {
+      // なかまは「鳴き声」つき（idから音程が決まる）
+      let seed = 0
+      for (const ch of m.id) seed += ch.charCodeAt(0)
+      sfx.cry(seed)
+      speak(`${m.name}。 ${m.desc}`)
+    } else {
+      sfx.star()
+      speak('まだ であって いない なかま。バトルで さがそう！')
+    }
   }
 
   return (
