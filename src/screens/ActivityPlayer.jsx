@@ -99,9 +99,11 @@ export default function ActivityPlayer({ task, onDone }) {
   }
 
   // 「かく」（なぞり書き）が終わったとき
-  const handleTraceDone = () => {
+  // success=true: 全画きちんとなぞれた / false: 途中で「かけた！」を使った
+  // （false のときは復習キューに入り、後日また出題される）
+  const handleTraceDone = (success) => {
     if (phase === 'feedback') return
-    recordAnswer(true)
+    recordAnswer(success)
     setPhase('feedback')
     setTimeout(advance, 300)
   }
