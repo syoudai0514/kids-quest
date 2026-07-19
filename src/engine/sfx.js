@@ -89,8 +89,9 @@ export const sfx = {
   },
   wrongSoft() {
     if (!enabled) return
-    tone(330, 0, 0.12, 'sine', 0.13)
-    tone(294, 0.1, 0.16, 'sine', 0.13)
+    // 責めない、やわらかい「ぽよん？」（少し上がって「もう1回いこう」の合図）
+    tone(392, 0, 0.12, 'sine', 0.12, 523)
+    tone(523, 0.11, 0.12, 'triangle', 0.07)
   },
   reward() {
     if (!enabled) return
@@ -123,15 +124,18 @@ export const sfx = {
   },
   hit() {
     if (!enabled) return
-    noiseHit(0, 0.14, 0.2, 600)
-    tone(180, 0, 0.1, 'sawtooth', 0.12)
+    // ポンッと当たる、まるい打撃（暗いノコギリ波はやめて明るく）
+    noiseHit(0, 0.12, 0.16, 1400)
+    tone(330, 0, 0.09, 'triangle', 0.14, 180)
+    tone(660, 0, 0.06, 'sine', 0.06)
   },
   hitBig() {
     if (!enabled) return
-    noiseHit(0, 0.2, 0.3, 900)
-    tone(220, 0, 0.08, 'sawtooth', 0.16)
-    tone(120, 0.05, 0.18, 'sawtooth', 0.18)
-    tone(1200, 0.02, 0.12, 'square', 0.06, 300)
+    // 大ヒットは元気に「ドンッ☆」（低いうなりより、はずむ高音を効かせる）
+    noiseHit(0, 0.16, 0.24, 1800)
+    tone(392, 0, 0.1, 'triangle', 0.16, 196)
+    tone(784, 0.02, 0.14, 'triangle', 0.1)
+    tone(1319, 0.06, 0.18, 'sine', 0.08)
   },
   swoosh() {
     if (!enabled) return
