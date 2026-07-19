@@ -28,6 +28,7 @@ const RES = 320
 const PATH_TOLERANCE = RES * 0.17 // 線からこれだけ離れても「なぞれている」
 const START_RADIUS = RES * 0.24 // 始点からこの範囲で描き始めれば OK
 const STROKE_THRESHOLD = 0.72 // 線に沿ってここまで進めたら合格
+const FINISH_MIN = 0.5 // 「かけた！」を押すのに最低これだけはなぞっていること
 
 function toPx(pt) {
   return { x: (pt[0] / 100) * RES, y: (pt[1] / 100) * RES }
@@ -124,6 +125,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
   const [retries, setRetries] = useState(0)
   const [stars, setStars] = useState(0)
   const [startDot, setStartDot] = useState(null)
+  const [enoughTraced, setEnoughTraced] = useState(false) // ちゃんとなぞったか（からのまま完了を防ぐ）
 
   const totalStrokes = strokes ? strokes.length : 1
 
@@ -215,6 +217,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     setStars(0)
     setRetries(0)
     setStrokeIndex(0)
+    setEnoughTraced(false)
     setShowGuide(stage === 'trace')
     hasInkRef.current = false
     resetStrokeScoring()
@@ -296,6 +299,8 @@ export default function TracingCanvas({ target, stage, onComplete }) {
       const t = projectOnPolyline(polysRef.current[strokeIndex], p, PATH_TOLERANCE)
       if (t != null) progressRef.current = Math.max(progressRef.current, t)
       setCoverage(progressRef.current)
+      // ちゃんと線に沿って半分以上なぞれたら「かけた！」を解禁
+      if (progressRef.current >= FINISH_MIN) setEnoughTraced(true)
     }
   }
 
@@ -348,15 +353,30 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     setTimeout(() => onComplete(completedAllStrokes), 1300)
   }
 
+  // やりなおす: いま書いた分を消して、この文字を1画目からきれいにやり直す
   const clearDrawing = () => {
     const fg = fgRef.current
     if (fg) fg.getContext('2d').clearRect(0, 0, RES, RES)
+    drawingRef.current = false
+    hasInkRef.current = false
+    lastRef.current = null
+    setStrokeIndex(0)
+    setRetries(0)
+    setEnoughTraced(false)
     resetStrokeScoring()
+    paintBoard(0, 0, showGuide) // 定着した画も消して、まっさらな状態にもどす
+    updateStartDot(0)
     sfx.tap()
   }
 
   // 全画終わる前の「かけた！」→ 練習中として記録し先へ進む
+  // ただし、なにも書いていないのに進めてしまうのを防ぐ（ちゃんとなぞった時だけ）
   const forceFinish = () => {
+    if (strokeIndex === 0 && !enoughTraced) {
+      sfx.wrongSoft()
+      speak('まだ かいてないよ。ひかる ところから ゆびで なぞってみよう！')
+      return
+    }
     finishAll(false)
   }
 

@@ -194,6 +194,24 @@ export default function ActivityPlayer({ task, onDone }) {
     }
   }
 
+  // 「わからない」= 正直に。適当に答えるより、答えを一緒に見て覚える。
+  // 記録上はミス扱い（＝とっくんキューに入って、あとで克服チャンスになる）。
+  const handleDontKnow = () => {
+    if (phase === 'feedback') return
+    recordAnswer(false) // 初回のみ有効。ミスとして復習キューへ
+    comboRef.current = 0
+    setChosenId(question.answerId) // 正解を光らせて見せる
+    setWrongIds([])
+    setPhase('feedback')
+    const ans = question.choices.find((c) => c.id === question.answerId)
+    const ansText = question.answerWord?.text || ans?.label || ''
+    setFeedback({ good: false, word: 'いっしょに おぼえよう' })
+    speak(`だいじょうぶ。こたえは 「${ansText}」。${question.explain || ''} つぎは できるよ！`, {
+      rate: 0.9
+    })
+    setTimeout(advance, 2600)
+  }
+
   const choiceClass = (choice) => {
     let c = 'choice'
     if (phase === 'feedback' && choice.id === chosenId) c += ' choice--correct'
@@ -265,6 +283,15 @@ export default function ActivityPlayer({ task, onDone }) {
                 </button>
               ))}
             </div>
+            {phase === 'answering' && (
+              <button
+                className="btn btn--ghost dontknow-btn"
+                onClick={handleDontKnow}
+                style={{ marginTop: 6, opacity: 0.85, fontSize: 'clamp(14px,2.4vw,17px)' }}
+              >
+                🤔 わからない（こたえを みる）
+              </button>
+            )}
           </>
         )}
       </div>

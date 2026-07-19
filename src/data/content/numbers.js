@@ -696,6 +696,101 @@ const BUILDERS = {
       answer: t, cc: p.cc, spread: 1, say: `${t}じかん`,
       explain: `じかんは みちのり わる はやさ。${dist}わる${v}で ${t}じかん`
     })
+  },
+  // ---- さらに追加タイプ ----
+  tens(p) {
+    const c = rng(2, 9)
+    return numQ('tens', {
+      visual: { kind: 'bigtext', text: `10が ${c}こで ＝ ❓` },
+      instruction: `10が ${c}こで いくつ？`,
+      speak: `10が ${c}こ あつまると いくつ？`,
+      answer: c * 10, cc: p.cc, spread: 10, say: `${c * 10}`,
+      explain: `10が ${c}こで ${c * 10}だよ`
+    })
+  },
+  mul10(p) {
+    const a = rng(2, 9)
+    return numQ('mul10', {
+      visual: { kind: 'bigtext', text: `${a} × 10 ＝ ❓` },
+      instruction: `${a} × 10 ＝ ？`,
+      speak: `${a} かける 10 は いくつ？`,
+      answer: a * 10, cc: p.cc, spread: 10, say: `${a * 10}`,
+      explain: `10を かけると 0が ひとつ ふえる。こたえは ${a * 10}`
+    })
+  },
+  countMoney100(p) {
+    const c = rng(2, 6)
+    return numQ('countMoney100', {
+      visual: { kind: 'bigtext', text: `100えんが ${c}こで ＝ ❓えん` },
+      instruction: `100えんだまが ${c}こで いくら？`,
+      speak: `100えんだまが ${c}こ あると なんえん？`,
+      answer: c * 100, cc: p.cc, spread: 100, say: `${c * 100}えん`,
+      explain: `100が ${c}こで ${c * 100}えんだよ`
+    })
+  },
+  unitPrice(p) {
+    const price = pick([20, 30, 50, 80, 100]), n = rng(2, 5)
+    return numQ('unitPrice', {
+      visual: { kind: 'bigtext', text: `1こ${price}えんの あめ ${n}こ ＝ ❓えん` },
+      instruction: `1こ${price}えんの あめを ${n}こ かうと？`,
+      speak: `1こ ${price}えんの あめを ${n}こ かうと いくら？`,
+      answer: price * n, cc: p.cc, spread: price, say: `${price * n}えん`,
+      explain: `${price}かける${n}で ${price * n}えんだよ`
+    })
+  },
+  roundTen(p) {
+    const a = rng(11, 99)
+    const ans = Math.round(a / 10) * 10
+    return numQ('roundTen', {
+      visual: { kind: 'bigtext', text: `${a} を 十のくらいで\nしごにゅう ＝ ❓` },
+      instruction: `${a}の がいすうは？（十のくらい）`,
+      speak: `${a}を じゅうのくらいで ししゃごにゅうすると いくつ？`,
+      answer: ans, cc: p.cc, spread: 10, say: `やく${ans}`,
+      explain: `一のくらいが 5いじょうなら くりあげ。こたえは ${ans}`
+    })
+  },
+  triangleArea(p) {
+    const base = rng(1, 4) * 2, h = rng(2, 8)
+    const ans = (base * h) / 2
+    return numQ('triangleArea', {
+      visual: { kind: 'bigtext', text: `そこへん${base}cm たかさ${h}cm の\nさんかく ＝ ❓cm²` },
+      instruction: `さんかくの めんせきは？`,
+      speak: `そこへん${base}センチ、たかさ${h}センチの さんかくの めんせきは？`,
+      answer: ans, cc: p.cc, spread: base, say: `${ans}へいほうセンチ`,
+      explain: `そこへん かける たかさ わる 2。${base}かける${h}わる2で ${ans}`
+    })
+  },
+  volume(p) {
+    const a = rng(2, 6), b = rng(2, 6), c = rng(2, 5)
+    return numQ('volume', {
+      visual: { kind: 'bigtext', text: `たて${a} よこ${b} たかさ${c} の\nたいせき ＝ ❓cm³` },
+      instruction: `たいせきは？`,
+      speak: `たて${a}、よこ${b}、たかさ${c}センチの はこの たいせきは？`,
+      answer: a * b * c, cc: p.cc, spread: a * b, say: `${a * b * c}りっぽうセンチ`,
+      explain: `たて かける よこ かける たかさ。${a}かける${b}かける${c}で ${a * b * c}`
+    })
+  },
+  lcm(p) {
+    const [a, b] = pick([[2, 3], [2, 5], [3, 4], [4, 6], [3, 6], [2, 6], [3, 5], [4, 8]])
+    const ans = (a * b) / gcd(a, b)
+    return numQ('lcm', {
+      visual: { kind: 'bigtext', text: `${a} と ${b} の\nさいしょうこうばいすう ＝ ❓` },
+      instruction: `${a}と${b}の さいしょうこうばいすうは？`,
+      speak: `${a}と${b}の さいしょうこうばいすうは いくつ？`,
+      answer: ans, cc: p.cc, spread: Math.max(2, a), say: `${ans}`,
+      explain: `${a}のばいすうと ${b}のばいすう、どちらにも でてくる いちばん ちいさい かずは ${ans}`
+    })
+  },
+  gcdKind(p) {
+    const [a, b] = pick([[6, 8], [12, 8], [9, 6], [12, 18], [8, 12], [10, 15], [16, 12], [12, 9]])
+    const ans = gcd(a, b)
+    return numQ('gcdKind', {
+      visual: { kind: 'bigtext', text: `${a} と ${b} の\nさいだいこうやくすう ＝ ❓` },
+      instruction: `${a}と${b}の さいだいこうやくすうは？`,
+      speak: `${a}と${b}の さいだいこうやくすうは いくつ？`,
+      answer: ans, cc: p.cc, spread: 2, say: `${ans}`,
+      explain: `${a}も ${b}も わりきれる いちばん おおきい かずは ${ans}`
+    })
   }
 }
 
@@ -707,34 +802,34 @@ function kindsForGrade(grade, level) {
     return k
   }
   if (grade === 1) {
-    const k = ['add10', 'make10', 'sub10', 'addCarry', 'sequence', 'holeAdd', 'moneyAdd']
+    const k = ['add10', 'make10', 'sub10', 'addCarry', 'sequence', 'holeAdd', 'moneyAdd', 'tens']
     if (level >= 3) k.push('subBorrow', 'compareNum', 'add3nums', 'addCarry', 'subBorrow', 'holeAdd')
     return k
   }
   if (grade === 2) {
-    const k = ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'kuku', 'sequence', 'holeSub', 'double', 'half']
-    if (level >= 3) k.push('evenOdd', 'moneyChange', 'clockPlus', 'lengthConv')
+    const k = ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'kuku', 'sequence', 'holeSub', 'double', 'half', 'mul10']
+    if (level >= 3) k.push('evenOdd', 'moneyChange', 'clockPlus', 'lengthConv', 'countMoney100')
     if (level >= 4) k.push('compareNum', 'kuku')
     return k
   }
   if (grade === 3) {
-    const k = ['kuku', 'div', 'div', 'add3digit', 'mul2x1', 'holeMul', 'tensMul']
+    const k = ['kuku', 'div', 'div', 'add3digit', 'mul2x1', 'holeMul', 'tensMul', 'unitPrice']
     if (level >= 3) k.push('divRemainder', 'fracCompareSame', 'divRemainder', 'perimeter', 'timeCalc', 'kgConv', 'literConv')
     return k
   }
   if (grade === 4) {
     const k = ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub']
-    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'div3digit', 'roundNum', 'area')
+    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'div3digit', 'roundNum', 'roundTen', 'area')
     return k
   }
   if (grade === 5) {
     const k = ['div3digit', 'decimalAdd', 'decimalMul', 'fracAddDiff', 'decimalSub', 'average']
-    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'fracCompareDiff', 'area')
+    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'fracCompareDiff', 'area', 'triangleArea')
     return k
   }
   // 小6
-  const k = ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio', 'average', 'discount']
-  if (level >= 3) k.push('speed', 'ratio', 'fracMul', 'speedTime', 'fracCompareDiff')
+  const k = ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio', 'average', 'discount', 'lcm', 'gcdKind']
+  if (level >= 3) k.push('speed', 'ratio', 'fracMul', 'speedTime', 'fracCompareDiff', 'volume')
   return k
 }
 
@@ -772,5 +867,8 @@ export const KIND_LABELS = {
   timeCalc: 'じかん', tensMul: '何十×何', perimeter: 'まわりのながさ',
   mul3x1: '3けた×1けた', decimalSub: 'しょうすう−', roundNum: 'がいすう',
   area: 'めんせき', average: 'へいきん', fracCompareDiff: 'ぶんすうくらべ(異)',
-  discount: 'ねびき', speedTime: 'じかんをもとめる'
+  discount: 'ねびき', speedTime: 'じかんをもとめる',
+  tens: '10のまとまり', mul10: '×10', countMoney100: '100だまのおかね',
+  unitPrice: 'ねだんの計算', roundTen: 'がいすう(十)', triangleArea: 'さんかくのめんせき',
+  volume: 'たいせき', lcm: 'さいしょうこうばいすう', gcdKind: 'さいだいこうやくすう'
 }
