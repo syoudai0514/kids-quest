@@ -1,28 +1,22 @@
 // ============================================================
 // 指でなぞる文字書きキャンバス（「かく」分野）
 //
-// v2: 1画ずつ、正しい書き順でなぞる方式（旧: 文字全体を1枚絵として
-// 好きな順・好きな場所からなぞれば通ってしまう方式だった）。
+// v3: 文字の表示も採点も、すべて書き順データ（strokeOrder.js =
+// KanjiVG 由来の正確なデータ）から行う。
+//
+// v2 の不具合: フォントで描いた文字の上に、手作りの近似折れ線を
+// ガイドとして重ねていたため、2つの形がズレて「て」が「7」に
+// 見えるなど、なぞっても合格できない状態だった。
+// → フォント描画を廃止し、見えている文字＝なぞる線＝採点の線、
+//   をすべて同じデータに統一して解決。
 //
 // 仕組み:
-//  - STROKE_ORDER（strokeOrder.js）に、その文字の正しい画の順番・
-//    始点・おおまかな向きが入っている。
-//  - 今の画だけをハイライト表示し、始点に光る点を出す。
-//  - 判定は「指を離した瞬間」だけ行う（＝なぞっている途中で
-//    勝手に終わらない。書いている途中で終わってしまう不具合の修正）。
-//  - 採点は、画の線の上に等間隔で置いたサンプル点のうち、指が
-//    どれだけ近くを通ったかで判定する（面を塗りつぶす方式だと、
-//    許容はばを広げるほど逆に「細い指の線では埋めきれない」
-//    という矛盾が起きるため、線に沿った判定に変更した）。
-//  - なぞれていたら次の画へ。なぞれていなければインクを消して
-//    もう一度（何度でもやり直せる。減点はしない）。
-//  - 全画おわったら星評価（やり直し回数が少ないほど星が多い）。
-//  - 「かけた！」でいつでも先に進める（苦手意識を持たせない）。
-//    ただし全画終わる前に使った場合は「まだ練習中」として記録され、
-//    後日また出題される（復習キュー）。
-//
-// STROKE_ORDER にデータが無い文字は、旧来の「文字全体コピー」方式に
-// フォールバックする（安全策。実際には全文字にデータがある）。
+//  - お手本: 1画ずつ順番に描かれるアニメ（本物の書き順が見える）
+//  - なぞり: 今の画だけ黄色でハイライト、始点に光る点
+//  - 書き終えた画はミント色で「定着」し、文字が少しずつ完成していく
+//  - 判定は指を離した瞬間のみ（途中で勝手に終わらない）
+//  - 始点チェックあり（正しい書きはじめの位置から）
+//  - 「かけた！」でいつでも先へ（全画前に使うと復習キューへ）
 // ============================================================
 
 import React, { useEffect, useRef, useState } from 'react'
@@ -31,20 +25,15 @@ import { sfx } from '../engine/sfx.js'
 import { STROKE_ORDER } from '../data/strokeOrder.js'
 
 const RES = 320
-const GRID = 28
-const PATH_TOLERANCE = RES * 0.17 // 線からこれだけ離れていても「近く」とみなす
-const START_RADIUS = RES * 0.26 // 画の始点からこの範囲で描き始めれば「正しい始点」
-const STROKE_THRESHOLD = 0.75 // 線に沿って、ここまで進めたら合格
-const WHOLE_THRESHOLD = 0.6 // フォールバック（文字全体・面積方式）用
-
-const FONT = (size) =>
-  `bold ${size}px 'Hiragino Maru Gothic ProN','Yu Gothic','M PLUS Rounded 1c',sans-serif`
+const PATH_TOLERANCE = RES * 0.17 // 線からこれだけ離れても「なぞれている」
+const START_RADIUS = RES * 0.24 // 始点からこの範囲で描き始めれば OK
+const STROKE_THRESHOLD = 0.72 // 線に沿ってここまで進めたら合格
 
 function toPx(pt) {
   return { x: (pt[0] / 100) * RES, y: (pt[1] / 100) * RES }
 }
 
-// 折れ線（1画）を px 座標に変換し、区間長・総延長を前計算しておく
+// 折れ線を px 座標に変換し、区間長・総延長を前計算しておく
 function buildPolyline(points) {
   const px = points.map(toPx)
   const segLens = []
@@ -57,8 +46,8 @@ function buildPolyline(points) {
   return { px, segLens, total: Math.max(1, total) }
 }
 
-// 点 p が折れ線のどのあたり（0〜1、始点からの弧長の割合）に一番近いかを求める。
-// 線から PATH_TOLERANCE より離れている場合は null（「なぞっていない」扱い）。
+// 点 p が折れ線のどこ（始点からの弧長割合 0〜1）に一番近いか。
+// 線から tolerance より離れていれば null。
 function projectOnPolyline(poly, p, tolerance) {
   let bestDistSq = Infinity
   let bestLen = 0
@@ -84,85 +73,49 @@ function projectOnPolyline(poly, p, tolerance) {
   return bestLen / poly.total
 }
 
-// 文字全体（フォールバック用）のインクマスクを作る（面積方式）
-function buildGlyphMask(target) {
-  const off = document.createElement('canvas')
-  off.width = RES
-  off.height = RES
-  const ctx = off.getContext('2d')
-  ctx.font = FONT(RES * 0.72)
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillStyle = '#fff'
-  ctx.fillText(target, RES / 2, RES / 2 + RES * 0.02)
-  const data = ctx.getImageData(0, 0, RES, RES).data
-  const cell = RES / GRID
-  const mask = new Uint8Array(GRID * GRID)
-  let total = 0
-  for (let gy = 0; gy < GRID; gy++) {
-    for (let gx = 0; gx < GRID; gx++) {
-      let ink = false
-      const x0 = Math.floor(gx * cell)
-      const y0 = Math.floor(gy * cell)
-      for (let y = y0; y < y0 + cell && !ink; y += 2) {
-        for (let x = x0; x < x0 + cell && !ink; x += 2) {
-          if (data[(y * RES + x) * 4 + 3] > 40) ink = true
-        }
-      }
-      if (ink) {
-        mask[gy * GRID + gx] = 1
-        total++
-      }
+// 1画（折れ線）をキャンバスに描く。lengthRatio<1 なら途中まで（アニメ用）
+function drawStroke(ctx, poly, { color, width, lengthRatio = 1 }) {
+  if (!poly || !poly.px.length) return
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = width
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  const maxLen = poly.total * lengthRatio
+  let acc = 0
+  ctx.moveTo(poly.px[0].x, poly.px[0].y)
+  for (let i = 1; i < poly.px.length; i++) {
+    const seg = poly.segLens[i - 1] || 0
+    if (acc + seg <= maxLen) {
+      ctx.lineTo(poly.px[i].x, poly.px[i].y)
+      acc += seg
+    } else {
+      const t = seg > 0 ? (maxLen - acc) / seg : 0
+      ctx.lineTo(
+        poly.px[i - 1].x + (poly.px[i].x - poly.px[i - 1].x) * t,
+        poly.px[i - 1].y + (poly.px[i].y - poly.px[i - 1].y) * t
+      )
+      break
     }
   }
-  return { mask, total: Math.max(1, total) }
-}
-
-// 現在の画（または文字全体）を、うすい背景ガイドとして描く
-function paintGuide(canvas, target, currentStroke, showFull, showCurrent) {
-  const ctx = canvas.getContext('2d')
-  ctx.clearRect(0, 0, RES, RES)
-  if (showFull) {
-    ctx.save()
-    ctx.font = FONT(RES * 0.72)
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = 'rgba(255,255,255,0.14)'
-    ctx.fillText(target, RES / 2, RES / 2 + RES * 0.02)
-    ctx.restore()
-  }
-  if (showCurrent && currentStroke) {
-    ctx.save()
-    ctx.strokeStyle = 'rgba(255,209,102,0.65)'
-    ctx.lineWidth = RES * 0.09
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    ctx.beginPath()
-    currentStroke.forEach((p, i) => {
-      const px = toPx(p)
-      if (i === 0) ctx.moveTo(px.x, px.y)
-      else ctx.lineTo(px.x, px.y)
-    })
-    ctx.stroke()
-    ctx.restore()
-  }
+  ctx.stroke()
+  ctx.restore()
 }
 
 export default function TracingCanvas({ target, stage, onComplete }) {
   const bgRef = useRef(null)
   const fgRef = useRef(null)
-  const polyRef = useRef(null) // 今の画の折れ線（px座標）
-  const progressRef = useRef(0) // 線に沿ってどこまで進めたか（0〜1の最大値）
-  const startOkRef = useRef(false) // この試行が正しい始点から始まったか
-  const maskRef = useRef(null) // フォールバック（文字全体）の面マスク
-  const coveredRef = useRef(null) // フォールバック用の塗り済みセル
+  const polysRef = useRef([]) // 全画の折れ線（px 前計算済み）
+  const progressRef = useRef(0)
+  const startOkRef = useRef(false)
   const drawingRef = useRef(false)
   const lastRef = useRef(null)
-  const hasInkRef = useRef(false) // この画の試行で実際に描いたか
+  const hasInkRef = useRef(false)
   const doneRef = useRef(false)
+  const demoRafRef = useRef(0)
 
   const strokes = STROKE_ORDER[target] || null
-  const useWhole = !strokes // フォールバック（実際にはまず使われない）
 
   const [phase, setPhase] = useState('write') // 'demo' | 'write' | 'done'
   const [strokeIndex, setStrokeIndex] = useState(0)
@@ -172,30 +125,88 @@ export default function TracingCanvas({ target, stage, onComplete }) {
   const [stars, setStars] = useState(0)
   const [startDot, setStartDot] = useState(null)
 
-  const totalStrokes = useWhole ? 1 : strokes.length
+  const totalStrokes = strokes ? strokes.length : 1
 
-  const redrawGuide = (idx, guideOn) => {
-    if (!bgRef.current) return
-    const cur = useWhole ? null : strokes[idx]
-    paintGuide(bgRef.current, target, cur, guideOn, guideOn)
-    if (cur) {
-      const p = toPx(cur[0])
-      setStartDot({ x: (p.x / RES) * 100, y: (p.y / RES) * 100 })
-    } else {
-      setStartDot(null)
+  // 背景キャンバスに文字を描く:
+  //  - guideOn なら全画をうすく（お手本の形）
+  //  - doneCount までの画はミントで定着（書けた分だけ文字が完成していく）
+  //  - currentIdx の画は黄色でハイライト（guideOn のとき）
+  const paintBoard = (doneCount, currentIdx, guideOn) => {
+    const canvas = bgRef.current
+    if (!canvas || !strokes) return
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, RES, RES)
+    const polys = polysRef.current
+    if (guideOn) {
+      for (let i = doneCount; i < polys.length; i++) {
+        drawStroke(ctx, polys[i], { color: 'rgba(255,255,255,0.18)', width: RES * 0.075 })
+      }
+      if (currentIdx != null && currentIdx >= doneCount && polys[currentIdx]) {
+        drawStroke(ctx, polys[currentIdx], { color: 'rgba(255,209,102,0.7)', width: RES * 0.085 })
+      }
+    }
+    for (let i = 0; i < doneCount && i < polys.length; i++) {
+      drawStroke(ctx, polys[i], { color: 'rgba(122,240,208,0.95)', width: RES * 0.075 })
     }
   }
 
-  const rebuildScoring = (idx) => {
-    if (useWhole) {
-      maskRef.current = buildGlyphMask(target)
-      coveredRef.current = new Uint8Array(GRID * GRID)
-    } else {
-      polyRef.current = buildPolyline(strokes[idx])
-      progressRef.current = 0
+  const updateStartDot = (idx) => {
+    if (!strokes || !strokes[idx]) {
+      setStartDot(null)
+      return
     }
+    const p = toPx(strokes[idx][0])
+    setStartDot({ x: (p.x / RES) * 100, y: (p.y / RES) * 100 })
+  }
+
+  const resetStrokeScoring = () => {
+    progressRef.current = 0
     startOkRef.current = false
     setCoverage(0)
+  }
+
+  // お手本アニメ: 1画ずつ順番に描いてみせる（本物の書き順）
+  const runDemo = (onEnd) => {
+    const polys = polysRef.current
+    const canvas = bgRef.current
+    if (!canvas || !polys.length) {
+      onEnd()
+      return
+    }
+    const perStroke = Math.max(300, Math.min(700, 2400 / polys.length))
+    const gap = 130
+    let startTime = null
+    const tick = (now) => {
+      // RAF の最初のタイムスタンプは performance.now() より過去のことがあるので、
+      // 最初のフレームの時刻を基準にする（負の経過時間で idx=-1 になり
+      // クラッシュ→デモが止まる不具合の修正）
+      if (startTime === null) startTime = now
+      const t = Math.max(0, now - startTime)
+      const idx = Math.max(0, Math.min(polys.length - 1, Math.floor(t / (perStroke + gap))))
+      const inStroke = Math.min(1, (t - idx * (perStroke + gap)) / perStroke)
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, RES, RES)
+      // 全体をごくうすく下敷きに
+      for (const poly of polys) {
+        drawStroke(ctx, poly, { color: 'rgba(255,255,255,0.10)', width: RES * 0.075 })
+      }
+      // 描き終わった画＋今描いている画
+      for (let i = 0; i < idx; i++) {
+        drawStroke(ctx, polys[i], { color: 'rgba(255,255,255,0.85)', width: RES * 0.08 })
+      }
+      drawStroke(ctx, polys[idx], {
+        color: 'rgba(255,255,255,0.85)',
+        width: RES * 0.08,
+        lengthRatio: inStroke
+      })
+      const finished = idx === polys.length - 1 && inStroke >= 1
+      if (finished) {
+        setTimeout(onEnd, 350)
+      } else {
+        demoRafRef.current = requestAnimationFrame(tick)
+      }
+    }
+    demoRafRef.current = requestAnimationFrame(tick)
   }
 
   // 文字が変わるたびに初期化
@@ -206,33 +217,40 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     setStrokeIndex(0)
     setShowGuide(stage === 'trace')
     hasInkRef.current = false
+    resetStrokeScoring()
+    polysRef.current = strokes ? strokes.map(buildPolyline) : []
     const fg = fgRef.current
     if (fg) fg.getContext('2d').clearRect(0, 0, RES, RES)
 
-    rebuildScoring(0)
-
-    if (stage === 'trace') {
+    if (stage === 'trace' && strokes) {
+      let alive = true
       setPhase('demo')
-      if (bgRef.current) paintGuide(bgRef.current, target, null, false, false)
-      const t = setTimeout(() => {
+      setStartDot(null)
+      runDemo(() => {
+        if (!alive) return
         setPhase('write')
-        redrawGuide(0, true)
+        paintBoard(0, 0, true)
+        updateStartDot(0)
         speak(
           totalStrokes > 1
             ? 'よし、きみの ばん！ ひかる ところから 1かくめを なぞってね'
             : 'よし、きみの ばん！ ひかる ところから なぞってね'
         )
-      }, 2100)
-      return () => clearTimeout(t)
+      })
+      return () => {
+        alive = false
+        cancelAnimationFrame(demoRafRef.current)
+      }
     }
     setPhase('write')
-    redrawGuide(0, false)
+    paintBoard(0, 0, false)
+    updateStartDot(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, stage])
 
-  // showGuide トグル（自由書きモードの「おてほん」ボタン）
+  // 自由書きモードの「おてほん」トグル
   useEffect(() => {
-    if (phase === 'write') redrawGuide(strokeIndex, showGuide)
+    if (phase === 'write') paintBoard(strokeIndex, strokeIndex, showGuide)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showGuide])
 
@@ -244,41 +262,16 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     return { x: (cx / rect.width) * RES, y: (cy / rect.height) * RES }
   }
 
-  // 面積方式（フォールバック専用）
-  const markCoveredArea = (p) => {
-    const m = maskRef.current
-    const cov = coveredRef.current
-    if (!m || !cov) return null
-    const cell = RES / GRID
-    const gx = Math.floor(p.x / cell)
-    const gy = Math.floor(p.y / cell)
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const x = gx + dx
-        const y = gy + dy
-        if (x < 0 || y < 0 || x >= GRID || y >= GRID) continue
-        const idx = y * GRID + x
-        if (m.mask[idx] && !cov[idx]) cov[idx] = 1
-      }
-    }
-    let c = 0
-    for (let i = 0; i < cov.length; i++) c += cov[i]
-    return c / m.total
-  }
-
   const start = (e) => {
-    if (doneRef.current || phase !== 'write') return
+    if (doneRef.current || phase !== 'write' || !strokes) return
     e.preventDefault()
     drawingRef.current = true
     hasInkRef.current = true
     const p = pointFromEvent(e)
     lastRef.current = p
-    if (!useWhole && strokes) {
-      // この試行が「正しい始点」の近くから始まったかを記録
-      // （書き順＝どこから書き始めるかを、ここで実際にチェックしている）
-      const startPx = toPx(strokes[strokeIndex][0])
-      startOkRef.current = Math.hypot(p.x - startPx.x, p.y - startPx.y) <= START_RADIUS
-    }
+    // 正しい始点の近くから書き始めたか（＝書き順の始点チェック）
+    const startPx = toPx(strokes[strokeIndex][0])
+    startOkRef.current = Math.hypot(p.x - startPx.x, p.y - startPx.y) <= START_RADIUS
   }
 
   const move = (e) => {
@@ -297,22 +290,16 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     ctx.stroke()
     lastRef.current = p
 
-    // 採点は「なぞった量」を記録するだけ。ここでは絶対に完了判定しない
-    // （＝描いている途中でいきなり終わる不具合の直接の原因だったため、
-    //   判定は必ず指を離した瞬間 end() でのみ行う）。
-    if (useWhole) {
-      const cov = markCoveredArea(p)
-      if (cov != null) setCoverage(cov)
-    } else if (startOkRef.current) {
-      // 正しい始点から始めた試行のときだけ、線に沿った進み具合を更新する
-      // （始点が違う試行は、最後までなぞってもコレクション扱いにしない）
-      const t = projectOnPolyline(polyRef.current, p, PATH_TOLERANCE)
+    // ここでは進み具合を記録するだけで、絶対に完了判定しない
+    // （判定は指を離した瞬間 end() のみ。途中で終わる不具合の再発防止）
+    if (startOkRef.current) {
+      const t = projectOnPolyline(polysRef.current[strokeIndex], p, PATH_TOLERANCE)
       if (t != null) progressRef.current = Math.max(progressRef.current, t)
       setCoverage(progressRef.current)
     }
   }
 
-  // 指を離した瞬間だけ、この画が合格かどうかを判定する
+  // 指を離した瞬間だけ、この画の合否を判定する
   const end = () => {
     if (!drawingRef.current) return
     drawingRef.current = false
@@ -320,16 +307,15 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     if (doneRef.current || phase !== 'write' || !hasInkRef.current) return
     hasInkRef.current = false
 
-    const threshold = useWhole ? WHOLE_THRESHOLD : STROKE_THRESHOLD
-    if (coverage >= threshold) {
+    if (coverage >= STROKE_THRESHOLD) {
       advanceStroke()
     } else {
-      // おしい！ このインクは消してもう一度（減点はしない。回数だけ記録）
+      // おしい！ インクを消してもう一度（減点なし。回数だけ記録）
       setRetries((r) => r + 1)
       sfx.wrongSoft()
       const fg = fgRef.current
       if (fg) fg.getContext('2d').clearRect(0, 0, RES, RES)
-      rebuildScoring(strokeIndex)
+      resetStrokeScoring()
     }
   }
 
@@ -338,13 +324,15 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     if (fg) fg.getContext('2d').clearRect(0, 0, RES, RES)
     const next = strokeIndex + 1
     if (next >= totalStrokes) {
+      paintBoard(totalStrokes, null, false) // 完成した文字をミントで表示
       finishAll(true)
       return
     }
     sfx.pop()
     setStrokeIndex(next)
-    rebuildScoring(next)
-    redrawGuide(next, showGuide)
+    resetStrokeScoring()
+    paintBoard(next, next, showGuide) // 書けた画は定着し、次の画がハイライト
+    updateStartDot(next)
   }
 
   const finishAll = (completedAllStrokes) => {
@@ -353,6 +341,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     const n = !completedAllStrokes ? 1 : retries === 0 ? 3 : retries <= 2 ? 2 : 1
     setStars(n)
     setPhase('done')
+    setStartDot(null)
     sfx.correct()
     const praise = n === 3 ? 'ほし みっつ！ さすが！' : n === 2 ? 'じょうずに かけたね！' : 'かけたね！ そのちょうし！'
     speak(`${target}。 ${praise}`)
@@ -362,11 +351,11 @@ export default function TracingCanvas({ target, stage, onComplete }) {
   const clearDrawing = () => {
     const fg = fgRef.current
     if (fg) fg.getContext('2d').clearRect(0, 0, RES, RES)
-    rebuildScoring(strokeIndex)
+    resetStrokeScoring()
     sfx.tap()
   }
 
-  // まだ全画終わっていない状態で「かけた！」→ 練習中として記録し先へ進む
+  // 全画終わる前の「かけた！」→ 練習中として記録し先へ進む
   const forceFinish = () => {
     finishAll(false)
   }
@@ -378,6 +367,11 @@ export default function TracingCanvas({ target, stage, onComplete }) {
       {totalStrokes > 1 && phase === 'write' && (
         <div className="muted" style={{ fontWeight: 800, fontSize: 'clamp(14px,2.4vw,18px)' }}>
           {strokeIndex + 1} かくめ ／ ぜんぶで {totalStrokes} かく
+        </div>
+      )}
+      {phase === 'demo' && (
+        <div className="muted" style={{ fontWeight: 800, fontSize: 'clamp(14px,2.4vw,18px)' }}>
+          👀 おてほんを みててね
         </div>
       )}
 
@@ -399,13 +393,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
           onPointerLeave={end}
         />
 
-        {phase === 'demo' && (
-          <div className="trace-demo" style={{ fontSize: 'min(37vh, 60vw)' }}>
-            {target}
-          </div>
-        )}
-
-        {phase === 'write' && showGuide && startDot && !drawingRef.current && (
+        {phase === 'write' && showGuide && startDot && (
           <div className="trace-start-dot" style={{ left: `${startDot.x}%`, top: `${startDot.y}%` }} />
         )}
 
@@ -415,8 +403,9 @@ export default function TracingCanvas({ target, stage, onComplete }) {
               position: 'absolute',
               inset: 0,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              paddingBottom: '8%'
             }}
           >
             <div className="trace-stars">

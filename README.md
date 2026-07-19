@@ -107,3 +107,8 @@ src/
 
 モンスター・世界観・バトルはすべて独自デザインです。
 既存IP（ポケモン等）の画像・名称・データは一切使用していません。
+
+「かく」の書き順データ（`src/data/strokeOrder.js`）は
+[KanjiVG](https://kanjivg.tagaini.net)（© Ulrich Apel,
+[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)）の
+標準書き順SVGから `scripts/build-stroke-order.mjs` で自動生成しています。
