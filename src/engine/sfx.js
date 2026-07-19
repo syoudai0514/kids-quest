@@ -1,20 +1,15 @@
 // ============================================================
 // 効果音（Web Audio API で合成。音声ファイル不要＝完全オフライン）
-// v2: エコー・和音・ノイズヒットでリッチに。失敗音も明るいトーンのまま。
+// v3: BGM と同じ「共有 AudioContext」を使う（別々に作ると
+//     スマホで効果音だけ無音になることがあったため一本化）。
 // ============================================================
 
-let ctx = null
+import { getCtx, unlockAudio } from './audioCtx.js'
+
 let enabled = true
 
 function ac() {
-  if (typeof window === 'undefined') return null
-  if (!ctx) {
-    const AC = window.AudioContext || window.webkitAudioContext
-    if (!AC) return null
-    ctx = new AC()
-  }
-  if (ctx.state === 'suspended') ctx.resume()
-  return ctx
+  return getCtx()
 }
 
 export function setSfxEnabled(v) {
@@ -24,7 +19,7 @@ export function isSfxEnabled() {
   return enabled
 }
 export function unlockSfx() {
-  ac()
+  unlockAudio()
 }
 
 function tone(freq, start, dur, type = 'sine', gain = 0.18, slideTo = null) {

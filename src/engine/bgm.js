@@ -8,7 +8,8 @@
 // 音量はごく小さめ。保護者画面で ON/OFF できる。
 // ============================================================
 
-let ctx = null
+import { getCtx } from './audioCtx.js'
+
 let master = null
 let running = false
 let timers = []
@@ -16,14 +17,7 @@ let padNodes = []
 let stepIdx = 0
 
 function ac() {
-  if (typeof window === 'undefined') return null
-  if (!ctx) {
-    const AC = window.AudioContext || window.webkitAudioContext
-    if (!AC) return null
-    ctx = new AC()
-  }
-  if (ctx.state === 'suspended') ctx.resume()
-  return ctx
+  return getCtx()
 }
 
 // 明るいポップ進行 C→G→Am→F（子供にもなじみの「元気な」流れ）
@@ -120,7 +114,7 @@ export function startBgm() {
       if (!running) return
       const now = ac()
       if (!now) return
-      const t = ctx.currentTime + 0.02
+      const t = now.currentTime + 0.02
       const chordIdx = Math.floor(stepIdx / 8) % PROG.length
       const chord = PROG[chordIdx]
       const s = stepIdx % 8
