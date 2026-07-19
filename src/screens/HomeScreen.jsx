@@ -14,7 +14,7 @@ import {
   masteryProgress,
   missedCount
 } from '../state/GameContext.jsx'
-import { getPartner, partnerStage } from '../data/monsters.js'
+import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
 import { GRADES, gradeOf } from '../data/grades.js'
 import { buildOkawariTask, buildExtraTask, OKAWARI_MAX } from '../engine/missions.js'
@@ -267,7 +267,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
           >
             <span className="menu-tile__emoji">📒</span>
             <span className="menu-tile__label">ずかん</span>
-            <span className="menu-tile__sub">{state.unlockedMonsters.length} / 100</span>
+            <span className="menu-tile__sub">{state.unlockedMonsters.length} / {MONSTERS.length}</span>
           </button>
         </div>
       </div>

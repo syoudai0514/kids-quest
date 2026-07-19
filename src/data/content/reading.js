@@ -107,10 +107,107 @@ export const WORDS = [
   { text: 'め', emoji: '👁️', kana: 'hira', tier: 1, theme: 'life' },
   { text: 'は', emoji: '🦷', kana: 'hira', tier: 1, theme: 'life' },
   { text: 'て', emoji: '✋', kana: 'hira', tier: 1, theme: 'life' },
-  { text: 'あし', emoji: '🦶', kana: 'hira', tier: 2, theme: 'life' }
+  { text: 'あし', emoji: '🦶', kana: 'hira', tier: 2, theme: 'life' },
+
+  // --- くだもの・やさい・たべもの（増量） ---
+  { text: 'もも', emoji: '🍑', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'さくらんぼ', emoji: '🍒', kana: 'hira', tier: 5, theme: 'life' },
+  { text: 'パイナップル', emoji: '🍍', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'メロン', emoji: '🍈', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'レモン', emoji: '🍋', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'なし', emoji: '🍐', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'くり', emoji: '🌰', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'とうもろこし', emoji: '🌽', kana: 'hira', tier: 6, theme: 'life' },
+  { text: 'なす', emoji: '🍆', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'じゃがいも', emoji: '🥔', kana: 'hira', tier: 5, theme: 'life' },
+  { text: 'たまねぎ', emoji: '🧅', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'ブロッコリー', emoji: '🥦', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'ハンバーガー', emoji: '🍔', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'ピザ', emoji: '🍕', kana: 'kata', tier: 2, theme: 'life' },
+  { text: 'スパゲッティ', emoji: '🍝', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'カレー', emoji: '🍛', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'ラーメン', emoji: '🍜', kana: 'kata', tier: 4, theme: 'life' },
+  { text: 'すし', emoji: '🍣', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'ぎょうざ', emoji: '🥟', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'プリン', emoji: '🍮', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'チョコレート', emoji: '🍫', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'クッキー', emoji: '🍪', kana: 'kata', tier: 4, theme: 'life' },
+  { text: 'ドーナツ', emoji: '🍩', kana: 'kata', tier: 4, theme: 'life' },
+  { text: 'あめだま', emoji: '🍬', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'ポップコーン', emoji: '🍿', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'ジュース', emoji: '🧃', kana: 'kata', tier: 4, theme: 'life' },
+  { text: 'ぎゅうにゅう', emoji: '🥛', kana: 'hira', tier: 6, theme: 'life' },
+
+  // --- いきもの（増量） ---
+  { text: 'きつね', emoji: '🦊', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'おおかみ', emoji: '🐺', kana: 'hira', tier: 4, theme: 'animal' },
+  { text: 'しか', emoji: '🦌', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'りす', emoji: '🐿️', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'はりねずみ', emoji: '🦔', kana: 'hira', tier: 5, theme: 'animal' },
+  { text: 'こうもり', emoji: '🦇', kana: 'hira', tier: 4, theme: 'animal' },
+  { text: 'わに', emoji: '🐊', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'かば', emoji: '🦛', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'ゴリラ', emoji: '🦍', kana: 'kata', tier: 3, theme: 'animal' },
+  { text: 'らくだ', emoji: '🐫', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'しまうま', emoji: '🦓', kana: 'hira', tier: 4, theme: 'animal' },
+  { text: 'ひょう', emoji: '🐆', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'フラミンゴ', emoji: '🦩', kana: 'kata', tier: 6, theme: 'animal' },
+  { text: 'くじゃく', emoji: '🦚', kana: 'hira', tier: 4, theme: 'animal' },
+  { text: 'ふくろう', emoji: '🦉', kana: 'hira', tier: 4, theme: 'animal' },
+  { text: 'あひる', emoji: '🦆', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'にわとり', emoji: '🐔', kana: 'hira', tier: 4, theme: 'animal' },
+  { text: 'ひよこ', emoji: '🐤', kana: 'hira', tier: 3, theme: 'animal' },
+  { text: 'てんとうむし', emoji: '🐞', kana: 'hira', tier: 6, theme: 'animal' },
+  { text: 'あり', emoji: '🐜', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'えび', emoji: '🦐', kana: 'hira', tier: 2, theme: 'animal' },
+  { text: 'いか', emoji: '🦑', kana: 'hira', tier: 2, theme: 'animal' },
+
+  // --- どうぐ・もちもの ---
+  { text: 'ふうせん', emoji: '🎈', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'プレゼント', emoji: '🎁', kana: 'kata', tier: 5, theme: 'life' },
+  { text: 'とけい', emoji: '⏰', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'めがね', emoji: '👓', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'ぼうし', emoji: '🎩', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'くつ', emoji: '👟', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'かさ', emoji: '☂️', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'ランドセル', emoji: '🎒', kana: 'kata', tier: 5, theme: 'life' },
+  { text: 'えんぴつ', emoji: '✏️', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'はさみ', emoji: '✂️', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'かぎ', emoji: '🔑', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'いす', emoji: '🪑', kana: 'hira', tier: 2, theme: 'life' },
+  { text: 'ベッド', emoji: '🛏️', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'でんわ', emoji: '📞', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'カメラ', emoji: '📷', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'テレビ', emoji: '📺', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'ロボット', emoji: '🤖', kana: 'kata', tier: 4, theme: 'space' },
+  { text: 'ピアノ', emoji: '🎹', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'ギター', emoji: '🎸', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'たいこ', emoji: '🥁', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'サッカーボール', emoji: '⚽', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'やきゅう', emoji: '⚾', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'メダル', emoji: '🥇', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'トロフィー', emoji: '🏆', kana: 'kata', tier: 5, theme: 'life' },
+
+  // --- のりもの・たてもの（増量） ---
+  { text: 'ヨット', emoji: '⛵', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'ヘリコプター', emoji: '🚁', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'トラクター', emoji: '🚜', kana: 'kata', tier: 5, theme: 'life' },
+  { text: 'パトカー', emoji: '🚓', kana: 'kata', tier: 4, theme: 'life' },
+  { text: 'タクシー', emoji: '🚕', kana: 'kata', tier: 4, theme: 'life' },
+  { text: 'トラック', emoji: '🚚', kana: 'kata', tier: 4, theme: 'life' },
+  { text: 'しんかんせん', emoji: '🚅', kana: 'hira', tier: 6, theme: 'life' },
+  { text: 'きかんしゃ', emoji: '🚂', kana: 'hira', tier: 5, theme: 'life' },
+  { text: 'おしろ', emoji: '🏰', kana: 'hira', tier: 3, theme: 'life' },
+  { text: 'テント', emoji: '⛺', kana: 'kata', tier: 3, theme: 'life' },
+  { text: 'びょういん', emoji: '🏥', kana: 'hira', tier: 5, theme: 'life' },
+  { text: 'がっこう', emoji: '🏫', kana: 'hira', tier: 4, theme: 'life' },
+  { text: 'かんらんしゃ', emoji: '🎡', kana: 'hira', tier: 6, theme: 'life' },
+  { text: 'ジェットコースター', emoji: '🎢', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'メリーゴーランド', emoji: '🎠', kana: 'kata', tier: 6, theme: 'life' },
+  { text: 'はなび', emoji: '🎆', kana: 'hira', tier: 3, theme: 'life' }
 ]
 
-import { kanjiPoolForGrade, KANJI_BY_CHAR } from '../kanjiByGrade.js'
+import { kanjiPoolForGrade, KANJI_BY_CHAR, jukugoPoolForGrade, JUKUGO_BY_WORD } from '../kanjiByGrade.js'
 
 const WORD_BY_TEXT = Object.fromEntries(WORDS.map((w) => [w.text, w]))
 
@@ -207,6 +304,33 @@ function kanjiQuestion(answer, params) {
   }
 }
 
+// 熟語（2字）: 「なんて よむ？」
+function jukugoQuestion(answer, params) {
+  const { choiceCount } = params
+  const pool = jukugoPoolForGrade(Math.max(1, params.grade || 1))
+  const seen = new Set([answer.yomi])
+  const distractors = []
+  for (const j of shuffle(pool)) {
+    if (distractors.length >= choiceCount - 1) break
+    if (seen.has(j.yomi)) continue
+    seen.add(j.yomi)
+    distractors.push(j)
+  }
+  const options = shuffle([answer, ...distractors])
+  return {
+    domain: 'yomu',
+    type: 'choice',
+    itemKey: `j:${answer.k}`,
+    visual: { kind: 'kanji', text: answer.k },
+    speak: 'この ことばは なんて よむかな？',
+    instruction: 'なんて よむ？',
+    answerId: answer.yomi,
+    choices: options.map((j) => ({ id: j.yomi, label: j.yomi, speak: j.yomi })),
+    answerWord: { text: answer.yomi },
+    explain: `これは 「${answer.yomi}」と よむよ`
+  }
+}
+
 /**
  * 「よむ」の問題を1問生成する。
  * @param {object} params 難易度パラメータ
@@ -215,6 +339,10 @@ function kanjiQuestion(answer, params) {
 export function generateReadingQuestion(params, reviewKey = null) {
   // 復習キューからの再出題
   if (reviewKey) {
+    if (reviewKey.startsWith('j:')) {
+      const j = JUKUGO_BY_WORD[reviewKey.slice(2)]
+      if (j) return jukugoQuestion(j, params)
+    }
     if (reviewKey.startsWith('k:')) {
       const k = KANJI_BY_CHAR[reviewKey.slice(2)]
       if (k) return kanjiQuestion(k, params)
@@ -228,6 +356,10 @@ export function generateReadingQuestion(params, reviewKey = null) {
   const grade = params.grade || 0
   const kanjiProb = grade >= 2 ? 0.65 : grade === 1 ? 0.45 : params.level >= 3 ? 0.35 : 0
   if (Math.random() < kanjiProb) {
+    const jpool = jukugoPoolForGrade(grade)
+    if (grade >= 1 && jpool.length && Math.random() < 0.4) {
+      return jukugoQuestion(shuffle(jpool)[0], params)
+    }
     return kanjiQuestion(shuffle(kanjiPoolForGrade(grade))[0], params)
   }
   const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard)

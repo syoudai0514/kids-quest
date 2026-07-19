@@ -175,6 +175,39 @@ function ArtSlime({ c }) {
   )
 }
 
+// 見た目バリエーション（1000体でも見分けがつくように）
+function Deco({ kind, c }) {
+  if (kind === 1) {
+    // つの
+    return (
+      <g>
+        <path d="M36 30 l-4 -12 l9 6 z" fill={c.accent} />
+        <path d="M64 30 l4 -12 l-9 6 z" fill={c.accent} />
+      </g>
+    )
+  }
+  if (kind === 2) {
+    // ほしアンテナ
+    return (
+      <g>
+        <line x1="50" y1="26" x2="50" y2="14" stroke={c.body} strokeWidth="3.4" />
+        <path d="M50 6 l2.4 5.6 l5.6 0.8 l-4 4 l1.2 5.6 l-5.2 -2.8 l-5.2 2.8 l1.2 -5.6 l-4 -4 l5.6 -0.8 z" fill={c.accent} />
+      </g>
+    )
+  }
+  if (kind === 3) {
+    // もよう（みずたま）
+    return (
+      <g opacity="0.55">
+        <circle cx="36" cy="66" r="3.4" fill={c.accent} />
+        <circle cx="52" cy="72" r="2.8" fill={c.accent} />
+        <circle cx="66" cy="64" r="3.2" fill={c.accent} />
+      </g>
+    )
+  }
+  return null
+}
+
 const ART = {
   blob: ArtBlob,
   dino: ArtDino,
@@ -211,6 +244,7 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
       aria-label={monster.name}
     >
       <Art c={colors} />
+      {monster.deco ? <Deco kind={monster.deco} c={colors} /> : null}
     </svg>
   )
 }

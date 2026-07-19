@@ -22,7 +22,7 @@ const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上�
 const MISSED_MAX = 14 // 復習キューの分野ごとの上限
 
 // コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
-const CONTENT_VERSION = 6
+const CONTENT_VERSION = 7
 
 // XP → 相棒レベル（ゆるやかな二次曲線）
 export function partnerLevel(xp) {

@@ -75,8 +75,8 @@ const PALETTES = [
   { element: 'うちゅう', body: '#6a8bff', belly: '#cdd6ff', accent: '#ffd166', eye: '#0c1640' }
 ]
 
-const PRE = ['ピ', 'ポ', 'モ', 'ニ', 'クル', 'ゾ', 'ラ', 'ビ', 'ガ', 'ジャ', 'テ', 'ヌ', 'ベ', 'ロ', 'ワ', 'キ', 'チ', 'ヘ', 'ム', 'ソ', 'ダ', 'ヒ', 'メ', 'リ', 'ヨ', 'プ', 'ブ', 'グ', 'ズ', 'ネ', 'ファ', 'コ']
-const SUF = ['ット', 'リン', 'ゴン', 'ピー', 'モン', 'タン', 'ニャ', 'ドン', 'ック', 'ララ', 'ゾン', 'ピョン', 'ポン', 'ミィ', 'ズー', 'バウ', 'ゴロ', 'クス', 'ノン', 'ピコ']
+const PRE = ['ピ', 'ポ', 'モ', 'ニ', 'クル', 'ゾ', 'ラ', 'ビ', 'ガ', 'ジャ', 'テ', 'ヌ', 'ベ', 'ロ', 'ワ', 'キ', 'チ', 'ヘ', 'ム', 'ソ', 'ダ', 'ヒ', 'メ', 'リ', 'ヨ', 'プ', 'ブ', 'グ', 'ズ', 'ネ', 'ファ', 'コ', 'サ', 'タ', 'ナ', 'ハ', 'マ', 'ヤ', 'ル', 'ギ']
+const SUF = ['ット', 'リン', 'ゴン', 'ピー', 'モン', 'タン', 'ニャ', 'ドン', 'ック', 'ララ', 'ゾン', 'ピョン', 'ポン', 'ミィ', 'ズー', 'バウ', 'ゴロ', 'クス', 'ノン', 'ピコ', 'ルル', 'ボン', 'キング', 'スター', 'ニョロ', 'ムム', 'ペロ', 'ジロ', 'ガオ', 'チュ']
 
 const DESC_BY_ART = {
   blob: 'ぷにぷにの からだを もつ モンスター。',
@@ -91,15 +91,31 @@ const DESC_BY_ART = {
 
 function generateMonsters(count) {
   const out = []
+  const used = new Set()
   for (let i = 0; i < count; i++) {
     const art = ART_KINDS[i % ART_KINDS.length]
     const pal = PALETTES[(i + Math.floor(i / ART_KINDS.length)) % PALETTES.length]
-    const name = PRE[i % PRE.length] + SUF[Math.floor(i / PRE.length) % SUF.length]
+    // 最初の92体は旧世代の命名式を維持（捕まえた子の名前が変わらないように）。
+    // それ以降は重複しない組み合わせを決定論的に探す。
+    let name
+    if (i < 92) {
+      name = PRE[i % 32] + SUF[Math.floor(i / 32) % 20]
+    } else {
+      for (let k = 0; ; k++) {
+        const cand = PRE[(i + k) % PRE.length] + SUF[(Math.floor(i / PRE.length) + k) % SUF.length]
+        if (!used.has(cand)) {
+          name = cand
+          break
+        }
+      }
+    }
+    used.add(name)
     out.push({
       id: 'g' + String(i).padStart(3, '0'),
       name,
       role: 'wild', // バトルで捕まえて集める
       art,
+      deco: (i * 7 + 3) % 4, // 0:なし 1:つの 2:ほしアンテナ 3:もよう（見た目のバリエーション）
       element: pal.element,
       colors: { body: pal.body, belly: pal.belly, accent: pal.accent, eye: pal.eye },
       desc: `${pal.element}の ${DESC_BY_ART[art]}`
@@ -108,8 +124,8 @@ function generateMonsters(count) {
   return out
 }
 
-// BASE 8 + 生成 92 = 100体
-export const MONSTERS = [...BASE, ...generateMonsters(92)]
+// BASE 8 + 生成 992 = 1000体（id/名前は決定論的で、以前の92体のidもそのまま）
+export const MONSTERS = [...BASE, ...generateMonsters(992)]
 
 export const MONSTER_BY_ID = Object.fromEntries(MONSTERS.map((m) => [m.id, m]))
 

@@ -4,7 +4,7 @@
 // タップで名前と説明を読み上げる。
 // ============================================================
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useGame } from '../state/GameContext.jsx'
 import { MONSTERS } from '../data/monsters.js'
 import Monster from '../components/Monster.jsx'
@@ -12,9 +12,15 @@ import { Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
+const PAGE_SIZE = 100
+
 export default function CollectionScreen({ onBack }) {
   const { state } = useGame()
   const unlocked = new Set(state.unlockedMonsters)
+  const [page, setPage] = useState(0)
+  const pageCount = Math.ceil(MONSTERS.length / PAGE_SIZE)
+  const pageMonsters = MONSTERS.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const unlockedInPage = pageMonsters.filter((m) => unlocked.has(m.id)).length
 
   const tap = (m, isUnlocked) => {
     if (isUnlocked) {
@@ -42,6 +48,29 @@ export default function CollectionScreen({ onBack }) {
         </div>
       </div>
 
+      {/* ページ切替（100体ずつ） */}
+      <div className="row" style={{ justifyContent: 'center', gap: 12, padding: '2px 0 8px' }}>
+        <button
+          className="btn btn--ghost"
+          style={{ minHeight: 56, padding: '8px 20px' }}
+          disabled={page === 0}
+          onClick={() => { sfx.tap(); setPage((p) => p - 1) }}
+        >
+          ◀
+        </button>
+        <div className="pill">
+          {page + 1} / {pageCount}ページ（このページ {unlockedInPage}/{pageMonsters.length}）
+        </div>
+        <button
+          className="btn btn--ghost"
+          style={{ minHeight: 56, padding: '8px 20px' }}
+          disabled={page >= pageCount - 1}
+          onClick={() => { sfx.tap(); setPage((p) => p + 1) }}
+        >
+          ▶
+        </button>
+      </div>
+
       <div className="scroll-y" style={{ flex: 1, padding: '6px 4px 24px' }}>
         <div
           style={{
@@ -52,7 +81,7 @@ export default function CollectionScreen({ onBack }) {
             margin: '0 auto'
           }}
         >
-          {MONSTERS.map((m) => {
+          {pageMonsters.map((m) => {
             const isUnlocked = unlocked.has(m.id)
             return (
               <button

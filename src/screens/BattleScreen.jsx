@@ -10,7 +10,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame, partnerLevel, PARTNER_COLORS } from '../state/GameContext.jsx'
-import { getPartner, partnerStage, getWildMonsters } from '../data/monsters.js'
+import { getPartner, partnerStage, getWildMonsters, MONSTERS } from '../data/monsters.js'
 import {
   TYPES,
   typeOfElement,
@@ -222,7 +222,7 @@ export default function BattleScreen({ onBack }) {
             <div style={{ fontSize: 'clamp(17px,3.2vw,22px)', fontWeight: 800 }}>
               {win
                 ? wasNewCatchRef.current
-                  ? `${enemy.name}が なかまに なった！（ずかん ${state.unlockedMonsters.length}/100）`
+                  ? `${enemy.name}が なかまに なった！（ずかん ${state.unlockedMonsters.length}/${MONSTERS.length}）`
                   : `${enemy.name}に かった！ ✨+12`
                 : 'つぎは きっと かてるよ！'}
             </div>

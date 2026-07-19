@@ -426,6 +426,276 @@ const BUILDERS = {
       answer: ans, cc: p.cc, spread: v / 2, say: `${ans}キロメートル`,
       explain: `みちのりは はやさ かける じかん。${v}かける${t}で ${ans}キロだよ`
     })
+  }  ,
+  // ---- 追加タイプ（大量増量ぶん） ----
+  holeAdd(p) {
+    const b = rng(2, 8), ans = rng(1, 9)
+    return numQ('holeAdd', {
+      visual: { kind: 'bigtext', text: `❓ ＋ ${b} ＝ ${ans + b}` },
+      instruction: `❓ ＋ ${b} ＝ ${ans + b}`,
+      speak: `はてなに ${b}を たすと ${ans + b}。はてなは いくつ？`,
+      answer: ans, cc: p.cc, spread: 2, say: `${ans}`,
+      explain: `${ans + b}から ${b}を ひけば わかるよ。こたえは ${ans}`
+    })
+  },
+  holeSub(p) {
+    const b = rng(2, 8), ans = rng(2, 9)
+    return numQ('holeSub', {
+      visual: { kind: 'bigtext', text: `❓ − ${b} ＝ ${ans}` },
+      instruction: `❓ − ${b} ＝ ${ans}`,
+      speak: `はてなから ${b}を ひくと ${ans}。はてなは いくつ？`,
+      answer: ans + b, cc: p.cc, spread: 2, say: `${ans + b}`,
+      explain: `${ans}に ${b}を たせば わかるよ。こたえは ${ans + b}`
+    })
+  },
+  double(p) {
+    const a = rng(3, 40)
+    return numQ('double', {
+      visual: { kind: 'bigtext', text: `${a} の 2ばい ＝ ❓` },
+      instruction: `${a}の 2ばいは？`,
+      speak: `${a}の 2ばいは いくつ？`,
+      answer: a * 2, cc: p.cc, spread: 4, say: `${a * 2}`,
+      explain: `おなじ かずを もういっかい たすと ${a * 2}`
+    })
+  },
+  half(p) {
+    const ans = rng(2, 30)
+    return numQ('half', {
+      visual: { kind: 'bigtext', text: `${ans * 2} の はんぶん ＝ ❓` },
+      instruction: `${ans * 2}の はんぶんは？`,
+      speak: `${ans * 2}の はんぶんは いくつ？`,
+      answer: ans, cc: p.cc, spread: 3, say: `${ans}`,
+      explain: `ふたつに わけると ${ans}と ${ans}だね`
+    })
+  },
+  evenOdd(p) {
+    const even = rng(1, 20) * 2
+    let odd = rng(0, 19) * 2 + 1
+    const askEven = Math.random() < 0.5
+    const target = askEven ? even : odd
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:evenOdd', visual: null,
+      instruction: askEven ? 'ぐうすうを タッチ！' : 'きすうを タッチ！',
+      speak: askEven
+        ? 'ふたつに わけきれる かず、ぐうすうは どっち？'
+        : 'ふたつに わけると 1あまる かず、きすうは どっち？',
+      answerId: String(target),
+      choices: shuffle([even, odd]).map((v) => ({ id: String(v), label: String(v), speak: `${v}` })),
+      answerWord: { text: `${target}` },
+      explain: askEven ? `${even}は 2で わりきれるから ぐうすう` : `${odd}は 1あまるから きすう`
+    }
+  },
+  moneyAdd(p) {
+    const a = pick([10, 20, 30, 50]), b = pick([10, 20, 30, 50])
+    return numQ('moneyAdd', {
+      visual: { kind: 'bigtext', text: `${a}えん ＋ ${b}えん ＝ ❓えん` },
+      instruction: `${a}えんと ${b}えんで いくら？`,
+      speak: `${a}えんと ${b}えんを あわせると なんえん？`,
+      answer: a + b, cc: p.cc, spread: 10, say: `${a + b}えん`,
+      explain: `あわせて ${a + b}えんだよ`
+    })
+  },
+  moneyChange(p) {
+    const price = pick([30, 40, 60, 70, 80]), pay = 100
+    return numQ('moneyChange', {
+      visual: { kind: 'bigtext', text: `100えん − ${price}えん ＝ ❓えん` },
+      instruction: `${pay}えんで ${price}えんの おかし。おつりは？`,
+      speak: `${pay}えんを だして ${price}えんの おかしを かったよ。おつりは なんえん？`,
+      answer: pay - price, cc: p.cc, spread: 10, say: `おつりは ${pay - price}えん`,
+      explain: `100から ${price}を ひくと ${pay - price}えん`
+    })
+  },
+  clockPlus(p) {
+    const h = rng(1, 10)
+    const addHalf = Math.random() < 0.5
+    const ans = addHalf ? `${h}じ30ぷん` : `${h + 1}じ`
+    const dummies = addHalf
+      ? [`${h + 1}じ30ぷん`, `${h}じ`, `${h + 1}じ`]
+      : [`${h}じ30ぷん`, `${h + 2}じ`, `${h}じ`]
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:clockPlus',
+      visual: { kind: 'bigtext', text: `${h}じ の ${addHalf ? '30ぷん' : '1じかん'}あと ＝ ❓` },
+      instruction: `${h}じの ${addHalf ? '30ぷん' : '1じかん'}あとは？`,
+      speak: `${h}じの ${addHalf ? 'さんじゅっぷん' : 'いちじかん'}あとは なんじ？`,
+      answerId: ans,
+      choices: stringChoices(ans, dummies, p.cc),
+      answerWord: { text: ans },
+      explain: `とけいの はりを すすめて ${ans}だよ`
+    }
+  },
+  lengthConv(p) {
+    const m = rng(1, 5)
+    return numQ('lengthConv', {
+      visual: { kind: 'bigtext', text: `${m}m ＝ ❓cm` },
+      instruction: `${m}メートルは なんセンチ？`,
+      speak: `${m}メートルは なんセンチメートル？`,
+      answer: m * 100, cc: p.cc, spread: 100, say: `${m * 100}センチ`,
+      explain: `1メートルは 100センチ。だから ${m * 100}センチ`
+    })
+  },
+  kgConv(p) {
+    const kg = rng(1, 5)
+    return numQ('kgConv', {
+      visual: { kind: 'bigtext', text: `${kg}kg ＝ ❓g` },
+      instruction: `${kg}キログラムは なんグラム？`,
+      speak: `${kg}キログラムは なんグラム？`,
+      answer: kg * 1000, cc: p.cc, spread: 1000, say: `${kg * 1000}グラム`,
+      explain: `1キログラムは 1000グラム。だから ${kg * 1000}グラム`
+    })
+  },
+  literConv(p) {
+    const l = rng(1, 8)
+    return numQ('literConv', {
+      visual: { kind: 'bigtext', text: `${l}L ＝ ❓dL` },
+      instruction: `${l}リットルは なんデシリットル？`,
+      speak: `${l}リットルは なんデシリットル？`,
+      answer: l * 10, cc: p.cc, spread: 10, say: `${l * 10}デシリットル`,
+      explain: `1リットルは 10デシリットル。だから ${l * 10}デシリットル`
+    })
+  },
+  timeCalc(p) {
+    const a = pick([20, 30, 40, 50]), b = pick([20, 30, 40, 50])
+    const total = a + b
+    const ans = total >= 60 ? `1じかん${total - 60 > 0 ? `${total - 60}ぷん` : ''}` : `${total}ぷん`
+    const dummies = [`${total}ぷん`, `1じかん${total - 50}ぷん`, `${a + b + 10}ぷん`, '1じかん'].filter((d) => d !== ans)
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:timeCalc',
+      visual: { kind: 'bigtext', text: `${a}ぷん ＋ ${b}ぷん ＝ ❓` },
+      instruction: `${a}ぷんと ${b}ぷんで どれくらい？`,
+      speak: `${a}ふんと ${b}ふんを あわせると どれくらいの じかん？`,
+      answerId: ans,
+      choices: stringChoices(ans, dummies, p.cc),
+      answerWord: { text: ans },
+      explain: `60ぷんで 1じかんだよ。あわせて ${ans}`
+    }
+  },
+  holeMul(p) {
+    const b = rng(2, 9), ans = rng(2, 9)
+    return numQ('holeMul', {
+      visual: { kind: 'bigtext', text: `❓ × ${b} ＝ ${ans * b}` },
+      instruction: `❓ × ${b} ＝ ${ans * b}`,
+      speak: `はてな かける ${b}は ${ans * b}。はてなは いくつ？`,
+      answer: ans, cc: p.cc, spread: 2, say: `${ans}`,
+      explain: `${b}のだんで ${ans * b}に なるのは ${ans}だね`
+    })
+  },
+  tensMul(p) {
+    const a = rng(2, 9) * 10, b = rng(2, 9)
+    return numQ('tensMul', {
+      visual: { kind: 'bigtext', text: `${a} × ${b} ＝ ❓` },
+      instruction: `${a} × ${b} ＝ ？`,
+      speak: `${a} かける ${b} は いくつ？`,
+      answer: a * b, cc: p.cc, spread: 30, say: `${a * b}`,
+      explain: `${a / 10}かける${b}の 10ばい。こたえは ${a * b}`
+    })
+  },
+  perimeter(p) {
+    const a = rng(2, 8), b = rng(2, 8)
+    return numQ('perimeter', {
+      visual: { kind: 'bigtext', text: `たて${a}cm よこ${b}cm の\nまわりの ながさ ＝ ❓cm` },
+      instruction: `まわりの ながさは？`,
+      speak: `たて${a}センチ、よこ${b}センチの しかくの まわりの ながさは？`,
+      answer: (a + b) * 2, cc: p.cc, spread: 4, say: `${(a + b) * 2}センチ`,
+      explain: `たてと よこを たして 2ばい。${a}たす${b}は${a + b}、2ばいで ${(a + b) * 2}センチ`
+    })
+  },
+  mul3x1(p) {
+    const a = rng(120, 450), b = rng(2, 4)
+    return numQ('mul3x1', {
+      visual: { kind: 'bigtext', text: `${a} × ${b} ＝ ❓` },
+      instruction: `${a} × ${b} ＝ ？`,
+      speak: `${a} かける ${b} は いくつ？`,
+      answer: a * b, cc: p.cc, spread: 100, say: `${a * b}`,
+      explain: `くらいごとに かけて たそう。こたえは ${a * b}`
+    })
+  },
+  decimalSub(p) {
+    const ans = rng(1, 60) / 10, b = rng(1, 30) / 10
+    const a = Math.round((ans + b) * 10) / 10
+    const mk = (v) => (Math.round(v * 10) / 10).toFixed(1)
+    const dummies = [mk(ans + 0.1), mk(Math.max(0.1, ans - 0.1)), mk(ans + 1)]
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:decimalSub',
+      visual: { kind: 'bigtext', text: `${mk(a)} − ${mk(b)} ＝ ❓` },
+      instruction: `${mk(a)} − ${mk(b)} ＝ ？`,
+      speak: 'しょうすうの ひきざんだよ',
+      answerId: mk(ans),
+      choices: stringChoices(mk(ans), dummies, p.cc),
+      answerWord: { text: mk(ans) },
+      explain: `てんの いちを そろえて ひこう。こたえは ${mk(ans)}`
+    }
+  },
+  roundNum(p) {
+    const a = rng(1100, 9900)
+    const ans = Math.round(a / 100) * 100
+    return numQ('roundNum', {
+      visual: { kind: 'bigtext', text: `${a} を 百のくらいで\nしごにゅう ＝ ❓` },
+      instruction: `${a}の がいすうは？（百のくらい）`,
+      speak: `${a}を ひゃくのくらいで ししゃごにゅうすると いくつ？`,
+      answer: ans, cc: p.cc, spread: 100, say: `やく${ans}`,
+      explain: `じゅうのくらいが 5いじょうなら くりあげ。こたえは ${ans}`
+    })
+  },
+  area(p) {
+    const square = Math.random() < 0.4
+    const a = rng(2, 9), b = square ? a : rng(2, 9)
+    return numQ('area', {
+      visual: { kind: 'bigtext', text: `たて${a}cm よこ${b}cm の\nめんせき ＝ ❓cm²` },
+      instruction: `めんせきは？`,
+      speak: `たて${a}センチ、よこ${b}センチの ${square ? 'せいほうけい' : 'ちょうほうけい'}の めんせきは？`,
+      answer: a * b, cc: p.cc, spread: a, say: `${a * b}へいほうセンチ`,
+      explain: `めんせきは たて かける よこ。${a}かける${b}で ${a * b}`
+    })
+  },
+  average(p) {
+    const ans = rng(3, 12)
+    const d = rng(1, 3)
+    const nums = [ans - d, ans, ans + d]
+    return numQ('average', {
+      visual: { kind: 'bigtext', text: `${nums.join('、 ')} の へいきん ＝ ❓` },
+      instruction: `${nums.join('と')}の へいきんは？`,
+      speak: `${nums.join('と')}の へいきんは いくつ？`,
+      answer: ans, cc: p.cc, spread: 2, say: `${ans}`,
+      explain: `ぜんぶ たして 3で わる。${nums.reduce((x, y) => x + y, 0)}わる3で ${ans}`
+    })
+  },
+  fracCompareDiff(p) {
+    const pairs = [[1, 2, 1, 3], [1, 3, 1, 4], [2, 3, 1, 2], [3, 4, 2, 3], [1, 2, 2, 5], [1, 4, 1, 5]]
+    const [a, b, c, d] = pick(pairs)
+    const bigFirst = a / b > c / d
+    const ans = bigFirst ? `${a}/${b}` : `${c}/${d}`
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:fracCompareDiff', visual: null,
+      instruction: 'おおきい ほうを タッチ！',
+      speak: `${b}ぶんの${a}と ${d}ぶんの${c}、おおきいのは どっち？`,
+      answerId: ans,
+      choices: shuffle([`${a}/${b}`, `${c}/${d}`]).map((v) => ({ id: v, label: v })),
+      answerWord: { text: ans },
+      explain: `つうぶんして くらべよう。おおきいのは ${ans}`
+    }
+  },
+  discount(p) {
+    const base = pick([500, 800, 1000, 2000])
+    const pct = pick([10, 20, 50])
+    const ans = base - (base * pct) / 100
+    return numQ('discount', {
+      visual: { kind: 'bigtext', text: `${base}えんの ${pct}％びき ＝ ❓えん` },
+      instruction: `${base}えんの ${pct}％びきは？`,
+      speak: `${base}えんの しなものが ${pct}パーセントびき。いくらに なる？`,
+      answer: ans, cc: p.cc, spread: base / 10, say: `${ans}えん`,
+      explain: `${pct}％は ${(base * pct) / 100}えん。ひくと ${ans}えん`
+    })
+  },
+  speedTime(p) {
+    const v = pick([30, 40, 50, 60]), t = rng(2, 4)
+    const dist = v * t
+    return numQ('speedTime', {
+      visual: { kind: 'bigtext', text: `${dist}km ÷ じそく${v}km ＝ ❓じかん` },
+      instruction: `${dist}kmを じそく${v}kmで いくと？`,
+      speak: `${dist}キロの みちのりを じそく${v}キロで いくと なんじかん かかる？`,
+      answer: t, cc: p.cc, spread: 1, say: `${t}じかん`,
+      explain: `じかんは みちのり わる はやさ。${dist}わる${v}で ${t}じかん`
+    })
   }
 }
 
@@ -437,33 +707,34 @@ function kindsForGrade(grade, level) {
     return k
   }
   if (grade === 1) {
-    const k = ['add10', 'make10', 'sub10', 'addCarry', 'sequence']
-    if (level >= 3) k.push('subBorrow', 'compareNum', 'add3nums', 'addCarry', 'subBorrow')
+    const k = ['add10', 'make10', 'sub10', 'addCarry', 'sequence', 'holeAdd', 'moneyAdd']
+    if (level >= 3) k.push('subBorrow', 'compareNum', 'add3nums', 'addCarry', 'subBorrow', 'holeAdd')
     return k
   }
   if (grade === 2) {
-    const k = ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'kuku', 'sequence']
+    const k = ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'kuku', 'sequence', 'holeSub', 'double', 'half']
+    if (level >= 3) k.push('evenOdd', 'moneyChange', 'clockPlus', 'lengthConv')
     if (level >= 4) k.push('compareNum', 'kuku')
     return k
   }
   if (grade === 3) {
-    const k = ['kuku', 'div', 'div', 'add3digit', 'mul2x1']
-    if (level >= 3) k.push('divRemainder', 'fracCompareSame', 'divRemainder')
+    const k = ['kuku', 'div', 'div', 'add3digit', 'mul2x1', 'holeMul', 'tensMul']
+    if (level >= 3) k.push('divRemainder', 'fracCompareSame', 'divRemainder', 'perimeter', 'timeCalc', 'kgConv', 'literConv')
     return k
   }
   if (grade === 4) {
-    const k = ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd']
-    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'div3digit')
+    const k = ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub']
+    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'div3digit', 'roundNum', 'area')
     return k
   }
   if (grade === 5) {
-    const k = ['div3digit', 'decimalAdd', 'decimalMul', 'fracAddDiff']
-    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul')
+    const k = ['div3digit', 'decimalAdd', 'decimalMul', 'fracAddDiff', 'decimalSub', 'average']
+    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'fracCompareDiff', 'area')
     return k
   }
   // 小6
-  const k = ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio']
-  if (level >= 3) k.push('speed', 'ratio', 'fracMul')
+  const k = ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio', 'average', 'discount']
+  if (level >= 3) k.push('speed', 'ratio', 'fracMul', 'speedTime', 'fracCompareDiff')
   return k
 }
 
@@ -493,5 +764,13 @@ export const KIND_LABELS = {
   add3digit: '3けたのたしざん', mul2x1: '2けた×1けた', fracCompareSame: 'ぶんすうくらべ',
   div3digit: 'わり算(大)', decimalAdd: 'しょうすう＋', bigNumbers: 'おおきなかず',
   decimalMul: 'しょうすう×', fracAddDiff: 'ぶんすう＋', percent: 'パーセント',
-  fracMul: 'ぶんすう×', ratio: 'ひ', speed: 'はやさ'
+  fracMul: 'ぶんすう×', ratio: 'ひ', speed: 'はやさ',
+  holeAdd: '□のたしざん', holeSub: '□のひきざん', holeMul: '□のかけざん',
+  double: '2ばい', half: 'はんぶん', evenOdd: 'ぐうすう・きすう',
+  moneyAdd: 'おかね', moneyChange: 'おつり', clockPlus: 'とけい',
+  lengthConv: 'ながさ', kgConv: 'おもさ', literConv: 'かさ',
+  timeCalc: 'じかん', tensMul: '何十×何', perimeter: 'まわりのながさ',
+  mul3x1: '3けた×1けた', decimalSub: 'しょうすう−', roundNum: 'がいすう',
+  area: 'めんせき', average: 'へいきん', fracCompareDiff: 'ぶんすうくらべ(異)',
+  discount: 'ねびき', speedTime: 'じかんをもとめる'
 }
