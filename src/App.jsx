@@ -8,16 +8,20 @@ import { useGame } from './state/GameContext.jsx'
 import { currentPlanet } from './data/planets.js'
 import { unlockTts, setTtsEnabled } from './engine/tts.js'
 import { unlockSfx, setSfxEnabled } from './engine/sfx.js'
+import { setBgmEnabled } from './engine/bgm.js'
 import OnboardingScreen from './screens/OnboardingScreen.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import ActivityPlayer from './screens/ActivityPlayer.jsx'
 import BattleScreen from './screens/BattleScreen.jsx'
 import CollectionScreen from './screens/CollectionScreen.jsx'
 import ParentScreen from './screens/ParentScreen.jsx'
+import ReviewScreen from './screens/ReviewScreen.jsx'
 import CelebrationOverlay from './screens/CelebrationOverlay.jsx'
 
 export default function App() {
   const { state, dispatch } = useGame()
+  const stateRef = React.useRef(state)
+  stateRef.current = state
   const [screen, setScreen] = useState('home')
   const [activeTask, setActiveTask] = useState(null)
 
@@ -26,6 +30,7 @@ export default function App() {
     const unlock = () => {
       unlockTts()
       unlockSfx()
+      if (stateRef.current.settings.bgm) setBgmEnabled(true)
     }
     window.addEventListener('pointerdown', unlock, { once: true })
     return () => window.removeEventListener('pointerdown', unlock)
@@ -36,6 +41,12 @@ export default function App() {
     setTtsEnabled(state.settings.tts)
     setSfxEnabled(state.settings.sfx)
   }, [state.settings.tts, state.settings.sfx])
+
+  // BGM の ON/OFF（初回は unlock 時に開始される）
+  useEffect(() => {
+    if (!state.settings.bgm) setBgmEnabled(false)
+    else setBgmEnabled(true)
+  }, [state.settings.bgm])
 
   const startTask = (task) => {
     setActiveTask(task)
@@ -62,6 +73,9 @@ export default function App() {
             <ActivityPlayer task={activeTask} onDone={finishTask} onQuit={finishTask} />
           )}
           {screen === 'battle' && <BattleScreen onBack={() => go('home')} />}
+          {screen === 'review' && (
+            <ReviewScreen onBack={() => go('home')} onStartTask={startTask} />
+          )}
           {screen === 'collection' && <CollectionScreen onBack={() => go('home')} />}
           {screen === 'parent' && <ParentScreen onBack={() => go('home')} />}
 

@@ -1,6 +1,6 @@
 // ============================================================
 // 効果音（Web Audio API で合成。音声ファイル不要＝完全オフライン）
-// ポジティブで気持ちのいい音だけ。失敗音も明るいトーンにする。
+// v2: エコー・和音・ノイズヒットでリッチに。失敗音も明るいトーンのまま。
 // ============================================================
 
 let ctx = null
@@ -45,56 +45,98 @@ function tone(freq, start, dur, type = 'sine', gain = 0.18, slideTo = null) {
   osc.stop(t0 + dur + 0.05)
 }
 
+// エコーつきトーン（キラッと響く）
+function toneEcho(freq, start, dur, type = 'triangle', gain = 0.18) {
+  tone(freq, start, dur, type, gain)
+  tone(freq, start + 0.16, dur, type, gain * 0.4)
+  tone(freq * 2, start + 0.32, dur * 0.8, 'sine', gain * 0.18)
+}
+
+// ノイズヒット（バトルの打撃感）
+function noiseHit(start, dur = 0.16, gain = 0.22, freq = 700) {
+  const a = ac()
+  if (!a) return
+  const t0 = a.currentTime + start
+  const len = Math.floor(a.sampleRate * dur)
+  const buf = a.createBuffer(1, len, a.sampleRate)
+  const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len)
+  const src = a.createBufferSource()
+  src.buffer = buf
+  const f = a.createBiquadFilter()
+  f.type = 'lowpass'
+  f.frequency.value = freq
+  const g = a.createGain()
+  g.gain.value = gain
+  src.connect(f)
+  f.connect(g)
+  g.connect(a.destination)
+  src.start(t0)
+}
+
 export const sfx = {
   tap() {
     if (!enabled) return
-    tone(520, 0, 0.08, 'triangle', 0.12)
+    tone(620, 0, 0.06, 'triangle', 0.1)
+    tone(930, 0.03, 0.08, 'sine', 0.07)
   },
   correct() {
     if (!enabled) return
-    tone(523, 0, 0.12, 'triangle', 0.18)
-    tone(659, 0.1, 0.12, 'triangle', 0.18)
-    tone(784, 0.2, 0.18, 'triangle', 0.2)
+    // 明るいメジャー和音アルペジオ＋エコー
+    tone(523, 0, 0.1, 'triangle', 0.16)
+    tone(659, 0.08, 0.1, 'triangle', 0.16)
+    toneEcho(784, 0.16, 0.22, 'triangle', 0.2)
   },
   wrongSoft() {
     if (!enabled) return
-    tone(330, 0, 0.12, 'sine', 0.14)
-    tone(294, 0.1, 0.16, 'sine', 0.14)
+    tone(330, 0, 0.12, 'sine', 0.13)
+    tone(294, 0.1, 0.16, 'sine', 0.13)
   },
   reward() {
     if (!enabled) return
-    tone(659, 0, 0.12, 'triangle', 0.18)
-    tone(784, 0.1, 0.12, 'triangle', 0.18)
-    tone(988, 0.2, 0.12, 'triangle', 0.18)
-    tone(1319, 0.32, 0.3, 'triangle', 0.22)
+    tone(659, 0, 0.1, 'triangle', 0.16)
+    tone(784, 0.09, 0.1, 'triangle', 0.16)
+    tone(988, 0.18, 0.1, 'triangle', 0.16)
+    toneEcho(1319, 0.28, 0.4, 'triangle', 0.22)
   },
   levelUp() {
     if (!enabled) return
-    tone(523, 0, 0.1, 'square', 0.12)
-    tone(784, 0.1, 0.1, 'square', 0.12)
-    tone(1047, 0.2, 0.28, 'square', 0.16)
+    // 克服・解放の「キュイン！」
+    tone(523, 0, 0.09, 'square', 0.1)
+    tone(659, 0.07, 0.09, 'square', 0.1)
+    tone(784, 0.14, 0.09, 'square', 0.1)
+    tone(1047, 0.22, 0.3, 'square', 0.14)
+    toneEcho(1568, 0.34, 0.4, 'sine', 0.14)
+    tone(400, 0, 0.5, 'sine', 0.06, 1600)
   },
   fanfare() {
     if (!enabled) return
-    tone(523, 0, 0.14, 'triangle', 0.2)
-    tone(659, 0.12, 0.14, 'triangle', 0.2)
-    tone(784, 0.24, 0.14, 'triangle', 0.2)
-    tone(1047, 0.38, 0.22, 'triangle', 0.24)
-    tone(784, 0.58, 0.1, 'triangle', 0.16)
-    tone(1047, 0.68, 0.4, 'triangle', 0.24)
+    const seq = [
+      [523, 0], [659, 0.11], [784, 0.22], [1047, 0.36]
+    ]
+    for (const [f, t] of seq) {
+      tone(f, t, 0.16, 'triangle', 0.2)
+      tone(f * 0.5, t, 0.16, 'triangle', 0.1) // オクターブ下で厚み
+    }
+    tone(784, 0.56, 0.1, 'triangle', 0.14)
+    toneEcho(1047, 0.66, 0.5, 'triangle', 0.24)
   },
   hit() {
     if (!enabled) return
-    tone(180, 0, 0.12, 'sawtooth', 0.16)
+    noiseHit(0, 0.14, 0.2, 600)
+    tone(180, 0, 0.1, 'sawtooth', 0.12)
   },
   hitBig() {
     if (!enabled) return
-    tone(220, 0, 0.1, 'sawtooth', 0.2)
-    tone(140, 0.06, 0.16, 'sawtooth', 0.2)
+    noiseHit(0, 0.2, 0.3, 900)
+    tone(220, 0, 0.08, 'sawtooth', 0.16)
+    tone(120, 0.05, 0.18, 'sawtooth', 0.18)
+    tone(1200, 0.02, 0.12, 'square', 0.06, 300)
   },
   swoosh() {
     if (!enabled) return
-    tone(900, 0, 0.25, 'sine', 0.12, 200)
+    tone(1200, 0, 0.28, 'sine', 0.1, 180)
+    noiseHit(0.02, 0.22, 0.06, 2000)
   },
   pop() {
     if (!enabled) return
@@ -102,10 +144,8 @@ export const sfx = {
   },
   star() {
     if (!enabled) return
-    tone(1047, 0, 0.08, 'triangle', 0.16)
-    tone(1568, 0.07, 0.12, 'triangle', 0.16)
+    toneEcho(1047, 0, 0.1, 'triangle', 0.14)
   },
-  // モンスターごとの鳴き声（idのシードで音程が変わる）
   cry(seed = 0) {
     if (!enabled) return
     const base = 300 + (seed % 7) * 60

@@ -1,12 +1,12 @@
 // ============================================================
 // ゲーム全体の状態管理（Context + Reducer + localStorage 永続化）
 //
-// v2 で追加したもの:
-//   xp          : ほしのかけら。正解・クリア・バトルで貯まり相棒が育つ
-//   streak      : 連続で遊んだ日数（🔥）
-//   missed      : 分野ごとの「まちがえた問題」キュー（後日再出題＝復習）
-//   onboarded   : はじめての おはなし（オンボーディング）を見たか
-//   partnerColor: 相棒の色（はじめに選ぶ）
+// v3 で追加したもの:
+//   grade / gradeMax : いまの学年 / 解放済みの最高学年（年長0〜小6）。
+//                      全分野の平均レベルがマスター基準に達すると次が解放
+//   skills[grade]    : 習熟度は学年ごとに別管理（戻っても進んでも保持）
+//   conquered        : 「まちがいから おぼえた」累計数（失敗→知識の見える化）
+//   missed           : 分野ごとの「まちがえた問題」キュー（とっくんで克服）
 // ============================================================
 
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
@@ -16,12 +16,13 @@ import { buildCoreMission } from '../engine/missions.js'
 import { DOMAINS } from '../engine/activities.js'
 import { getPartner } from '../data/monsters.js'
 import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
+import { MAX_GRADE, MASTER_LEVEL } from '../data/grades.js'
 
 const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上限
-const MISSED_MAX = 12 // 復習キューの分野ごとの上限
+const MISSED_MAX = 14 // 復習キューの分野ごとの上限
 
 // コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
-const CONTENT_VERSION = 5
+const CONTENT_VERSION = 6
 
 // XP → 相棒レベル（ゆるやかな二次曲線）
 export function partnerLevel(xp) {
@@ -39,6 +40,26 @@ function freshSkills() {
   const s = {}
   for (const d of DOMAINS) s[d.id] = makeSkill()
   return s
+}
+
+// いまの学年の習熟度（無ければ作る）
+export function skillsForGrade(state, grade = state.grade) {
+  return state.skills[grade] || freshSkills()
+}
+export function skillOf(state, domainId, grade = state.grade) {
+  return (state.skills[grade] || {})[domainId] || makeSkill()
+}
+
+// 学年マスター進捗（0〜1）: 全分野の平均レベル / マスター基準
+export function masteryProgress(state) {
+  const skills = skillsForGrade(state)
+  const doms = DOMAINS.filter((d) => d.available)
+  const avg = doms.reduce((sum, d) => sum + Math.floor((skills[d.id] || makeSkill()).level), 0) / doms.length
+  return Math.min(1, avg / MASTER_LEVEL)
+}
+
+export function missedCount(state) {
+  return Object.values(state.missed).reduce((n, arr) => n + arr.length, 0)
 }
 
 function freshDaily(date) {
@@ -72,39 +93,48 @@ function createInitialState() {
   const today = todayKey()
   const partner = getPartner()
   return {
-    version: 2,
+    version: 3,
     contentVersion: CONTENT_VERSION,
     createdAt: Date.now(),
     onboarded: false,
     partnerId: partner.id,
     partnerColor: 'mint',
+    grade: 0,
+    gradeMax: 0,
+    pendingGradeUp: null,
     xp: 0,
     streak: 0,
     lastActiveDate: null,
-    skills: freshSkills(),
+    conquered: 0,
+    skills: { 0: freshSkills() },
     missed: {}, // { domainId: [itemKey,...] }
     unlockedMonsters: [partner.id],
     totalClears: 0,
     daily: freshDaily(today),
     battle: freshBattle(today),
-    settings: { tts: true, sfx: true },
+    settings: { tts: true, sfx: true, bgm: true },
     history: {},
     pendingCelebration: null
   }
 }
 
-// v1（旧バージョン）のセーブを引き継ぐ
-function migrateV1(saved) {
+// 旧バージョンのセーブを引き継ぐ
+function migrateOld(saved) {
   const fresh = createInitialState()
+  const flatSkills = saved.version === 2 || saved.version === 1 ? saved.skills || {} : {}
   return {
     ...fresh,
-    skills: { ...fresh.skills, ...(saved.skills || {}) },
+    skills: { 0: { ...freshSkills(), ...flatSkills } },
     unlockedMonsters: saved.unlockedMonsters?.length ? saved.unlockedMonsters : fresh.unlockedMonsters,
     totalClears: saved.totalClears || 0,
     history: saved.history || {},
     settings: { ...fresh.settings, ...(saved.settings || {}) },
-    xp: (saved.totalClears || 0) * 10,
-    onboarded: (saved.totalClears || 0) > 0 || (saved.unlockedMonsters?.length || 0) > 1
+    xp: saved.xp ?? (saved.totalClears || 0) * 10,
+    streak: saved.streak || 0,
+    lastActiveDate: saved.lastActiveDate || null,
+    missed: saved.missed || {},
+    partnerColor: saved.partnerColor || 'mint',
+    onboarded: saved.onboarded ?? ((saved.totalClears || 0) > 0)
   }
 }
 
@@ -136,17 +166,6 @@ function addDomainTally(perDomain, domainId, correct) {
   }
 }
 
-function updateMissed(missed, domainId, itemKey, correct) {
-  if (!itemKey) return missed
-  const list = missed[domainId] || []
-  if (correct) {
-    if (!list.includes(itemKey)) return missed
-    return { ...missed, [domainId]: list.filter((k) => k !== itemKey) }
-  }
-  if (list.includes(itemKey)) return missed
-  return { ...missed, [domainId]: [...list, itemKey].slice(-MISSED_MAX) }
-}
-
 function reducer(state, action) {
   switch (action.type) {
     case 'ROLLOVER':
@@ -155,11 +174,26 @@ function reducer(state, action) {
     case 'ONBOARD':
       return { ...state, onboarded: true, partnerColor: action.color || 'mint' }
 
-    // 1問の回答結果（難易度調整＋集計＋XP＋ストリーク＋復習キュー）
+    case 'SET_GRADE': {
+      const g = Math.max(0, Math.min(state.gradeMax, action.grade))
+      return {
+        ...state,
+        grade: g,
+        skills: state.skills[g] ? state.skills : { ...state.skills, [g]: freshSkills() }
+      }
+    }
+
+    // 1問の回答結果
+    // まちがい → 復習キューへ（あとで「とっくん」で克服できる）
+    // 復習キューにあった問題に正解 → キューから外れ、ボーナスXP＋克服数が増える
+    //   ＝「失敗から学ぶと知っていることが増える」を数字と演出で見せる
     case 'ANSWER': {
       const { domainId, correct, itemKey } = action
-      const skill = state.skills[domainId] || makeSkill()
+      const grade = state.grade
+      const gradeSkills = skillsForGrade(state)
+      const skill = gradeSkills[domainId] || makeSkill()
       const { skill: newSkill } = applyResult(skill, correct)
+      const newGradeSkills = { ...gradeSkills, [domainId]: newSkill }
 
       const today = todayKey()
       let streak = state.streak
@@ -169,13 +203,46 @@ function reducer(state, action) {
         lastActiveDate = today
       }
 
+      // 復習キューの出し入れ＋克服ボーナス
+      let missed = state.missed
+      let conquered = state.conquered
+      let xpGain = correct ? 2 : 0
+      if (itemKey) {
+        const list = missed[domainId] || []
+        const wasMissed = list.includes(itemKey)
+        if (correct && wasMissed) {
+          missed = { ...missed, [domainId]: list.filter((k) => k !== itemKey) }
+          conquered += 1
+          xpGain += 4 // まちがいを ちからに かえたボーナス
+        } else if (!correct && !wasMissed) {
+          missed = { ...missed, [domainId]: [...list, itemKey].slice(-MISSED_MAX) }
+        }
+      }
+
+      // 学年マスター判定（全分野の平均レベルが基準以上 → 次の学年を解放）
+      let gradeMax = state.gradeMax
+      let pendingGradeUp = state.pendingGradeUp
+      if (correct && grade === gradeMax && gradeMax < MAX_GRADE) {
+        const doms = DOMAINS.filter((d) => d.available)
+        const avg =
+          doms.reduce((sum, d) => sum + Math.floor((newGradeSkills[d.id] || makeSkill()).level), 0) /
+          doms.length
+        if (avg >= MASTER_LEVEL) {
+          gradeMax = grade + 1
+          pendingGradeUp = grade + 1
+        }
+      }
+
       return {
         ...state,
-        skills: { ...state.skills, [domainId]: newSkill },
-        xp: state.xp + (correct ? 2 : 0),
+        skills: { ...state.skills, [grade]: newGradeSkills },
+        xp: state.xp + xpGain,
         streak,
         lastActiveDate,
-        missed: updateMissed(state.missed, domainId, itemKey, correct),
+        missed,
+        conquered,
+        gradeMax,
+        pendingGradeUp,
         daily: {
           ...state.daily,
           correctToday: state.daily.correctToday + (correct ? 1 : 0),
@@ -193,7 +260,14 @@ function reducer(state, action) {
       let daily = { ...state.daily, tasksClearedToday: state.daily.tasksClearedToday + 1 }
       let battle = state.battle
       let unlockedMonsters = state.unlockedMonsters
-      const celebration = { ticket: false, planet: null, monster: null, partnerStageUp: false, xpGain: 6 }
+      const celebration = {
+        ticket: false,
+        planet: null,
+        monster: null,
+        partnerStageUp: false,
+        gradeUp: null,
+        xpGain: kind === 'review' ? 8 : 6
+      }
 
       if (kind === 'core') {
         const coreIndex = state.daily.coreIndex + 1
@@ -225,13 +299,19 @@ function reducer(state, action) {
         if (crossed) celebration.partnerStageUp = true
       }
 
+      // ミッション中にマスターした学年の解放は、タスク完了時にまとめて祝う
+      if (state.pendingGradeUp != null) {
+        celebration.gradeUp = state.pendingGradeUp
+      }
+
       return {
         ...state,
         totalClears,
-        xp: state.xp + 6,
+        xp: state.xp + celebration.xpGain,
         daily,
         battle,
         unlockedMonsters,
+        pendingGradeUp: null,
         pendingCelebration: celebration
       }
     }
@@ -239,7 +319,6 @@ function reducer(state, action) {
     case 'CLEAR_CELEBRATION':
       return { ...state, pendingCelebration: null }
 
-    // 息抜きバトルを1回プレイする権利を消費（無料枠→チケットの順）
     case 'CONSUME_BATTLE_PLAY': {
       const b = state.battle
       if (b.playsUsed < b.dailyLimit) {
@@ -268,6 +347,12 @@ function reducer(state, action) {
       }
     }
 
+    // 保護者による先取り解放
+    case 'FORCE_GRADE_MAX': {
+      const gm = Math.max(state.gradeMax, Math.min(MAX_GRADE, action.gradeMax))
+      return { ...state, gradeMax: gm }
+    }
+
     case 'SET_SETTING':
       return { ...state, settings: { ...state.settings, [action.key]: action.value } }
 
@@ -285,17 +370,17 @@ export function GameProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, () => {
     const saved = loadState()
     let base
-    if (saved && saved.version === 2) {
-      // 新フィールドが増えても壊れないよう、初期値の上に被せる
+    if (saved && saved.version === 3) {
       const fresh = createInitialState()
       base = {
         ...fresh,
         ...saved,
         settings: { ...fresh.settings, ...(saved.settings || {}) },
+        skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
         missed: saved.missed || {}
       }
-    } else if (saved && saved.version === 1) {
-      base = migrateV1(saved)
+    } else if (saved && (saved.version === 1 || saved.version === 2)) {
+      base = migrateOld(saved)
     } else {
       base = createInitialState()
     }

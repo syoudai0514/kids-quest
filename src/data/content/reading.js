@@ -110,29 +110,9 @@ export const WORDS = [
   { text: 'あし', emoji: '🦶', kana: 'hira', tier: 2, theme: 'life' }
 ]
 
-// 小1の漢字（読み）。読みは全て重複なし。
-export const KANJI = [
-  { k: '一', yomi: 'いち' }, { k: '二', yomi: 'に' }, { k: '三', yomi: 'さん' },
-  { k: '四', yomi: 'よん' }, { k: '五', yomi: 'ご' }, { k: '六', yomi: 'ろく' },
-  { k: '七', yomi: 'なな' }, { k: '八', yomi: 'はち' }, { k: '九', yomi: 'きゅう' },
-  { k: '十', yomi: 'じゅう' },
-  { k: '山', yomi: 'やま' }, { k: '川', yomi: 'かわ' }, { k: '木', yomi: 'き' },
-  { k: '火', yomi: 'ひ' }, { k: '水', yomi: 'みず' }, { k: '空', yomi: 'そら' },
-  { k: '月', yomi: 'つき' }, { k: '日', yomi: 'にち' }, { k: '花', yomi: 'はな' },
-  { k: '犬', yomi: 'いぬ' }, { k: '虫', yomi: 'むし' }, { k: '目', yomi: 'め' },
-  { k: '耳', yomi: 'みみ' }, { k: '口', yomi: 'くち' }, { k: '手', yomi: 'て' },
-  { k: '足', yomi: 'あし' }, { k: '雨', yomi: 'あめ' }, { k: '石', yomi: 'いし' },
-  { k: '土', yomi: 'つち' }, { k: '田', yomi: 'た' }, { k: '車', yomi: 'くるま' },
-  { k: '人', yomi: 'ひと' }, { k: '大', yomi: 'おおきい' }, { k: '小', yomi: 'ちいさい' },
-  { k: '上', yomi: 'うえ' }, { k: '下', yomi: 'した' }, { k: '中', yomi: 'なか' },
-  { k: '王', yomi: 'おう' }, { k: '子', yomi: 'こ' }, { k: '女', yomi: 'おんな' },
-  { k: '男', yomi: 'おとこ' }, { k: '力', yomi: 'ちから' }, { k: '金', yomi: 'きん' },
-  { k: '貝', yomi: 'かい' }, { k: '竹', yomi: 'たけ' }, { k: '草', yomi: 'くさ' },
-  { k: '森', yomi: 'もり' }, { k: '林', yomi: 'はやし' }
-]
+import { kanjiPoolForGrade, KANJI_BY_CHAR } from '../kanjiByGrade.js'
 
 const WORD_BY_TEXT = Object.fromEntries(WORDS.map((w) => [w.text, w]))
-const KANJI_BY_CHAR = Object.fromEntries(KANJI.map((k) => [k.k, k]))
 
 function poolForLevel(level, allowKatakana, allowHard) {
   return WORDS.filter((w) => {
@@ -203,9 +183,10 @@ function wordQuestion(answer, params) {
 
 function kanjiQuestion(answer, params) {
   const { choiceCount } = params
+  const pool = kanjiPoolForGrade(params.grade || 0)
   const seen = new Set([answer.yomi])
   const distractors = []
-  for (const k of shuffle(KANJI)) {
+  for (const k of shuffle(pool)) {
     if (distractors.length >= choiceCount - 1) break
     if (seen.has(k.yomi)) continue
     seen.add(k.yomi)
@@ -243,9 +224,11 @@ export function generateReadingQuestion(params, reviewKey = null) {
     }
   }
 
-  // 漢字はレベル3以上で混ざる
-  if (params.level >= 3 && Math.random() < 0.35) {
-    return kanjiQuestion(shuffle(KANJI)[0], params)
+  // 漢字の出題率は学年が上がるほど高くなる
+  const grade = params.grade || 0
+  const kanjiProb = grade >= 2 ? 0.65 : grade === 1 ? 0.45 : params.level >= 3 ? 0.35 : 0
+  if (Math.random() < kanjiProb) {
+    return kanjiQuestion(shuffle(kanjiPoolForGrade(grade))[0], params)
   }
   const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard)
   const safePool = pool.length >= params.choiceCount ? pool : WORDS

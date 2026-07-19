@@ -31,6 +31,8 @@ export function Starfield({ count = 28 }) {
           }}
         />
       ))}
+      {/* ながれ星（ときどき流れる） */}
+      <i className="shooting-star" />
     </div>
   )
 }
@@ -89,6 +91,41 @@ export function useSpeakOnMount(text, deps = []) {
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
+}
+
+// 正解時の星パーティクル（gold=克服演出の金色版）
+export function Burst({ gold = false, count = 12 }) {
+  const parts = useMemo(
+    () =>
+      Array.from({ length: count }).map(() => {
+        const ang = Math.random() * Math.PI * 2
+        const dist = 90 + Math.random() * 130
+        return {
+          dx: Math.cos(ang) * dist,
+          dy: Math.sin(ang) * dist,
+          delay: Math.random() * 0.12,
+          size: 14 + Math.random() * 16
+        }
+      }),
+    [count]
+  )
+  return (
+    <div className="burst" aria-hidden="true">
+      {parts.map((p, i) => (
+        <span
+          key={i}
+          style={{
+            '--dx': `${p.dx}px`,
+            '--dy': `${p.dy}px`,
+            animationDelay: `${p.delay}s`,
+            fontSize: p.size
+          }}
+        >
+          {gold ? '✨' : '⭐'}
+        </span>
+      ))}
+    </div>
+  )
 }
 
 // 進捗ドット

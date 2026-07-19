@@ -2,20 +2,21 @@
 // タスク（数問のまとまり）のプレイ画面 — 全分野で共通の出題エンジン。
 //
 // 学習効果のための仕掛け:
-//  - アダプティブ: その時点の習熟度から難易度を決める
+//  - アダプティブ: いまの学年×習熟度から難易度を決める
 //  - 復習キュー: 前に間違えた問題を確率で混ぜて再出題（想起練習）
-//  - 苦手支援: 1回目のミス→ヒント音声 / 2回目→正解を光らせ「解説」を読む
-//    （責めない。難易度に効くのは最初の1回だけ＝やり直しは減点しない）
-//  - 連続正解コンボ: 「2れんぞく！」で気持ちよく加速
+//  - 「まちがいが ちからに なった！」: 復習キューの問題に正解すると
+//    金の演出＋ボーナス✨。失敗→知識が増える、を体感させる中心の仕掛け
+//  - とっくんタスク (task.plan): 復習キューの項目だけを分野横断で出題
+//  - 苦手支援: 1ミス→ヒント音声 / 2ミス→正解を光らせ解説（責めない）
 // ============================================================
 
 import React, { useEffect, useRef, useState } from 'react'
-import { useGame } from '../state/GameContext.jsx'
+import { useGame, skillOf } from '../state/GameContext.jsx'
 import { DOMAIN_BY_ID } from '../engine/activities.js'
 import { difficultyParams } from '../engine/difficulty.js'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
-import { Starfield, ProgressDots } from '../components/common.jsx'
+import { Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
 
@@ -23,7 +24,7 @@ const PRAISE = ['せいかい！', 'すごい！', 'やったね！', 'てんさ
 const CHEER = [
   'だいじょうぶ、もういっかい いけるよ！',
   'おしい！ もういちど みてみよう',
-  'いいちょうし、つぎは できるよ！'
+  'まちがえたら おぼえられる。チャンスだよ！'
 ]
 
 function pick(arr) {
@@ -32,7 +33,8 @@ function pick(arr) {
 
 export default function ActivityPlayer({ task, onDone }) {
   const { state, dispatch } = useGame()
-  const domain = DOMAIN_BY_ID[task.domainId]
+  // とっくんタスクは1問ごとに分野が変わる
+  const isReviewTask = task.kind === 'review' && Array.isArray(task.plan)
 
   const [qIndex, setQIndex] = useState(0)
   const [question, setQuestion] = useState(null)
@@ -45,20 +47,34 @@ export default function ActivityPlayer({ task, onDone }) {
   const wrongCountRef = useRef(0)
   const firstAttemptRef = useRef(true)
   const comboRef = useRef(0)
-  const skillRef = useRef(state.skills[task.domainId])
-  skillRef.current = state.skills[task.domainId]
-  const missedRef = useRef(state.missed[task.domainId] || [])
-  missedRef.current = state.missed[task.domainId] || []
+  const domainIdRef = useRef(task.domainId)
+  const stateRef = useRef(state)
+  stateRef.current = state
+
+  const currentDomainId = () =>
+    isReviewTask ? task.plan[Math.min(qIndex, task.plan.length - 1)].domainId : task.domainId
+  const domain = DOMAIN_BY_ID[currentDomainId()]
 
   const makeQuestion = () => {
-    const params = difficultyParams(skillRef.current)
-    // 復習キューから35%の確率で再出題
-    let review = null
-    const missed = missedRef.current
-    if (missed.length && Math.random() < 0.35) {
-      review = missed[Math.floor(Math.random() * missed.length)]
+    const domainId = currentDomainId()
+    domainIdRef.current = domainId
+    const dom = DOMAIN_BY_ID[domainId]
+    const params = {
+      ...difficultyParams(skillOf(stateRef.current, domainId)),
+      grade: stateRef.current.grade
     }
-    const q = domain.generateQuestion(params, review)
+
+    let review = null
+    if (isReviewTask) {
+      review = task.plan[Math.min(qIndex, task.plan.length - 1)].key
+    } else {
+      // 通常タスクでも、復習キューから35%の確率で再出題
+      const missed = stateRef.current.missed[domainId] || []
+      if (missed.length && Math.random() < 0.35) {
+        review = missed[Math.floor(Math.random() * missed.length)]
+      }
+    }
+    const q = dom.generateQuestion(params, review)
     setQuestion(q)
     setPhase('answering')
     setChosenId(null)
@@ -77,33 +93,55 @@ export default function ActivityPlayer({ task, onDone }) {
 
   if (!question) return null
 
+  const questionCount = isReviewTask ? task.plan.length : task.questionCount
+
   const advance = () => {
-    if (qIndex + 1 < task.questionCount) {
+    if (qIndex + 1 < questionCount) {
       setQIndex(qIndex + 1)
     } else {
       dispatch({ type: 'CLEAR_TASK', kind: task.kind })
       sfx.reward()
       const line =
-        task.kind === 'extra'
-          ? 'ぜんぶ できた！ バトルチケットを ゲット！'
-          : 'タスク クリア！ よくがんばったね！'
+        task.kind === 'review'
+          ? 'とっくん クリア！ まちがいが どんどん ちからに かわっていくよ！'
+          : task.kind === 'extra'
+            ? 'ぜんぶ できた！ バトルチケットを ゲット！'
+            : 'タスク クリア！ よくがんばったね！'
       speak(line)
       setTimeout(onDone, 1100)
     }
   }
 
+  // この問題が復習キューにある（＝克服チャンス）か
+  const isConquerTarget = () =>
+    question.itemKey &&
+    (stateRef.current.missed[domainIdRef.current] || []).includes(question.itemKey)
+
   const recordAnswer = (correct) => {
-    if (!firstAttemptRef.current) return
-    dispatch({ type: 'ANSWER', domainId: task.domainId, correct, itemKey: question.itemKey })
+    if (!firstAttemptRef.current) return false
+    const conquer = correct && isConquerTarget()
+    dispatch({
+      type: 'ANSWER',
+      domainId: domainIdRef.current,
+      correct,
+      itemKey: question.itemKey
+    })
     firstAttemptRef.current = false
+    return conquer
   }
 
   // 「かく」（なぞり書き）が終わったとき
-  // success=true: 全画きちんとなぞれた / false: 途中で「かけた！」を使った
-  // （false のときは復習キューに入り、後日また出題される）
   const handleTraceDone = (success) => {
     if (phase === 'feedback') return
-    recordAnswer(success)
+    const conquer = recordAnswer(success)
+    if (conquer) {
+      setFeedback({ good: true, word: 'ちからに なった！', gold: true })
+      sfx.levelUp()
+      speak('まちがいが ちからに なった！ ✨')
+      setPhase('feedback')
+      setTimeout(advance, 1400)
+      return
+    }
     setPhase('feedback')
     setTimeout(advance, 300)
   }
@@ -112,19 +150,28 @@ export default function ActivityPlayer({ task, onDone }) {
     if (phase === 'feedback') return
     if (wrongIds.includes(choice.id)) return
     const correct = choice.id === question.answerId
-    recordAnswer(correct)
+    const conquer = recordAnswer(correct)
 
     if (correct) {
       setChosenId(choice.id)
       setPhase('feedback')
-      sfx.correct()
       comboRef.current += 1
       const combo = comboRef.current
-      const word = combo >= 2 ? `${combo}れんぞく！` : pick(PRAISE)
-      setFeedback({ good: true, word })
-      const tail = question.answerWord ? `${question.answerWord.text}！ ` : ''
-      speak(`${tail}${combo >= 2 ? `${combo}れんぞく せいかい！ すごい！` : pick(PRAISE)}`)
-      setTimeout(advance, 1250)
+      if (conquer) {
+        // まちがえたことのある問題を克服！ 金の演出＋ボーナス
+        sfx.levelUp()
+        setFeedback({ good: true, word: 'ちからに なった！', gold: true })
+        const tail = question.answerWord ? `${question.answerWord.text}！ ` : ''
+        speak(`${tail}まちがいが ちからに なった！ ボーナス ゲット！`)
+        setTimeout(advance, 1500)
+      } else {
+        sfx.correct()
+        const word = combo >= 2 ? `${combo}れんぞく！` : pick(PRAISE)
+        setFeedback({ good: true, word })
+        const tail = question.answerWord ? `${question.answerWord.text}！ ` : ''
+        speak(`${tail}${combo >= 2 ? `${combo}れんぞく せいかい！ すごい！` : pick(PRAISE)}`)
+        setTimeout(advance, 1250)
+      }
     } else {
       comboRef.current = 0
       wrongCountRef.current += 1
@@ -134,11 +181,9 @@ export default function ActivityPlayer({ task, onDone }) {
       setTimeout(() => setFeedback(null), 900)
 
       if (wrongCountRef.current >= 2) {
-        // 2回つまずいたら: 正解を光らせて、解説を読む（できるまで支える）
         setShowAnswerHint(true)
         speak(`${question.explain || ''}。 ひかってる ところを おしてみよう`, { rate: 0.88 })
       } else {
-        // 1回目: やさしいヒント
         const ans = question.answerWord
         const hint =
           ans && question.visual?.kind === 'emoji'
@@ -165,7 +210,7 @@ export default function ActivityPlayer({ task, onDone }) {
       : 'choice-grid'
 
   return (
-    <div className="screen fade-in">
+    <div className="screen screen-in">
       <Starfield count={16} />
 
       <div className="topbar">
@@ -177,13 +222,18 @@ export default function ActivityPlayer({ task, onDone }) {
         >
           🏠
         </button>
-        <ProgressDots total={task.questionCount} index={qIndex} />
+        <ProgressDots total={questionCount} index={qIndex} />
         <div className="pill">
-          {domain.emoji} {domain.name}
+          {isReviewTask ? '🎯 とっくん' : `${domain.emoji} ${domain.name}`}
         </div>
       </div>
 
       <div className="center-col scroll-col">
+        {/* 復習キューの問題には「克服チャンス」の目印 */}
+        {isConquerTarget() && phase === 'answering' && (
+          <div className="conquer-tag">⭐ できたら「ちから」になる もんだい！</div>
+        )}
+
         <div className="muted" style={{ fontSize: 'clamp(16px,3vw,24px)', fontWeight: 800 }}>
           {question.instruction}
         </div>
@@ -221,10 +271,13 @@ export default function ActivityPlayer({ task, onDone }) {
 
       {feedback && (
         <div className="feedback">
-          <div className="feedback__big">{feedback.good ? '🌟' : '💪'}</div>
+          {feedback.good && <Burst gold={feedback.gold} />}
+          <div className="feedback__big">{feedback.gold ? '⚡' : feedback.good ? '🌟' : '💪'}</div>
           <div
             className="feedback__word"
-            style={{ color: feedback.good ? 'var(--accent)' : 'var(--bad-soft)' }}
+            style={{
+              color: feedback.gold ? 'var(--accent-2)' : feedback.good ? 'var(--accent)' : 'var(--bad-soft)'
+            }}
           >
             {feedback.word}
           </div>

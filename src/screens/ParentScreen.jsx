@@ -6,11 +6,13 @@
 // ============================================================
 
 import React, { useState } from 'react'
-import { useGame } from '../state/GameContext.jsx'
+import { useGame, skillOf } from '../state/GameContext.jsx'
 import { DOMAINS } from '../engine/activities.js'
 import { trendLabel } from '../engine/difficulty.js'
 import { setTtsEnabled } from '../engine/tts.js'
 import { setSfxEnabled } from '../engine/sfx.js'
+import { setBgmEnabled } from '../engine/bgm.js'
+import { GRADES, MAX_GRADE, gradeOf } from '../data/grades.js'
 
 function Stat({ label, value, sub }) {
   return (
@@ -42,6 +44,7 @@ export default function ParentScreen({ onBack }) {
     dispatch({ type: 'SET_SETTING', key, value: next })
     if (key === 'tts') setTtsEnabled(next)
     if (key === 'sfx') setSfxEnabled(next)
+    if (key === 'bgm') setBgmEnabled(next)
   }
 
   return (
@@ -69,6 +72,11 @@ export default function ParentScreen({ onBack }) {
                 sub="追加問題で獲得したチケット数"
               />
               <Stat label="連続日数" value={`${state.streak}日`} sub="毎日つづけると🔥" />
+              <Stat
+                label="まちがいから覚えた数"
+                value={state.conquered}
+                sub="復習(とっくん)で克服した累計"
+              />
             </div>
           </div>
 
@@ -77,7 +85,7 @@ export default function ParentScreen({ onBack }) {
             <h3 style={{ margin: '4px 0 10px' }}>とくい・にがての けいこう</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {DOMAINS.map((dom) => {
-                const sk = state.skills[dom.id]
+                const sk = skillOf(state, dom.id)
                 const today = d.perDomainToday[dom.id]
                 const label = dom.available ? trendLabel(sk) : 'じゅんびちゅう'
                 return (
@@ -109,6 +117,39 @@ export default function ParentScreen({ onBack }) {
             </p>
           </div>
 
+          {/* 学年（先取り解放の保護者操作） */}
+          <div>
+            <h3 style={{ margin: '4px 0 10px' }}>学年レベル</h3>
+            <div className="card">
+              <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, marginTop: 0 }}>
+                現在: {gradeOf(state.grade).short} ／ 解放済み: {gradeOf(state.gradeMax).short} まで
+                <br />
+                通常は各学年をマスターすると次が自動で解放されます。
+                保護者判断で先取り解放することもできます。
+              </p>
+              <div className="row wrap">
+                {state.gradeMax < MAX_GRADE && (
+                  <button
+                    className="btn btn--ghost"
+                    onClick={() => dispatch({ type: 'FORCE_GRADE_MAX', gradeMax: state.gradeMax + 1 })}
+                  >
+                    ⏭ {gradeOf(state.gradeMax + 1).short} を先取り解放
+                  </button>
+                )}
+                {GRADES.filter((g) => g.id <= state.gradeMax).map((g) => (
+                  <button
+                    key={g.id}
+                    className={'btn ' + (g.id === state.grade ? 'btn--primary' : 'btn--ghost')}
+                    style={{ minHeight: 52, padding: '8px 16px' }}
+                    onClick={() => dispatch({ type: 'SET_GRADE', grade: g.id })}
+                  >
+                    {g.short}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* 設定 */}
           <div>
             <h3 style={{ margin: '4px 0 10px' }}>せってい</h3>
@@ -131,6 +172,16 @@ export default function ParentScreen({ onBack }) {
                   onClick={() => toggle('sfx')}
                 >
                   {state.settings.sfx ? 'ON' : 'OFF'}
+                </button>
+              </label>
+              <label className="row" style={{ justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 800 }}>🎼 BGM（うちゅうの音楽）</span>
+                <button
+                  className={'btn ' + (state.settings.bgm ? 'btn--primary' : 'btn--ghost')}
+                  style={{ minHeight: 52, padding: '8px 20px' }}
+                  onClick={() => toggle('bgm')}
+                >
+                  {state.settings.bgm ? 'ON' : 'OFF'}
                 </button>
               </label>
             </div>
