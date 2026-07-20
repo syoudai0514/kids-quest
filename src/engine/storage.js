@@ -31,6 +31,32 @@ export function clearState() {
   }
 }
 
+// ---- 機種変更用: データのエクスポート / インポート ----
+// 端末内保存なので、引っ越し（機種変更）のために手動で書き出し／読み込みできる。
+export const EXPORT_MARKER = 'hoshizora-quest-save'
+
+export function serializeForExport(state) {
+  return JSON.stringify(
+    { marker: EXPORT_MARKER, formatVersion: 1, exportedAt: new Date().toISOString(), state },
+    null,
+    2
+  )
+}
+
+// 貼り付け／ファイルの中身から「セーブ本体」を取り出す。おかしければ throw。
+export function parseImport(text) {
+  const obj = JSON.parse(text) // 不正な JSON はここで例外
+  // 正式なエクスポート封筒
+  if (obj && obj.marker === EXPORT_MARKER && obj.state && typeof obj.state === 'object') {
+    return obj.state
+  }
+  // 素のセーブ本体（念のため受け入れる）
+  if (obj && typeof obj === 'object' && (obj.version || obj.skills || obj.unlockedMonsters)) {
+    return obj
+  }
+  throw new Error('ひきつぎデータの形式が ちがいます')
+}
+
 // 今日の日付キー（ローカル時間。深夜0時でリセット）
 export function todayKey(d = new Date()) {
   const y = d.getFullYear()

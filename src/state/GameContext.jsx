@@ -138,6 +138,31 @@ function migrateOld(saved) {
   }
 }
 
+// 保存データ（読み込み or インポート）を、いまのバージョンの形に整える。
+// v3 はそのまま引き継ぎ、旧 v1/v2 は移行、未知は新規から作る。
+function normalizeSaved(saved) {
+  let base
+  if (saved && saved.version === 3) {
+    const fresh = createInitialState()
+    base = {
+      ...fresh,
+      ...saved,
+      settings: { ...fresh.settings, ...(saved.settings || {}) },
+      skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
+      missed: saved.missed || {}
+    }
+  } else if (saved && (saved.version === 1 || saved.version === 2)) {
+    base = migrateOld(saved)
+  } else {
+    base = createInitialState()
+  }
+  base = rolloverIfNeeded(base)
+  if (base.contentVersion !== CONTENT_VERSION) {
+    base = { ...base, contentVersion: CONTENT_VERSION, daily: freshDaily(todayKey()) }
+  }
+  return base
+}
+
 function rolloverIfNeeded(state) {
   const today = todayKey()
   if (state.daily.date === today && state.battle.date === today) return state
@@ -359,6 +384,18 @@ function reducer(state, action) {
     case 'RESET_ALL':
       return createInitialState()
 
+    // 機種変更: 書き出したデータで丸ごと置き換える（上書き）。
+    // 明らかにセーブでない中身なら、安全のため何もしない。
+    case 'IMPORT_STATE': {
+      const data = action.data
+      const looksValid =
+        data &&
+        typeof data === 'object' &&
+        (data.version || data.skills || data.unlockedMonsters || data.totalClears != null)
+      if (!looksValid) return state
+      return normalizeSaved(data)
+    }
+
     default:
       return state
   }
@@ -367,29 +404,7 @@ function reducer(state, action) {
 const GameContext = createContext(null)
 
 export function GameProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, null, () => {
-    const saved = loadState()
-    let base
-    if (saved && saved.version === 3) {
-      const fresh = createInitialState()
-      base = {
-        ...fresh,
-        ...saved,
-        settings: { ...fresh.settings, ...(saved.settings || {}) },
-        skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
-        missed: saved.missed || {}
-      }
-    } else if (saved && (saved.version === 1 || saved.version === 2)) {
-      base = migrateOld(saved)
-    } else {
-      base = createInitialState()
-    }
-    base = rolloverIfNeeded(base)
-    if (base.contentVersion !== CONTENT_VERSION) {
-      base = { ...base, contentVersion: CONTENT_VERSION, daily: freshDaily(todayKey()) }
-    }
-    return base
-  })
+  const [state, dispatch] = useReducer(reducer, null, () => normalizeSaved(loadState()))
 
   useEffect(() => {
     saveState(state)
