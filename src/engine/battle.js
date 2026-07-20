@@ -8,6 +8,12 @@
 //   ⭐ほし  は どれにも ふつう（安定択）
 // 5歳が3すくみを推論できるよう、相手の属性は常に表示し、
 // 効果は音声でも「こうか ばつぐん！」と伝える。
+//
+// v2: 敵にも「レベル」を導入し、相棒のレベルに追従して強くなり続ける
+// （以前は総クリア数で最大+30止まりで、遊ぶほど簡単になっていた）。
+// さらに「つよい てき（elite）」がときどき出現し、属性を正しく選ばないと
+// 本当に負けることがある「本気の戦い」を用意した。相棒の わざも
+// レベルに応じて強くなり、たまに会心の一撃も出る。
 // ============================================================
 
 export const TYPES = {
@@ -52,19 +58,42 @@ export const PARTNER_MOVES = [
   { name: 'このはカッター', type: 'kusa', emoji: '🌿', min: 8, max: 19 }
 ]
 
-export function rollDamage(move, enemyType) {
-  const base = Math.floor(move.min + Math.random() * (move.max - move.min + 1))
+// 会心の一撃（たまに大ダメージ。えらぶ楽しさに「運」も少し足す）
+const CRIT_CHANCE = 0.08
+const CRIT_MULT = 1.5
+
+export function rollDamage(move, enemyType, partnerLv = 1) {
+  // レベルが上がるほど わざも強くなる（相棒の成長を実感できるように）
+  const growth = 1 + partnerLv * 0.022
+  const base = Math.floor((move.min + Math.random() * (move.max - move.min + 1)) * growth)
   const mult = effectiveness(move.type, enemyType)
-  return { dmg: Math.max(1, Math.round(base * mult)), mult }
+  const crit = Math.random() < CRIT_CHANCE
+  const dmg = Math.max(1, Math.round(base * mult * (crit ? CRIT_MULT : 1)))
+  return { dmg, mult, crit }
 }
 
-// 5歳が「だいたい勝てる」バランス。敵は累計クリアでゆるやかに強く。
-export function enemyMaxHp(totalClears) {
-  return 38 + Math.min(30, totalClears)
+// 敵のレベル: 相棒のレベルに合わせて上下（±1）。強敵(elite)は さらに +1〜+3。
+// → 頭打ちがなく、遊ぶほど手ごたえが続く（以前は総クリア数で最大+30止まりだった）
+export function enemyLevelFor(partnerLv, elite = false) {
+  const variance = Math.floor(Math.random() * 3) - 1
+  let lvl = Math.max(1, partnerLv + variance)
+  if (elite) lvl += 1 + Math.floor(Math.random() * 3)
+  return lvl
+}
+
+// 5〜12歳が「かんがえて選べば だいたい勝てる」バランス。
+// 通常戦はレベルが上がるほど手ごたえのある戦い（ターン数が増える）に、
+// 強敵(elite)戦は属性を正しく選ばないと本当に負けることがある「本気の相手」。
+export function enemyMaxHp(enemyLevel, elite = false) {
+  const base = 24 + enemyLevel * 5.2
+  return Math.round(elite ? base * 1.35 : base)
 }
 export function partnerMaxHp(level) {
-  return 54 + level * 4
+  return 58 + level * 6
 }
-export function enemyDamage() {
-  return Math.floor(5 + Math.random() * 7) // 5〜11
+export function enemyDamage(enemyLevel, elite = false) {
+  const base = 3 + enemyLevel * 0.75
+  const mn = Math.max(2, Math.round(base - 2))
+  const mx = Math.round(base + (elite ? 4 : 3))
+  return Math.floor(mn + Math.random() * (mx - mn + 1))
 }

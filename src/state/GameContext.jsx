@@ -358,9 +358,10 @@ function reducer(state, action) {
     case 'BATTLE_WON': {
       const b = state.battle
       const caught = action.caughtId && !state.unlockedMonsters.includes(action.caughtId)
+      const xpGain = action.elite ? 20 : 12 // つよい てき に勝つと ボーナス✨
       return {
         ...state,
-        xp: state.xp + 12,
+        xp: state.xp + xpGain,
         battle: {
           ...b,
           wins: b.wins + 1,

@@ -17,6 +17,7 @@ import {
   PARTNER_MOVES,
   rollDamage,
   effectLabel,
+  enemyLevelFor,
   enemyMaxHp,
   partnerMaxHp,
   enemyDamage
@@ -41,6 +42,8 @@ export default function BattleScreen({ onBack }) {
   const playsLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
   const canPlay = playsLeft > 0 || state.battle.tickets > 0
 
+  const ELITE_CHANCE = 0.25 // 4回に1回くらい「つよい てき」が出る
+
   const [round, setRound] = useState(0) // もう一回 のたびに敵を引き直す
   const enemy = useMemo(() => {
     const wilds = getWildMonsters()
@@ -52,7 +55,12 @@ export default function BattleScreen({ onBack }) {
   }, [round])
   const enemyType = typeOfElement(enemy.element)
 
-  const E_MAX = enemyMaxHp(state.totalClears)
+  // 敵の強さは相棒のレベルに追従（±1）。ときどき「つよい てき」が出現し、
+  // 属性を正しく選ばないと本当に負けることがある本気の相手になる。
+  const isElite = useMemo(() => Math.random() < ELITE_CHANCE, [round])
+  const enemyLv = useMemo(() => enemyLevelFor(level, isElite), [round, level, isElite])
+
+  const E_MAX = enemyMaxHp(enemyLv, isElite)
   const P_MAX = partnerMaxHp(level)
 
   const [mode, setMode] = useState(canPlay ? 'intro' : 'locked')
@@ -71,7 +79,11 @@ export default function BattleScreen({ onBack }) {
         'いきぬきバトルの きょうの ぶんは おしまい。ついか もんだいを とくと チケットが もらえて、もっと あそべるよ！'
       )
     } else if (mode === 'intro') {
-      speak(`やせいの ${enemy.name}が あらわれた！ ${TYPES[enemyType].name}タイプだ！`)
+      speak(
+        isElite
+          ? `つよい ${enemy.name}が あらわれた！ Lv.${enemyLv}の ${TYPES[enemyType].name}タイプだ。ゆだんするな！`
+          : `やせいの ${enemy.name}が あらわれた！ Lv.${enemyLv}の ${TYPES[enemyType].name}タイプだ！`
+      )
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, round])
@@ -92,7 +104,7 @@ export default function BattleScreen({ onBack }) {
   }
 
   const enemyTurn = () => {
-    const dmg = enemyDamage()
+    const dmg = enemyDamage(enemyLv, isElite)
     setShake('partner')
     sfx.hit()
     showDmg('partner', `-${dmg}`)
@@ -116,14 +128,15 @@ export default function BattleScreen({ onBack }) {
   const useMove = (move) => {
     if (busy || mode !== 'fight') return
     setBusy(true)
-    const { dmg, mult } = rollDamage(move, enemyType)
+    const { dmg, mult, crit } = rollDamage(move, enemyType, level)
     const eff = effectLabel(mult)
     setShake('enemy')
-    if (mult > 1) sfx.hitBig()
+    if (mult > 1 || crit) sfx.hitBig()
     else sfx.hit()
-    showDmg('enemy', `-${dmg}${mult > 1 ? '❗' : ''}`)
-    setLog(`${stage.name}の ${move.name}！${eff ? ` ${eff}` : ''}`)
-    speak(`${move.name}！${eff ? ` ${eff}` : ''}`)
+    showDmg('enemy', `-${dmg}${crit ? '💥' : mult > 1 ? '❗' : ''}`)
+    const critTxt = crit ? ' かいしんの いちげき！' : ''
+    setLog(`${stage.name}の ${move.name}！${eff ? ` ${eff}` : ''}${critTxt}`)
+    speak(`${move.name}！${eff ? ` ${eff}` : ''}${critTxt}`)
     setTimeout(() => setShake(null), 350)
 
     setEHp((hp) => {
@@ -137,22 +150,22 @@ export default function BattleScreen({ onBack }) {
     })
   }
 
-  // 勝利 → ほしのわ で捕まえる演出
+  // 勝利 → ほしのわ で捕まえる演出（つよい てき に勝つと ボーナス✨）
   const beginCatch = () => {
     const alreadyCaught = state.unlockedMonsters.includes(enemy.id)
     wasNewCatchRef.current = !alreadyCaught
     if (alreadyCaught) {
-      dispatch({ type: 'BATTLE_WON', caughtId: null })
+      dispatch({ type: 'BATTLE_WON', caughtId: null, elite: isElite })
       setMode('win')
       sfx.reward()
-      speak(`やった！ ${enemy.name}に かった！ つよいね！`)
+      speak(isElite ? `やった！ つよい ${enemy.name}に かった！ すごいぞ！` : `やった！ ${enemy.name}に かった！ つよいね！`)
       return
     }
     setMode('catch')
     sfx.swoosh()
     speak(`ほしのわを なげた！`)
     setTimeout(() => {
-      dispatch({ type: 'BATTLE_WON', caughtId: enemy.id })
+      dispatch({ type: 'BATTLE_WON', caughtId: enemy.id, elite: isElite })
       setMode('win')
       sfx.fanfare()
       speak(`やったー！ ${enemy.name}を つかまえた！ なかまが ふえたよ！`)
@@ -217,14 +230,19 @@ export default function BattleScreen({ onBack }) {
           <div style={{ fontSize: 'clamp(38px,9vw,80px)', fontWeight: 900 }}>
             {win ? (wasNewCatchRef.current ? '🌟 つかまえた！' : '🏆 かち！') : '💪 また あそぼう！'}
           </div>
+          {win && isElite && (
+            <div className="type-chip" style={{ background: 'rgba(255,180,60,0.35)' }}>
+              👑 つよい てきに かった！
+            </div>
+          )}
           <Monster monster={win ? enemy : partner} colorsOverride={win ? null : colors} size={150} />
           <div className="card" style={{ textAlign: 'center', width: 'min(520px,92vw)' }}>
             <div style={{ fontSize: 'clamp(17px,3.2vw,22px)', fontWeight: 800 }}>
               {win
                 ? wasNewCatchRef.current
                   ? `${enemy.name}が なかまに なった！（ずかん ${state.unlockedMonsters.length}/${MONSTERS.length}）`
-                  : `${enemy.name}に かった！ ✨+12`
-                : 'つぎは きっと かてるよ！'}
+                  : `${enemy.name}に かった！ ✨+${isElite ? 20 : 12}`
+                : `つぎは きっと かてるよ！（Lv.${enemyLv}${isElite ? ' ・ つよい てきだった' : ''}）`}
             </div>
           </div>
           <div className="row wrap" style={{ justifyContent: 'center' }}>
@@ -257,8 +275,12 @@ export default function BattleScreen({ onBack }) {
       <div className="center-col" style={{ justifyContent: 'space-between', paddingTop: 4 }}>
         {/* 敵 */}
         <div style={{ alignSelf: 'flex-end', textAlign: 'center', marginRight: '5vw', position: 'relative' }}>
-          <div className="row" style={{ justifyContent: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontWeight: 900 }}>{enemy.name}</span>
+          <div className="row" style={{ justifyContent: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 900 }}>
+              {isElite && '👑 '}
+              {enemy.name}
+            </span>
+            <span className="type-chip">Lv.{enemyLv}</span>
             <span className="type-chip">
               {TYPES[enemyType].emoji} {TYPES[enemyType].name}
             </span>
@@ -266,10 +288,16 @@ export default function BattleScreen({ onBack }) {
           <div className="hp-bar" style={{ width: 200, margin: '0 auto 6px' }}>
             <div
               className="hp-bar__fill"
-              style={{ width: `${(eHp / E_MAX) * 100}%`, background: 'var(--bad-soft)' }}
+              style={{ width: `${(eHp / E_MAX) * 100}%`, background: isElite ? '#ffb43c' : 'var(--bad-soft)' }}
             />
           </div>
-          <div style={{ position: 'relative', animation: shake === 'enemy' ? 'nudge 0.35s ease' : 'none' }}>
+          <div
+            style={{
+              position: 'relative',
+              animation: shake === 'enemy' ? 'nudge 0.35s ease' : 'none',
+              filter: isElite ? 'drop-shadow(0 0 14px rgba(255,180,60,0.75))' : 'none'
+            }}
+          >
             {dmgFloat?.side === 'enemy' && <div className="dmg-float">{dmgFloat.text}</div>}
             {mode === 'catch' && <div className="ring-throw" />}
             <Monster monster={enemy} size={125} bounce={mode === 'intro'} />
