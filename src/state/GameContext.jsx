@@ -6,7 +6,7 @@
 //                      全分野の平均レベルがマスター基準に達すると次が解放
 //   skills[grade]    : 習熟度は学年ごとに別管理（戻っても進んでも保持）
 //   conquered        : 「まちがいから おぼえた」累計数（失敗→知識の見える化）
-//   missed           : 分野ごとの「まちがえた問題」キュー（とっくんで克服）
+//   srs              : 間隔反復のスケジュール（まちがい→1→3→7→14→30日）
 // ============================================================
 
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
@@ -18,12 +18,14 @@ import { getPartner } from '../data/monsters.js'
 import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
 import { MAX_GRADE, MASTER_LEVEL } from '../data/grades.js'
 import { getWeapon, weaponScore, starterWeaponsFor } from '../data/weapons.js'
+import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engine/srs.js'
 
 const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上限
-const MISSED_MAX = 14 // 復習キューの分野ごとの上限
+// 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
+export const REVIEW_BATCH_MAX = 8
 
 // コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
-const CONTENT_VERSION = 8
+const CONTENT_VERSION = 9
 
 // XP → 相棒レベル（ゆるやかな二次曲線）
 export function partnerLevel(xp) {
@@ -59,8 +61,9 @@ export function masteryProgress(state) {
   return Math.min(1, avg / MASTER_LEVEL)
 }
 
+// きょう復習する問題の数（ホームのバッジ・とっくんの件数）
 export function missedCount(state) {
-  return Object.values(state.missed).reduce((n, arr) => n + arr.length, 0)
+  return dueCount(state.srs)
 }
 
 // いま そうびしている武器（無ければ null）
@@ -113,7 +116,7 @@ function createInitialState() {
     lastActiveDate: null,
     conquered: 0,
     skills: { 0: freshSkills() },
-    missed: {}, // { domainId: [itemKey,...] }
+    srs: {}, // { domainId: { itemKey: {box, due, lapses} } } 間隔反復
     weapons: ['w01'], // 持っている武器のid（さいしょの1本）
     equipped: 'w01', // そうび中の武器id
     testPassed: {}, // { 学年: { rate, at } } 章末テストの合格記録
@@ -143,7 +146,7 @@ function migrateOld(saved) {
     xp: saved.xp ?? (saved.totalClears || 0) * 10,
     streak: saved.streak || 0,
     lastActiveDate: saved.lastActiveDate || null,
-    missed: saved.missed || {},
+    srs: migrateMissed(saved.missed),
     partnerColor: saved.partnerColor || 'mint',
     onboarded: saved.onboarded ?? ((saved.totalClears || 0) > 0)
   }
@@ -160,7 +163,7 @@ function normalizeSaved(saved) {
       ...saved,
       settings: { ...fresh.settings, ...(saved.settings || {}) },
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
-      missed: saved.missed || {}
+      srs: saved.srs || migrateMissed(saved.missed)
     }
   } else if (saved && (saved.version === 1 || saved.version === 2)) {
     base = migrateOld(saved)
@@ -174,20 +177,37 @@ function normalizeSaved(saved) {
 
   // 武器システム導入前のセーブには、これまでのがんばりに見合う武器を手わたす
   //（新機能のせいで「急に敵が強くなった」と感じさせないため）
-  if (!Array.isArray(base.weapons) || base.weapons.length === 0) {
+  //
+  // 判定は「保存データに weapons が入っていたか」で行う。
+  // base.weapons を見てしまうと、createInitialState() の初期装備 ['w01'] が
+  // マージで入ってしまい、遡り付与が一度も発動しない（実際に起きていた不具合）。
+  const savedWeapons = Array.isArray(saved?.weapons) ? saved.weapons : null
+  if (!savedWeapons || savedWeapons.length === 0) {
     const caught = (base.unlockedMonsters || []).length
     const granted = starterWeaponsFor(caught, partnerLevel(base.xp || 0))
-    const best = granted.reduce(
+    // すでに持っていた分があれば失わないように合成する
+    const merged = [...new Set([...(savedWeapons || []), ...granted])]
+    const best = merged.reduce(
       (acc, id) => (weaponScore(getWeapon(id)) > weaponScore(getWeapon(acc)) ? id : acc),
-      granted[0]
+      merged[0]
     )
-    base = { ...base, weapons: granted, equipped: best }
+    base = { ...base, weapons: merged, equipped: best }
+  } else {
+    base = { ...base, weapons: savedWeapons }
   }
   if (!base.equipped || !base.weapons.includes(base.equipped)) {
     base = { ...base, equipped: base.weapons[0] || null }
   }
 
   // v4で増えた項目を、古いセーブにも用意する
+  if (!base.srs || typeof base.srs !== 'object') {
+    base = { ...base, srs: migrateMissed(base.missed) }
+  }
+  if (base.missed) {
+    // 旧形式は取り込み済みなので落とす（保存サイズを増やさない）
+    const { missed, ...rest } = base
+    base = rest
+  }
   if (!base.testPassed) base = { ...base, testPassed: {} }
   if (!base.lessonSeen) base = { ...base, lessonSeen: {} }
   if (!base.domainAccuracy) base = { ...base, domainAccuracy: {} }
@@ -291,19 +311,27 @@ function reducer(state, action) {
         lastActiveDate = today
       }
 
-      // 復習キューの出し入れ＋克服ボーナス
-      let missed = state.missed
+      // 間隔反復（ライトナー方式）
+      //   まちがえた   → その日のうちに もう一度（box0）
+      //   期限の来た問題に正解 → 次に会う日を のばす（1→3→7→14→30日）
+      //   最高boxに到達 → 「完全に自分のものになった」= conquered
+      let srs = state.srs
       let conquered = state.conquered
       let xpGain = correct ? 2 : 0
       if (itemKey) {
-        const list = missed[domainId] || []
-        const wasMissed = list.includes(itemKey)
-        if (correct && wasMissed) {
-          missed = { ...missed, [domainId]: list.filter((k) => k !== itemKey) }
-          conquered += 1
-          xpGain += 4 // まちがいを ちからに かえたボーナス
-        } else if (!correct && !wasMissed) {
-          missed = { ...missed, [domainId]: [...list, itemKey].slice(-MISSED_MAX) }
+        const day = dayNumber()
+        const byKey = srs[domainId] || {}
+        const prev = byKey[itemKey]
+        const wasDue = isDue(prev, day) // 復習として出ていた問題か
+        if (correct && !prev) {
+          // 一度も間違えていない問題に正解 → なにも登録しない（キューを汚さない）
+        } else {
+          const { entry, mastered } = scheduleNext(prev, correct, day)
+          srs = { ...srs, [domainId]: { ...byKey, [itemKey]: entry } }
+          if (correct && wasDue) {
+            xpGain += 4 // まちがいを ちからに かえたボーナス
+            if (mastered) conquered += 1
+          }
         }
       }
 
@@ -323,7 +351,7 @@ function reducer(state, action) {
         xp: state.xp + xpGain,
         streak,
         lastActiveDate,
-        missed,
+        srs,
         conquered,
         daily: {
           ...state.daily,
@@ -455,6 +483,17 @@ function reducer(state, action) {
           ? [...state.unlockedMonsters, action.caughtId]
           : state.unlockedMonsters
       }
+    }
+
+    // ミッションでやる教科を えらぶ（順番の入れかえだけ）。
+    // 全教科をひととおり やる のは変わらないので バランスは保たれる。
+    case 'PICK_CORE_TASK': {
+      const { coreTasks, coreIndex } = state.daily
+      const i = action.index
+      if (i == null || i < coreIndex || i >= coreTasks.length || i === coreIndex) return state
+      const next = [...coreTasks]
+      ;[next[coreIndex], next[i]] = [next[i], next[coreIndex]]
+      return { ...state, daily: { ...state.daily, coreTasks: next } }
     }
 
     case 'EQUIP_WEAPON': {

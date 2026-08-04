@@ -15,6 +15,7 @@ import ActivityPlayer from './screens/ActivityPlayer.jsx'
 import BattleScreen from './screens/BattleScreen.jsx'
 import CollectionScreen from './screens/CollectionScreen.jsx'
 import EquipScreen from './screens/EquipScreen.jsx'
+import FreeStudyScreen from './screens/FreeStudyScreen.jsx'
 import ChapterTestScreen from './screens/ChapterTestScreen.jsx'
 import ParentScreen from './screens/ParentScreen.jsx'
 import ReviewScreen from './screens/ReviewScreen.jsx'
@@ -80,6 +81,9 @@ export default function App() {
           )}
           {screen === 'collection' && <CollectionScreen onBack={() => go('home')} />}
           {screen === 'equip' && <EquipScreen onBack={() => go('home')} />}
+          {screen === 'freestudy' && (
+            <FreeStudyScreen onBack={() => go('home')} onStartTask={startTask} />
+          )}
           {screen === 'test' && <ChapterTestScreen onBack={() => go('home')} />}
           {screen === 'parent' && <ParentScreen onBack={() => go('home')} />}
 

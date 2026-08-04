@@ -14,6 +14,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useGame, skillOf, needsReviewLesson } from '../state/GameContext.jsx'
 import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import { pickLesson, hasLesson } from '../data/lessons.js'
+import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
 import { speak } from '../engine/tts.js'
@@ -91,10 +92,11 @@ export default function ActivityPlayer({ task, onDone }) {
     if (isReviewTask) {
       review = task.plan[Math.min(qIndex, task.plan.length - 1)].key
     } else {
-      // 通常タスクでも、復習キューから35%の確率で再出題
-      const missed = stateRef.current.missed[domainId] || []
-      if (missed.length && Math.random() < 0.35) {
-        review = missed[Math.floor(Math.random() * missed.length)]
+      // 通常タスクでも、きょうが復習の期限になっている問題を混ぜる
+      // （間隔反復: 忘れかけた ちょうどよい タイミングで もう一度 出会う）
+      const due = dueKeys(stateRef.current.srs, domainId)
+      if (due.length && Math.random() < 0.45) {
+        review = due[Math.floor(Math.random() * Math.min(due.length, 5))]
       }
     }
     const q = dom.generateQuestion(params, review)
@@ -159,8 +161,8 @@ export default function ActivityPlayer({ task, onDone }) {
 
   // この問題が復習キューにある（＝克服チャンス）か
   const isConquerTarget = () =>
-    question.itemKey &&
-    (stateRef.current.missed[domainIdRef.current] || []).includes(question.itemKey)
+    !!question.itemKey &&
+    isDue(stateRef.current.srs?.[domainIdRef.current]?.[question.itemKey], dayNumber())
 
   const recordAnswer = (correct) => {
     if (!firstAttemptRef.current) return false

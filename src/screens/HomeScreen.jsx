@@ -19,6 +19,7 @@ import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
 import { GRADES, gradeOf, MAX_GRADE } from '../data/grades.js'
 import { buildOkawariTask, buildExtraTask, OKAWARI_MAX } from '../engine/missions.js'
+import { domainsForGrade, DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import Monster from '../components/Monster.jsx'
 import { Starfield, useSpeakOnMount } from '../components/common.jsx'
 import { sfx } from '../engine/sfx.js'
@@ -62,6 +63,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
 
   const [bubble, setBubble] = useState(null)
   const [showGradePicker, setShowGradePicker] = useState(false)
+  const [showSubjectPicker, setShowSubjectPicker] = useState(false)
 
   const greeting = useMemo(() => {
     if (coreDone) return 'きょうの ミッション ぜんぶ クリア！ すごい！'
@@ -79,8 +81,21 @@ export default function HomeScreen({ onStartTask, onGo }) {
     setTimeout(() => setBubble(null), 3000)
   }
 
-  const startCore = () => {
+  // 「しゅっぱつ」→ 残っている教科から自分でえらぶ（順番だけ自由。全教科まわるのは変わらない）
+  const openSubjectPicker = () => {
+    sfx.tap()
+    setShowSubjectPicker(true)
+    speak('きょうは どの きょうかから やる？')
+  }
+  const startCoreAt = (index) => {
     sfx.swoosh()
+    setShowSubjectPicker(false)
+    if (index != null && index !== daily.coreIndex) {
+      dispatch({ type: 'PICK_CORE_TASK', index })
+      const task = daily.coreTasks[index]
+      if (task) onStartTask({ ...task })
+      return
+    }
     const task = daily.coreTasks[daily.coreIndex]
     if (task) onStartTask(task)
   }
@@ -203,7 +218,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
 
         {/* メインアクション */}
         {!coreDone ? (
-          <button className="btn btn--primary btn--big btn--glow" onClick={startCore}>
+          <button className="btn btn--primary btn--big btn--glow" onClick={openSubjectPicker}>
             🚀 しゅっぱつ！
           </button>
         ) : okawariLeft > 0 ? (
@@ -229,7 +244,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__emoji">🎯</span>
             <span className="menu-tile__label">とっくん</span>
             <span className="menu-tile__sub">
-              {nMissed > 0 ? 'まちがいを ちからに！' : `⚡ おぼえた数 ${state.conquered}`}
+              {nMissed > 0 ? `きょう ふくしゅう ${nMissed}こ` : `⚡ おぼえた数 ${state.conquered}`}
             </span>
             {nMissed > 0 && <span className="notice-badge">{nMissed}</span>}
           </button>
@@ -258,6 +273,19 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__emoji">🎟️</span>
             <span className="menu-tile__label">ついかもんだい</span>
             <span className="menu-tile__sub">クリアで チケット</span>
+          </button>
+
+          <button
+            className="menu-tile"
+            style={{ background: 'linear-gradient(180deg,#c2f0c2,#7fd17f)' }}
+            onClick={() => {
+              sfx.tap()
+              onGo('freestudy')
+            }}
+          >
+            <span className="menu-tile__emoji">📚</span>
+            <span className="menu-tile__label">じゆうべんきょう</span>
+            <span className="menu-tile__sub">すきな きょうかを えらぶ</span>
           </button>
 
           <button
@@ -310,6 +338,63 @@ export default function HomeScreen({ onStartTask, onGo }) {
           </button>
         </div>
       </div>
+
+      {/* きょうの教科えらび（順番だけ自由。全教科まわるのは変わらない） */}
+      {showSubjectPicker && (
+        <div className="overlay" onClick={() => setShowSubjectPicker(false)}>
+          <div className="card overlay__panel" onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontWeight: 900, fontSize: 'clamp(19px,3.4vw,26px)', textAlign: 'center', marginBottom: 4 }}>
+              どの きょうかから やる？
+            </div>
+            <div className="muted" style={{ fontSize: 13, fontWeight: 700, textAlign: 'center', marginBottom: 12 }}>
+              きょうは ぜんぶの きょうかを やるよ。じゅんばんは きみが きめてOK！
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill,minmax(120px,1fr))',
+                gap: 10
+              }}
+            >
+              {daily.coreTasks.map((t, i) => {
+                const dom = DOMAIN_BY_ID[t.domainId]
+                const done = i < daily.coreIndex
+                return (
+                  <button
+                    key={t.uid}
+                    className="card"
+                    disabled={done}
+                    onClick={() => startCoreAt(i)}
+                    style={{
+                      textAlign: 'center',
+                      cursor: done ? 'default' : 'pointer',
+                      padding: '12px 6px',
+                      opacity: done ? 0.4 : 1,
+                      border: done ? '2px solid rgba(255,255,255,0.12)' : '3px solid var(--accent)'
+                    }}
+                  >
+                    <div style={{ fontSize: 34 }}>{done ? '✅' : dom?.emoji}</div>
+                    <div style={{ fontWeight: 900, fontSize: 'clamp(13px,2.4vw,17px)' }}>
+                      {domainName(dom, state.grade)}
+                    </div>
+                    <div className="muted" style={{ fontSize: 11, fontWeight: 800 }}>
+                      {done ? 'おわった' : 'やる'}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            <div className="row wrap" style={{ justifyContent: 'center', marginTop: 14, gap: 10 }}>
+              <button className="btn btn--primary" onClick={() => startCoreAt(null)}>
+                🎲 おまかせで はじめる
+              </button>
+              <button className="btn btn--ghost" onClick={() => setShowSubjectPicker(false)}>
+                やめる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 学年えらび */}
       {showGradePicker && (

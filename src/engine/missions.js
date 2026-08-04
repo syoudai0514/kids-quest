@@ -53,3 +53,9 @@ export function buildExtraTask(index = 0, grade = 0) {
   t.questionCount = 3
   return t
 }
+
+// じゆうべんきょう: 好きな教科をいつでも単発で。
+// チケットは付かないので、ごほうび目当ての抜け道にはならない。
+export function buildFreeTask(domainId) {
+  return makeTask(domainId, 'free')
+}
