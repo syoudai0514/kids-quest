@@ -9,8 +9,9 @@
 // ============================================================
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useGame, partnerLevel, PARTNER_COLORS } from '../state/GameContext.jsx'
+import { useGame, partnerLevel, PARTNER_COLORS, equippedWeapon } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, getWildMonsters, MONSTERS } from '../data/monsters.js'
+import { rollWeaponDrop, RARITIES } from '../data/weapons.js'
 import {
   TYPES,
   typeOfElement,
@@ -18,6 +19,7 @@ import {
   rollDamage,
   effectLabel,
   enemyLevelFor,
+  ELITE_MIN_LEVEL,
   enemyMaxHp,
   partnerMaxHp,
   enemyDamage
@@ -57,11 +59,15 @@ export default function BattleScreen({ onBack }) {
 
   // 敵の強さは相棒のレベルに追従（±1）。ときどき「つよい てき」が出現し、
   // 属性を正しく選ばないと本当に負けることがある本気の相手になる。
-  const isElite = useMemo(() => Math.random() < ELITE_CHANCE, [round])
+  const isElite = useMemo(
+    () => level >= ELITE_MIN_LEVEL && Math.random() < ELITE_CHANCE,
+    [round, level]
+  )
   const enemyLv = useMemo(() => enemyLevelFor(level, isElite), [round, level, isElite])
 
+  const weapon = equippedWeapon(state)
   const E_MAX = enemyMaxHp(enemyLv, isElite)
-  const P_MAX = partnerMaxHp(level)
+  const P_MAX = partnerMaxHp(level, weapon)
 
   const [mode, setMode] = useState(canPlay ? 'intro' : 'locked')
   const [pHp, setPHp] = useState(P_MAX)
@@ -72,6 +78,7 @@ export default function BattleScreen({ onBack }) {
   const [dmgFloat, setDmgFloat] = useState(null) // {side, text}
   const startedRef = useRef(false)
   const wasNewCatchRef = useRef(false)
+  const dropRef = useRef(null) // このバトルで手に入れた そうび
 
   useEffect(() => {
     if (mode === 'locked') {
@@ -128,7 +135,7 @@ export default function BattleScreen({ onBack }) {
   const useMove = (move) => {
     if (busy || mode !== 'fight') return
     setBusy(true)
-    const { dmg, mult, crit } = rollDamage(move, enemyType, level)
+    const { dmg, mult, crit } = rollDamage(move, enemyType, level, weapon)
     const eff = effectLabel(mult)
     setShake('enemy')
     if (mult > 1 || crit) sfx.hitBig()
@@ -150,31 +157,45 @@ export default function BattleScreen({ onBack }) {
     })
   }
 
-  // 勝利 → ほしのわ で捕まえる演出（つよい てき に勝つと ボーナス✨）
+  // 勝利 → ほしのわ で捕まえる演出（つよい てき に勝つと ボーナス✨＋武器ドロップ）
   const beginCatch = () => {
     const alreadyCaught = state.unlockedMonsters.includes(enemy.id)
     wasNewCatchRef.current = !alreadyCaught
+
+    // そうび品のドロップ抽選。今より強ければ自動でそうびされる
+    const drop = rollWeaponDrop(level, isElite, state.weapons || [])
+    const upgraded = drop && (!weapon || drop.atk * 2 + drop.hp > weapon.atk * 2 + weapon.hp)
+    dropRef.current = drop ? { ...drop, upgraded } : null
+
+    const dropLine = drop
+      ? ` ${drop.name}を てにいれた！${upgraded ? ' そうび したよ！' : ''}`
+      : ''
+
     if (alreadyCaught) {
-      dispatch({ type: 'BATTLE_WON', caughtId: null, elite: isElite })
+      dispatch({ type: 'BATTLE_WON', caughtId: null, elite: isElite, weaponId: drop?.id })
       setMode('win')
       sfx.reward()
-      speak(isElite ? `やった！ つよい ${enemy.name}に かった！ すごいぞ！` : `やった！ ${enemy.name}に かった！ つよいね！`)
+      speak(
+        (isElite ? `やった！ つよい ${enemy.name}に かった！ すごいぞ！` : `やった！ ${enemy.name}に かった！ つよいね！`) +
+          dropLine
+      )
       return
     }
     setMode('catch')
     sfx.swoosh()
     speak(`ほしのわを なげた！`)
     setTimeout(() => {
-      dispatch({ type: 'BATTLE_WON', caughtId: enemy.id, elite: isElite })
+      dispatch({ type: 'BATTLE_WON', caughtId: enemy.id, elite: isElite, weaponId: drop?.id })
       setMode('win')
       sfx.fanfare()
-      speak(`やったー！ ${enemy.name}を つかまえた！ なかまが ふえたよ！`)
+      speak(`やったー！ ${enemy.name}を つかまえた！ なかまが ふえたよ！` + dropLine)
     }, 1500)
   }
 
   const playAgain = () => {
     startedRef.current = false
     wasNewCatchRef.current = false
+    dropRef.current = null
     setBusy(false)
     setRound((r) => r + 1)
     setMode('intro')
@@ -245,6 +266,36 @@ export default function BattleScreen({ onBack }) {
                 : `つぎは きっと かてるよ！（Lv.${enemyLv}${isElite ? ' ・ つよい てきだった' : ''}）`}
             </div>
           </div>
+
+          {/* 手に入れた そうび */}
+          {win && dropRef.current && (
+            <div
+              className="card"
+              style={{
+                textAlign: 'center',
+                width: 'min(520px,92vw)',
+                border: `3px solid ${RARITIES[dropRef.current.rarity].color}`,
+                boxShadow: `0 0 22px ${RARITIES[dropRef.current.rarity].glow}`
+              }}
+            >
+              <div style={{ fontWeight: 900, color: RARITIES[dropRef.current.rarity].color, fontSize: 13 }}>
+                🎁 {RARITIES[dropRef.current.rarity].name} そうび を てにいれた！
+              </div>
+              <div style={{ fontSize: 46, lineHeight: 1.2 }}>{dropRef.current.emoji}</div>
+              <div style={{ fontWeight: 900, fontSize: 'clamp(16px,3vw,21px)' }}>
+                {dropRef.current.name}
+              </div>
+              <div className="row" style={{ justifyContent: 'center', gap: 12, fontWeight: 900, marginTop: 4 }}>
+                <span style={{ color: 'var(--accent-2)' }}>⚔️ +{dropRef.current.atk}</span>
+                <span style={{ color: 'var(--accent)' }}>❤️ +{dropRef.current.hp}</span>
+              </div>
+              {dropRef.current.upgraded && (
+                <div className="pill" style={{ marginTop: 6, background: 'var(--good)', color: '#10231c', border: 'none' }}>
+                  ✅ つよいので そうび したよ！
+                </div>
+              )}
+            </div>
+          )}
           <div className="row wrap" style={{ justifyContent: 'center' }}>
             {canPlay && (
               <button className="btn btn--primary btn--big" onClick={playAgain}>
@@ -312,6 +363,11 @@ export default function BattleScreen({ onBack }) {
           </div>
           <div style={{ fontWeight: 900, margin: '2px 0' }}>
             {stage.name} <span className="type-chip">Lv.{level}</span>
+            {weapon && (
+              <span className="type-chip" style={{ marginLeft: 4 }}>
+                {weapon.emoji} ⚔️+{weapon.atk}
+              </span>
+            )}
           </div>
           <div className="hp-bar" style={{ width: 200, margin: '0 auto' }}>
             <div

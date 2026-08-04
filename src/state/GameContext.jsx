@@ -17,6 +17,7 @@ import { DOMAINS } from '../engine/activities.js'
 import { getPartner } from '../data/monsters.js'
 import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
 import { MAX_GRADE, MASTER_LEVEL } from '../data/grades.js'
+import { getWeapon, weaponScore, starterWeaponsFor } from '../data/weapons.js'
 
 const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上限
 const MISSED_MAX = 14 // 復習キューの分野ごとの上限
@@ -60,6 +61,11 @@ export function masteryProgress(state) {
 
 export function missedCount(state) {
   return Object.values(state.missed).reduce((n, arr) => n + arr.length, 0)
+}
+
+// いま そうびしている武器（無ければ null）
+export function equippedWeapon(state) {
+  return getWeapon(state.equipped)
 }
 
 function freshDaily(date) {
@@ -108,6 +114,8 @@ function createInitialState() {
     conquered: 0,
     skills: { 0: freshSkills() },
     missed: {}, // { domainId: [itemKey,...] }
+    weapons: ['w01'], // 持っている武器のid（さいしょの1本）
+    equipped: 'w01', // そうび中の武器id
     unlockedMonsters: [partner.id],
     totalClears: 0,
     daily: freshDaily(today),
@@ -159,6 +167,21 @@ function normalizeSaved(saved) {
   base = rolloverIfNeeded(base)
   if (base.contentVersion !== CONTENT_VERSION) {
     base = { ...base, contentVersion: CONTENT_VERSION, daily: freshDaily(todayKey()) }
+  }
+
+  // 武器システム導入前のセーブには、これまでのがんばりに見合う武器を手わたす
+  //（新機能のせいで「急に敵が強くなった」と感じさせないため）
+  if (!Array.isArray(base.weapons) || base.weapons.length === 0) {
+    const caught = (base.unlockedMonsters || []).length
+    const granted = starterWeaponsFor(caught, partnerLevel(base.xp || 0))
+    const best = granted.reduce(
+      (acc, id) => (weaponScore(getWeapon(id)) > weaponScore(getWeapon(acc)) ? id : acc),
+      granted[0]
+    )
+    base = { ...base, weapons: granted, equipped: best }
+  }
+  if (!base.equipped || !base.weapons.includes(base.equipped)) {
+    base = { ...base, equipped: base.weapons[0] || null }
   }
   return base
 }
@@ -359,9 +382,22 @@ function reducer(state, action) {
       const b = state.battle
       const caught = action.caughtId && !state.unlockedMonsters.includes(action.caughtId)
       const xpGain = action.elite ? 20 : 12 // つよい てき に勝つと ボーナス✨
+
+      // 武器ドロップ。今のそうびより強ければ自動でそうびする
+      //（小さい子が メニューを行き来しなくても 強くなれるように）
+      let weapons = state.weapons
+      let equipped = state.equipped
+      if (action.weaponId && !weapons.includes(action.weaponId)) {
+        weapons = [...weapons, action.weaponId]
+        const got = getWeapon(action.weaponId)
+        if (weaponScore(got) > weaponScore(getWeapon(equipped))) equipped = action.weaponId
+      }
+
       return {
         ...state,
         xp: state.xp + xpGain,
+        weapons,
+        equipped,
         battle: {
           ...b,
           wins: b.wins + 1,
@@ -371,6 +407,11 @@ function reducer(state, action) {
           ? [...state.unlockedMonsters, action.caughtId]
           : state.unlockedMonsters
       }
+    }
+
+    case 'EQUIP_WEAPON': {
+      if (!state.weapons.includes(action.weaponId)) return state
+      return { ...state, equipped: action.weaponId }
     }
 
     // 保護者による先取り解放

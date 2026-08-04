@@ -12,7 +12,8 @@ import {
   partnerLevel,
   PARTNER_COLORS,
   masteryProgress,
-  missedCount
+  missedCount,
+  equippedWeapon
 } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
@@ -48,6 +49,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const grade = gradeOf(state.grade)
   const mastery = masteryProgress(state)
   const nMissed = missedCount(state)
+  const weapon = equippedWeapon(state)
 
   const daily = state.daily
   const coreDone = daily.coreDone
@@ -268,6 +270,21 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__emoji">📒</span>
             <span className="menu-tile__label">ずかん</span>
             <span className="menu-tile__sub">{state.unlockedMonsters.length} / {MONSTERS.length}</span>
+          </button>
+
+          <button
+            className="menu-tile"
+            style={{ background: 'linear-gradient(180deg,#d5c4a1,#b89b6e)' }}
+            onClick={() => {
+              sfx.tap()
+              onGo('equip')
+            }}
+          >
+            <span className="menu-tile__emoji">{weapon ? weapon.emoji : '⚔️'}</span>
+            <span className="menu-tile__label">そうび</span>
+            <span className="menu-tile__sub">
+              {weapon ? `${weapon.name}（⚔️+${weapon.atk}）` : 'バトルで てにいれよう'}
+            </span>
           </button>
         </div>
       </div>
