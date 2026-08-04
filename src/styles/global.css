@@ -310,6 +310,14 @@ body {
   box-shadow: 0 0 0 4px #fff, 0 0 26px 6px var(--accent-2);
   animation: twinkle 1s ease-in-out infinite;
 }
+/* 章末テスト用: 「えらんだ」ことだけ分かる中立の見た目。
+   正解/不正解を示す choice--correct/wrong の色は テスト中は 使わない */
+.choice--picked {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
+  border-color: #ffffff;
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+}
 @keyframes nudge {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-8px); }

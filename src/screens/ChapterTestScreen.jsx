@@ -211,7 +211,7 @@ export default function ChapterTestScreen({ onBack }) {
           {q.choices.map((c) => (
             <button
               key={c.id}
-              className={'choice' + (chosen === c.id ? ' choice--correct' : '')}
+              className={'choice' + (chosen === c.id ? ' choice--picked' : '')}
               disabled={!!chosen}
               onClick={() => choose(c)}
             >

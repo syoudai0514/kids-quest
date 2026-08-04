@@ -270,11 +270,30 @@ import { kanjiPoolForGrade, KANJI_BY_CHAR, jukugoPoolForGrade, JUKUGO_BY_WORD } 
 
 const WORD_BY_TEXT = Object.fromEntries(WORDS.map((w) => [w.text, w]))
 
-function poolForLevel(level, allowKatakana, allowHard) {
+// 学年ぶんの最低むずかしさ。これが無いと、アダプティブの習熟度
+//（学年ごとに独立管理・新しい学年では START_LEVEL から再スタート）
+// だけで単語の難易度が決まってしまい、たとえば小4でも「ぞう」のような
+// 年長〜小1向けの簡単な単語が普通に出題対象に入ってしまっていた。
+function minTierForGrade(grade) {
+  if (grade <= 1) return 1
+  if (grade === 2) return 2
+  if (grade === 3) return 3
+  if (grade === 4) return 3
+  return 4 // 小5・小6
+}
+
+function poolForLevel(level, allowKatakana, allowHard, grade = 0) {
+  const floor = minTierForGrade(grade)
+  // 天井（level+1）が フロアを下回ると 該当tierが1つも無くなり、
+  // 呼び出し側の「プールが小さすぎたら 無フィルタの WORDS 全体へ
+  // フォールバック」が発動して フロアごと無視されてしまう。
+  // 天井を フロア以上に 底上げして、その事故を防ぐ。
+  const ceil = Math.max(level + 1, floor)
   return WORDS.filter((w) => {
     if (!allowKatakana && w.kana === 'kata') return false
     if (!allowHard && w.tier >= 5) return false
-    return w.tier <= level + 1
+    if (w.tier < floor) return false
+    return w.tier <= ceil
   })
 }
 
@@ -302,8 +321,8 @@ function pickDistinct(pool, n, exclude) {
 }
 
 function wordQuestion(answer, params) {
-  const { level, choiceCount, allowKatakana, allowHard } = params
-  const pool = poolForLevel(level, allowKatakana, allowHard)
+  const { level, choiceCount, allowKatakana, allowHard, grade } = params
+  const pool = poolForLevel(level, allowKatakana, allowHard, grade)
   const safePool = pool.length >= choiceCount ? pool : WORDS
   const distractors = pickDistinct(safePool, choiceCount, answer)
   const options = shuffle([answer, ...distractors])
@@ -421,7 +440,7 @@ export function generateReadingQuestion(params, reviewKey = null) {
     }
     return kanjiQuestion(shuffle(kanjiPoolForGrade(grade))[0], params)
   }
-  const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard)
+  const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard, grade)
   const safePool = pool.length >= params.choiceCount ? pool : WORDS
   return wordQuestion(shuffle(safePool)[0], params)
 }

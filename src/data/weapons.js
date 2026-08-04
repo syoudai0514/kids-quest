@@ -88,6 +88,13 @@ function pick(arr) {
 }
 
 // レベルが上がるほど 良い武器が出やすくなる（つよい てき は さらに good）
+//
+// v2: 以前は elite補正で どのレベル帯でも一律 legend+5% していたため、
+// レベルが低いうち（本来 legend が出ないはずの帯）でも「でんせつ」が
+// 出てしまっていた（＝1日目で最強装備が出る不具合）。
+// いまは「各レアリティの一部を1段階だけ格上げする」方式にして、
+// まだ そのレアリティに 到達していない帯では 格上げ先も 0 のままに なる
+// ようにした（例: legendが0の帯では、格上げ元のsrも0なので legendも0）。
 function rarityWeights(partnerLv, elite) {
   let w
   if (partnerLv < 8) w = { common: 85, rare: 15, sr: 0, legend: 0 }
@@ -95,13 +102,16 @@ function rarityWeights(partnerLv, elite) {
   else if (partnerLv < 25) w = { common: 30, rare: 45, sr: 23, legend: 2 }
   else w = { common: 12, rare: 40, sr: 40, legend: 8 }
   if (elite) {
-    // つよい てき は ワンランク上が出やすい
-    w = {
-      common: Math.max(0, w.common - 25),
-      rare: w.rare + 5,
-      sr: w.sr + 15,
-      legend: w.legend + 5
-    }
+    const order = ['common', 'rare', 'sr', 'legend']
+    const shifted = { common: 0, rare: 0, sr: 0, legend: 0 }
+    const SHIFT = 0.3 // それぞれの3割ぶんを1段階 格上げ
+    order.forEach((key, i) => {
+      const amt = w[key] * SHIFT
+      const upKey = order[Math.min(i + 1, order.length - 1)]
+      shifted[key] += w[key] - amt
+      shifted[upKey] += amt
+    })
+    w = shifted
   }
   return w
 }
