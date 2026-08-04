@@ -11,8 +11,10 @@
 // ============================================================
 
 import React, { useEffect, useRef, useState } from 'react'
-import { useGame, skillOf } from '../state/GameContext.jsx'
-import { DOMAIN_BY_ID } from '../engine/activities.js'
+import { useGame, skillOf, needsReviewLesson } from '../state/GameContext.jsx'
+import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
+import { pickLesson, hasLesson } from '../data/lessons.js'
+import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
@@ -36,6 +38,23 @@ export default function ActivityPlayer({ task, onDone }) {
   // とっくんタスクは1問ごとに分野が変わる
   const isReviewTask = task.kind === 'review' && Array.isArray(task.plan)
 
+  // 授業（勉強ターン）を出すか: コアミッションで
+  //   ・その教科をはじめて やるとき → はじめての じゅぎょう
+  //   ・直近の正解率が低いとき      → おさらいの じゅぎょう
+  const lessonPlan = useRef(
+    (() => {
+      if (isReviewTask || task.kind !== 'core') return null
+      const g = state.grade
+      const dId = task.domainId
+      if (!hasLesson(dId, g)) return null
+      const seen = state.lessonSeen?.[`${g}:${dId}`] || 0
+      const review = needsReviewLesson(state, dId, g)
+      if (seen > 0 && !review) return null
+      return { lesson: pickLesson(dId, g, review ? seen : 0), isReview: review && seen > 0, domainId: dId, grade: g }
+    })()
+  ).current
+  const [inLesson, setInLesson] = useState(!!lessonPlan)
+
   const [qIndex, setQIndex] = useState(0)
   const [question, setQuestion] = useState(null)
   const [phase, setPhase] = useState('answering')
@@ -50,6 +69,10 @@ export default function ActivityPlayer({ task, onDone }) {
   const domainIdRef = useRef(task.domainId)
   const stateRef = useRef(state)
   stateRef.current = state
+
+  // このタスクの「ちゃんと解いたか」の記録（チケットの判定に使う）
+  const tallyRef = useRef({ correct: 0, total: 0, fastWrong: 0 })
+  const shownAtRef = useRef(Date.now())
 
   const currentDomainId = () =>
     isReviewTask ? task.plan[Math.min(qIndex, task.plan.length - 1)].domainId : task.domainId
@@ -83,13 +106,31 @@ export default function ActivityPlayer({ task, onDone }) {
     setFeedback(null)
     wrongCountRef.current = 0
     firstAttemptRef.current = true
+    shownAtRef.current = Date.now()
     setTimeout(() => speak(q.speak), 300)
   }
 
   useEffect(() => {
+    if (inLesson) return // 授業中は まだ問題を作らない
     makeQuestion()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qIndex])
+  }, [qIndex, inLesson])
+
+  // ---- 授業（勉強ターン）----
+  if (inLesson && lessonPlan?.lesson) {
+    return (
+      <LessonScreen
+        lesson={lessonPlan.lesson}
+        domainId={lessonPlan.domainId}
+        grade={lessonPlan.grade}
+        isReview={lessonPlan.isReview}
+        onDone={() => {
+          dispatch({ type: 'LESSON_SEEN', domainId: lessonPlan.domainId, grade: lessonPlan.grade })
+          setInLesson(false)
+        }}
+      />
+    )
+  }
 
   if (!question) return null
 
@@ -99,7 +140,11 @@ export default function ActivityPlayer({ task, onDone }) {
     if (qIndex + 1 < questionCount) {
       setQIndex(qIndex + 1)
     } else {
-      dispatch({ type: 'CLEAR_TASK', kind: task.kind })
+      const t = tallyRef.current
+      const accuracy = t.total ? t.correct / t.total : 1
+      // 「読まずに連打」が半分以上なら 不正あつかい
+      const suspicious = t.total >= 2 && t.fastWrong >= Math.ceil(t.total / 2)
+      dispatch({ type: 'CLEAR_TASK', kind: task.kind, accuracy, suspicious })
       sfx.reward()
       const line =
         task.kind === 'review'
@@ -119,6 +164,12 @@ export default function ActivityPlayer({ task, onDone }) {
 
   const recordAnswer = (correct) => {
     if (!firstAttemptRef.current) return false
+    // 1問目の答えだけを「実力」として数える（チケットの判定に使う）
+    const elapsed = Date.now() - shownAtRef.current
+    tallyRef.current.total += 1
+    if (correct) tallyRef.current.correct += 1
+    // 問題が出て すぐ（1.5秒未満）に まちがえるのは 読まずに連打した可能性が高い
+    else if (elapsed < 1500) tallyRef.current.fastWrong += 1
     const conquer = correct && isConquerTarget()
     dispatch({
       type: 'ANSWER',
@@ -242,7 +293,7 @@ export default function ActivityPlayer({ task, onDone }) {
         </button>
         <ProgressDots total={questionCount} index={qIndex} />
         <div className="pill">
-          {isReviewTask ? '🎯 とっくん' : `${domain.emoji} ${domain.name}`}
+          {isReviewTask ? '🎯 とっくん' : `${domain.emoji} ${domainName(domain, state.grade)}`}
         </div>
       </div>
 

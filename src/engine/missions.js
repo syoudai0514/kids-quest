@@ -9,7 +9,7 @@
 // その分野の現在の習熟度から決める（＝アダプティブ）。
 // ============================================================
 
-import { availableDomains } from './activities.js'
+import { domainsForGrade } from './activities.js'
 
 export const QUESTIONS_PER_TASK = 4 // 1タスクの問題数（1〜2分目安）
 export const CORE_TASK_COUNT = 5 // コアのタスク数（約15分）
@@ -25,28 +25,31 @@ function makeTask(domainId, kind) {
   }
 }
 
-// 利用可能な分野を順番に割り当てる（よむ→かく→すうじ→…と自動ローテ）
-function pickDomainId(i) {
-  const doms = availableDomains()
+// その学年の教科を順番に割り当てる（こくご→かきとり→さんすう→…と自動ローテ）
+function pickDomainId(i, grade = 0) {
+  const doms = domainsForGrade(grade)
   if (!doms.length) return 'yomu'
   return doms[i % doms.length].id
 }
 
-export function buildCoreMission() {
+// コアミッションは その学年の教科を ひととおり まわす
+export function buildCoreMission(grade = 0) {
+  const doms = domainsForGrade(grade)
+  const count = Math.max(CORE_TASK_COUNT, Math.min(doms.length, 6))
   const tasks = []
-  for (let i = 0; i < CORE_TASK_COUNT; i++) {
-    tasks.push(makeTask(pickDomainId(i), 'core'))
+  for (let i = 0; i < count; i++) {
+    tasks.push(makeTask(pickDomainId(i, grade), 'core'))
   }
   return tasks
 }
 
-export function buildOkawariTask(index = 0) {
-  return makeTask(pickDomainId(index), 'okawari')
+export function buildOkawariTask(index = 0, grade = 0) {
+  return makeTask(pickDomainId(index, grade), 'okawari')
 }
 
 // 追加問題（解放チケット用）。少し短めにしてテンポを保つ。
-export function buildExtraTask(index = 0) {
-  const t = makeTask(pickDomainId(index), 'extra')
+export function buildExtraTask(index = 0, grade = 0) {
+  const t = makeTask(pickDomainId(index, grade), 'extra')
   t.questionCount = 3
   return t
 }

@@ -24,6 +24,60 @@ export function CountGrid({ emoji, n, mini = false }) {
   )
 }
 
+// アナログ時計。時計を「読む力」そのものを育てるので、
+// 目もり・数字・長短の針を はっきり描く。
+function Clock({ h, m }) {
+  const R = 100
+  const minAngle = (m / 60) * 360
+  const hourAngle = ((h % 12) / 12) * 360 + (m / 60) * 30
+  const hand = (angle, len, width, color) => {
+    const rad = ((angle - 90) * Math.PI) / 180
+    return (
+      <line
+        x1={R} y1={R}
+        x2={R + Math.cos(rad) * len} y2={R + Math.sin(rad) * len}
+        stroke={color} strokeWidth={width} strokeLinecap="round"
+      />
+    )
+  }
+  return (
+    <svg viewBox="0 0 200 200" width="min(46vh,74vw)" height="min(46vh,74vw)" role="img" aria-label={`${h}じ${m}ふん`}>
+      <circle cx={R} cy={R} r="94" fill="rgba(255,255,255,0.95)" stroke="#2b3a55" strokeWidth="6" />
+      {/* 分の目もり */}
+      {Array.from({ length: 60 }).map((_, i) => {
+        const a = ((i * 6 - 90) * Math.PI) / 180
+        const big = i % 5 === 0
+        const r1 = big ? 74 : 80
+        return (
+          <line
+            key={i}
+            x1={R + Math.cos(a) * r1} y1={R + Math.sin(a) * r1}
+            x2={R + Math.cos(a) * 86} y2={R + Math.sin(a) * 86}
+            stroke={big ? '#2b3a55' : '#9aa8bf'} strokeWidth={big ? 4 : 2}
+          />
+        )
+      })}
+      {/* 1〜12の数字 */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const n = i + 1
+        const a = ((n * 30 - 90) * Math.PI) / 180
+        return (
+          <text
+            key={n}
+            x={R + Math.cos(a) * 60} y={R + Math.sin(a) * 60 + 8}
+            textAnchor="middle" fontSize="22" fontWeight="900" fill="#2b3a55"
+          >
+            {n}
+          </text>
+        )
+      })}
+      {hand(hourAngle, 44, 9, '#2b3a55')}
+      {hand(minAngle, 68, 6, '#e5556e')}
+      <circle cx={R} cy={R} r="7" fill="#2b3a55" />
+    </svg>
+  )
+}
+
 function TenFrame({ filled }) {
   return (
     <div className="tenframe" aria-label={`10のフレーム、${filled}こ`}>
@@ -46,6 +100,7 @@ export default function QuestionVisual({ question }) {
   else if (v.kind === 'kanji') inner = <span className="q-kanji">{v.text}</span>
   else if (v.kind === 'bigtext') inner = <span className="q-bigtext">{v.text}</span>
   else if (v.kind === 'tenframe') inner = <TenFrame filled={v.filled} />
+  else if (v.kind === 'clock') inner = <Clock h={v.h} m={v.m} />
   else if (v.kind === 'groups') {
     inner = (
       <div className="groups-row">

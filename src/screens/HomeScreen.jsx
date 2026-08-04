@@ -17,7 +17,7 @@ import {
 } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
-import { GRADES, gradeOf } from '../data/grades.js'
+import { GRADES, gradeOf, MAX_GRADE } from '../data/grades.js'
 import { buildOkawariTask, buildExtraTask, OKAWARI_MAX } from '../engine/missions.js'
 import Monster from '../components/Monster.jsx'
 import { Starfield, useSpeakOnMount } from '../components/common.jsx'
@@ -50,6 +50,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const mastery = masteryProgress(state)
   const nMissed = missedCount(state)
   const weapon = equippedWeapon(state)
+  const testDone = !!state.testPassed?.[state.grade]?.passed
 
   const daily = state.daily
   const coreDone = daily.coreDone
@@ -85,18 +86,18 @@ export default function HomeScreen({ onStartTask, onGo }) {
   }
   const startOkawari = () => {
     sfx.swoosh()
-    onStartTask(buildOkawariTask(daily.okawariIndex))
+    onStartTask(buildOkawariTask(daily.okawariIndex, state.grade))
   }
   const startExtra = () => {
     sfx.tap()
-    speak('ついか もんだいに ちょうせん！ クリアすると バトルチケットが もらえるよ')
-    onStartTask(buildExtraTask(daily.extraIndex))
+    speak('ついか もんだいに ちょうせん！ せいかい率 70パーセント いじょうで バトルチケットが もらえるよ')
+    onStartTask(buildExtraTask(daily.extraIndex, state.grade))
   }
 
   const pickGrade = (g) => {
     if (g.id > state.gradeMax) {
       sfx.wrongSoft()
-      speak('いまの がくねんを マスターすると あくよ！ メーターを いっぱいに しよう')
+      speak('つぎの がくねんは、いまの がくねんの しょうまつテストに ごうかくすると あくよ！')
       return
     }
     sfx.pop()
@@ -162,7 +163,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
             className="muted"
             style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 'clamp(12px,2vw,15px)', marginBottom: 4 }}
           >
-            <span>{grade.emoji} {grade.short} マスターメーター</span>
+            <span>{grade.emoji} {grade.short} テストの じゅんび</span>
             <span>{Math.round(mastery * 100)}%</span>
           </div>
           <div className="hp-bar">
@@ -274,6 +275,27 @@ export default function HomeScreen({ onStartTask, onGo }) {
 
           <button
             className="menu-tile"
+            style={{ background: 'linear-gradient(180deg,#ffd7a1,#ffab4d)' }}
+            onClick={() => {
+              sfx.tap()
+              speak(
+                `${grade.name}の しょうまつテスト。ごうかくすると つぎの がくねんが あくよ！`
+              )
+              onGo('test')
+            }}
+          >
+            <span className="menu-tile__emoji">🎓</span>
+            <span className="menu-tile__label">しょうまつテスト</span>
+            <span className="menu-tile__sub">
+              {testDone
+                ? `ごうかくずみ（さいこう ${Math.round((state.testPassed[state.grade]?.rate || 0) * 100)}てん）`
+                : `ごうかくで ${state.grade < 6 ? gradeOf(state.grade + 1).short : 'そつぎょう'} かいほう`}
+            </span>
+            {!testDone && mastery >= 0.6 && <span className="notice-badge">!</span>}
+          </button>
+
+          <button
+            className="menu-tile"
             style={{ background: 'linear-gradient(180deg,#d5c4a1,#b89b6e)' }}
             onClick={() => {
               sfx.tap()
@@ -316,7 +338,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
               })}
             </div>
             <div className="muted" style={{ fontSize: 13, fontWeight: 700, textAlign: 'center', marginTop: 10, lineHeight: 1.6 }}>
-              マスターメーターを 100%にすると つぎの がくねんが あくよ！
+              しょうまつテストに ごうかく（80てん いじょう）すると、つぎの がくねんが あくよ！
             </div>
           </div>
         </div>

@@ -13,7 +13,7 @@ import React, { createContext, useContext, useEffect, useMemo, useReducer } from
 import { loadState, saveState, todayKey } from '../engine/storage.js'
 import { makeSkill, applyResult } from '../engine/difficulty.js'
 import { buildCoreMission } from '../engine/missions.js'
-import { DOMAINS } from '../engine/activities.js'
+import { DOMAINS, domainsForGrade } from '../engine/activities.js'
 import { getPartner } from '../data/monsters.js'
 import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
 import { MAX_GRADE, MASTER_LEVEL } from '../data/grades.js'
@@ -23,7 +23,7 @@ const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上�
 const MISSED_MAX = 14 // 復習キューの分野ごとの上限
 
 // コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
-const CONTENT_VERSION = 7
+const CONTENT_VERSION = 8
 
 // XP → 相棒レベル（ゆるやかな二次曲線）
 export function partnerLevel(xp) {
@@ -54,7 +54,7 @@ export function skillOf(state, domainId, grade = state.grade) {
 // 学年マスター進捗（0〜1）: 全分野の平均レベル / マスター基準
 export function masteryProgress(state) {
   const skills = skillsForGrade(state)
-  const doms = DOMAINS.filter((d) => d.available)
+  const doms = domainsForGrade(state.grade)
   const avg = doms.reduce((sum, d) => sum + Math.floor((skills[d.id] || makeSkill()).level), 0) / doms.length
   return Math.min(1, avg / MASTER_LEVEL)
 }
@@ -68,10 +68,10 @@ export function equippedWeapon(state) {
   return getWeapon(state.equipped)
 }
 
-function freshDaily(date) {
+function freshDaily(date, grade = 0) {
   return {
     date,
-    coreTasks: buildCoreMission(),
+    coreTasks: buildCoreMission(grade),
     coreIndex: 0,
     coreDone: false,
     tasksClearedToday: 0,
@@ -116,9 +116,12 @@ function createInitialState() {
     missed: {}, // { domainId: [itemKey,...] }
     weapons: ['w01'], // 持っている武器のid（さいしょの1本）
     equipped: 'w01', // そうび中の武器id
+    testPassed: {}, // { 学年: { rate, at } } 章末テストの合格記録
+    lessonSeen: {}, // { '学年:教科': 回数 } 授業を見た回数
+    domainAccuracy: {}, // { '学年:教科': {c, n} } 直近の正解率（おさらい授業の判定用）
     unlockedMonsters: [partner.id],
     totalClears: 0,
-    daily: freshDaily(today),
+    daily: freshDaily(today, 0),
     battle: freshBattle(today),
     settings: { tts: true, sfx: true, bgm: true },
     history: {},
@@ -166,7 +169,7 @@ function normalizeSaved(saved) {
   }
   base = rolloverIfNeeded(base)
   if (base.contentVersion !== CONTENT_VERSION) {
-    base = { ...base, contentVersion: CONTENT_VERSION, daily: freshDaily(todayKey()) }
+    base = { ...base, contentVersion: CONTENT_VERSION, daily: freshDaily(todayKey(), base.grade || 0) }
   }
 
   // 武器システム導入前のセーブには、これまでのがんばりに見合う武器を手わたす
@@ -183,7 +186,34 @@ function normalizeSaved(saved) {
   if (!base.equipped || !base.weapons.includes(base.equipped)) {
     base = { ...base, equipped: base.weapons[0] || null }
   }
+
+  // v4で増えた項目を、古いセーブにも用意する
+  if (!base.testPassed) base = { ...base, testPassed: {} }
+  if (!base.lessonSeen) base = { ...base, lessonSeen: {} }
+  if (!base.domainAccuracy) base = { ...base, domainAccuracy: {} }
+  // すでに先の学年へ進んでいた子が、テスト制になって戻されないようにする
+  //（これまでの解放は そのまま みとめる）
+  if (base.gradeMax > 0) {
+    const tp = { ...base.testPassed }
+    for (let g = 0; g < base.gradeMax; g++) {
+      if (!tp[g]) tp[g] = { rate: 1, passed: true, at: base.createdAt || Date.now(), grandfathered: true }
+    }
+    base = { ...base, testPassed: tp }
+  }
   return base
+}
+
+// その教科は「おさらい授業」を出したほうがよいか（直近の正解率が低い）
+export const REVIEW_LESSON_RATE = 0.6
+export function needsReviewLesson(state, domainId, grade = state.grade) {
+  const a = state.domainAccuracy?.[`${grade}:${domainId}`]
+  if (!a || a.n < 5) return false
+  return a.c / a.n < REVIEW_LESSON_RATE
+}
+
+// この学年の章末テストに合格しているか
+export function isGradePassed(state, grade) {
+  return !!state.testPassed?.[grade]?.passed
 }
 
 function rolloverIfNeeded(state) {
@@ -199,7 +229,7 @@ function rolloverIfNeeded(state) {
       ticketsEarned: state.daily.ticketsEarnedToday
     }
   }
-  return { ...state, history, daily: freshDaily(today), battle: freshBattle(today) }
+  return { ...state, history, daily: freshDaily(today, state.grade || 0), battle: freshBattle(today) }
 }
 
 function yesterdayKey() {
@@ -224,10 +254,20 @@ function reducer(state, action) {
 
     case 'SET_GRADE': {
       const g = Math.max(0, Math.min(state.gradeMax, action.grade))
+      if (g === state.grade) return state
+      // 学年で教科の構成が変わる（生活→理科・社会など）ので、
+      // 今日のミッションを その学年の教科で作り直す（進んだ数はそのまま）
+      const tasks = buildCoreMission(g)
       return {
         ...state,
         grade: g,
-        skills: state.skills[g] ? state.skills : { ...state.skills, [g]: freshSkills() }
+        skills: state.skills[g] ? state.skills : { ...state.skills, [g]: freshSkills() },
+        daily: {
+          ...state.daily,
+          coreTasks: tasks,
+          coreIndex: Math.min(state.daily.coreIndex, tasks.length),
+          coreDone: state.daily.coreIndex >= tasks.length
+        }
       }
     }
 
@@ -267,21 +307,17 @@ function reducer(state, action) {
         }
       }
 
-      // 学年マスター判定（全分野の平均レベルが基準以上 → 次の学年を解放）
-      let gradeMax = state.gradeMax
-      let pendingGradeUp = state.pendingGradeUp
-      if (correct && grade === gradeMax && gradeMax < MAX_GRADE) {
-        const doms = DOMAINS.filter((d) => d.available)
-        const avg =
-          doms.reduce((sum, d) => sum + Math.floor((newGradeSkills[d.id] || makeSkill()).level), 0) /
-          doms.length
-        if (avg >= MASTER_LEVEL) {
-          gradeMax = grade + 1
-          pendingGradeUp = grade + 1
-        }
-      }
+      // v4: 学年の解放は「章末テストの合格」で行うので、ここでは解放しない
+      //（メーターは いまどれくらい仕上がっているかの めやす表示に使う）
+
+      // 教科ごとの直近の正解率（「おさらい授業」を出すかの判定に使う）
+      const accKey = `${grade}:${domainId}`
+      const prevAcc = state.domainAccuracy[accKey] || { c: 0, n: 0 }
+      let acc = { c: prevAcc.c + (correct ? 1 : 0), n: prevAcc.n + 1 }
+      if (acc.n > 20) acc = { c: Math.round(acc.c / 2), n: Math.round(acc.n / 2) } // 直近を重く見る
 
       return {
+        domainAccuracy: { ...state.domainAccuracy, [accKey]: acc },
         ...state,
         skills: { ...state.skills, [grade]: newGradeSkills },
         xp: state.xp + xpGain,
@@ -289,8 +325,6 @@ function reducer(state, action) {
         lastActiveDate,
         missed,
         conquered,
-        gradeMax,
-        pendingGradeUp,
         daily: {
           ...state.daily,
           correctToday: state.daily.correctToday + (correct ? 1 : 0),
@@ -323,13 +357,27 @@ function reducer(state, action) {
       } else if (kind === 'okawari') {
         daily = { ...daily, okawariIndex: state.daily.okawariIndex + 1 }
       } else if (kind === 'extra') {
-        daily = {
-          ...daily,
-          extraIndex: state.daily.extraIndex + 1,
-          ticketsEarnedToday: state.daily.ticketsEarnedToday + 1
+        // チケットは「ちゃんと考えて解けたか」で決める。
+        // 適当に連打してチケットだけ取りに行くのを防ぐための仕組み。
+        //   正解率 70%以上 → チケット1まい
+        //   40%未満 or 明らかな連打 → チケットを1まい へらす（0未満にはしない）
+        //   その間 → チケットなし（ペナルティも なし）
+        const acc = typeof action.accuracy === 'number' ? action.accuracy : 1
+        const cheated = !!action.suspicious || acc < 0.4
+        daily = { ...daily, extraIndex: state.daily.extraIndex + 1 }
+        if (cheated) {
+          const lost = Math.min(1, battle.tickets)
+          battle = { ...battle, tickets: battle.tickets - lost }
+          celebration.ticketPenalty = lost > 0 ? lost : 0
+          celebration.ticketReason = 'てきとうに こたえたので チケットは もらえないよ'
+          celebration.xpGain = 1
+        } else if (acc >= 0.7) {
+          daily = { ...daily, ticketsEarnedToday: state.daily.ticketsEarnedToday + 1 }
+          battle = { ...battle, tickets: battle.tickets + 1 }
+          celebration.ticket = true
+        } else {
+          celebration.ticketReason = `せいかい率 ${Math.round(acc * 100)}％。70％いじょうで チケットが もらえるよ`
         }
-        battle = { ...battle, tickets: battle.tickets + 1 }
-        celebration.ticket = true
       }
 
       const newPlanet = planetUnlockedAt(totalClears)
@@ -412,6 +460,33 @@ function reducer(state, action) {
     case 'EQUIP_WEAPON': {
       if (!state.weapons.includes(action.weaponId)) return state
       return { ...state, equipped: action.weaponId }
+    }
+
+    // 章末テストの結果。合格したら次の学年を解放する（v4の解放条件）
+    case 'CHAPTER_TEST_RESULT': {
+      const g = action.grade
+      const prev = state.testPassed[g]
+      const best = Math.max(prev?.rate || 0, action.rate)
+      const testPassed = {
+        ...state.testPassed,
+        [g]: { rate: best, passed: (prev?.passed || false) || action.passed, at: Date.now() }
+      }
+      let gradeMax = state.gradeMax
+      let pendingGradeUp = state.pendingGradeUp
+      if (action.passed && g >= state.gradeMax && state.gradeMax < MAX_GRADE) {
+        gradeMax = g + 1
+        pendingGradeUp = g + 1
+      }
+      return { ...state, testPassed, gradeMax, pendingGradeUp }
+    }
+
+    // 授業を見た記録（何回目かで 見せる授業を変える）
+    case 'LESSON_SEEN': {
+      const key = `${action.grade}:${action.domainId}`
+      return {
+        ...state,
+        lessonSeen: { ...state.lessonSeen, [key]: (state.lessonSeen[key] || 0) + 1 }
+      }
     }
 
     // 保護者による先取り解放

@@ -15,12 +15,14 @@ import { sfx } from '../engine/sfx.js'
 
 export default function CelebrationOverlay({ celebration, onClose }) {
   const { dispatch } = useGame()
-  const { planet, monster, ticket, partnerStageUp, gradeUp } = celebration
-  const hasBig = planet || monster || ticket || partnerStageUp || gradeUp != null
+  const { planet, monster, ticket, partnerStageUp, gradeUp, ticketReason, ticketPenalty } = celebration
+  const hasBig =
+    planet || monster || ticket || partnerStageUp || gradeUp != null || !!ticketReason
   const newMonster = monster ? MONSTER_BY_ID[monster] : null
   const newGrade = gradeUp != null ? gradeOf(gradeUp) : null
 
   const title = useMemo(() => {
+    if (ticketReason) return ticketPenalty ? '🎟️ チケットが へったよ' : '🎟️ チケットは あと すこし'
     if (newGrade) return '🎓 レベルマスター！'
     if (monster) return 'あたらしい なかま！'
     if (planet) return 'あたらしい ほしに とうちゃく！'
@@ -45,6 +47,7 @@ export default function CelebrationOverlay({ celebration, onClose }) {
     if (partnerStageUp) lines.push('あいぼうが せいちょうしたよ！')
     if (ticket && !planet && !monster && !newGrade)
       lines.push('バトルチケットを ゲット！ いきぬきバトルが あそべるよ')
+    if (ticketReason) lines.push(ticketReason)
     speak(lines.join(' '))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -104,6 +107,20 @@ export default function CelebrationOverlay({ celebration, onClose }) {
 
         {ticket && !planet && !newMonster && !newGrade && (
           <div style={{ fontSize: 'clamp(60px,14vw,120px)' }}>🎟️</div>
+        )}
+
+        {/* チケットが もらえなかった／へった とき（不正な連打への やさしい注意） */}
+        {ticketReason && (
+          <>
+            <div style={{ fontSize: 'clamp(56px,12vw,100px)' }}>{ticketPenalty ? '😮' : '🤔'}</div>
+            <div style={{ fontSize: 'clamp(15px,2.9vw,20px)', fontWeight: 800, margin: '8px 0 4px', lineHeight: 1.6 }}>
+              {ticketReason}
+            </div>
+            <div className="muted" style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.6, marginBottom: 10 }}>
+              ゆっくり よんで こたえると、ちゃんと チケットが もらえるよ。
+              <br />まちがえても だいじょうぶ。よく 考えるのが 大事！
+            </div>
+          </>
         )}
 
         {(planet?.story || newMonster?.desc) && !newGrade && (

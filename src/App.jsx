@@ -15,6 +15,7 @@ import ActivityPlayer from './screens/ActivityPlayer.jsx'
 import BattleScreen from './screens/BattleScreen.jsx'
 import CollectionScreen from './screens/CollectionScreen.jsx'
 import EquipScreen from './screens/EquipScreen.jsx'
+import ChapterTestScreen from './screens/ChapterTestScreen.jsx'
 import ParentScreen from './screens/ParentScreen.jsx'
 import ReviewScreen from './screens/ReviewScreen.jsx'
 import CelebrationOverlay from './screens/CelebrationOverlay.jsx'
@@ -79,6 +80,7 @@ export default function App() {
           )}
           {screen === 'collection' && <CollectionScreen onBack={() => go('home')} />}
           {screen === 'equip' && <EquipScreen onBack={() => go('home')} />}
+          {screen === 'test' && <ChapterTestScreen onBack={() => go('home')} />}
           {screen === 'parent' && <ParentScreen onBack={() => go('home')} />}
 
           {state.pendingCelebration && (
