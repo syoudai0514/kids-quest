@@ -82,6 +82,18 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+// 直近に出した設問は しばらく除外する（固定文の問題バンクなので、
+// 単純な毎回ランダムだと 同じ問題が連続で出てしまうことがあった）
+let recentQs = []
+const RECENT_MAX = 3
+function pickFresh(pool) {
+  const avoid = new Set(recentQs)
+  const fresh = pool.filter((it) => !avoid.has(it.q))
+  const chosen = pick(fresh.length ? fresh : pool)
+  recentQs = [chosen.q, ...recentQs].slice(0, RECENT_MAX)
+  return chosen
+}
+
 // 小3〜6。その学年＋下の学年からも少し出す（復習になる）
 function poolForGrade(grade) {
   const g = Math.max(3, Math.min(6, grade))
@@ -115,7 +127,7 @@ export function generateRikaQuestion(params, reviewKey = null) {
     const it = BY_Q[reviewKey.slice(2)]
     if (it) return build(it, cc)
   }
-  return build(pick(poolForGrade(params.grade || 3)), cc)
+  return build(pickFresh(poolForGrade(params.grade || 3)), cc)
 }
 
 export const RIKA_COUNT = ALL.length
