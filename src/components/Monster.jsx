@@ -241,6 +241,36 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
   if (!monster) return null
   const colors = { ...monster.colors, ...(colorsOverride || {}) }
   const Art = ART[monster.art] || ArtBlob
+  const animation = pose === 'attack' ? 'monsterAttack 0.42s ease-out' : pose === 'hurt' ? 'monsterHurt 0.42s ease' : pose === 'win' ? 'monsterWin 0.7s ease-in-out infinite' : bounce ? 'twinkle 2.4s ease-in-out infinite' : 'none'
+
+  // 物語の最初に出会う6体は、生成した固有イラストを使用する。
+  // ID は変えず、既存の図鑑・捕獲・セーブデータと完全に互換にする。
+  if (monster.heroAsset) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          display: 'inline-block',
+          overflow: 'hidden',
+          borderRadius: '34%',
+          animation,
+          filter: 'drop-shadow(0 10px 12px rgba(0,0,0,0.35))',
+          ...style
+        }}
+        role="img"
+        aria-label={monster.name}
+      >
+        <img
+          src={monster.heroAsset}
+          alt=""
+          draggable="false"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+        />
+      </div>
+    )
+  }
+
   return (
     <svg
       viewBox="0 0 100 100"
@@ -248,7 +278,7 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
       height={size}
       style={{
         overflow: 'visible',
-        animation: pose === 'attack' ? 'monsterAttack 0.42s ease-out' : pose === 'hurt' ? 'monsterHurt 0.42s ease' : pose === 'win' ? 'monsterWin 0.7s ease-in-out infinite' : bounce ? 'twinkle 2.4s ease-in-out infinite' : 'none',
+        animation,
         filter: 'drop-shadow(0 10px 12px rgba(0,0,0,0.35))',
         ...style
       }}
