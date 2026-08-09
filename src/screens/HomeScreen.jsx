@@ -34,6 +34,18 @@ const PARTNER_LINES = [
   'バトルの とっくん しようよ！'
 ]
 
+function StatPill({ emoji, value, suffix = '' }) {
+  const valueText = String(value)
+  const digits = Math.min(7, valueText.replace(/\D/g, '').length || valueText.length)
+
+  return (
+    <div className={`pill stat-pill stat-pill--digits-${digits}`}>
+      <span className="stat-pill__emoji" aria-hidden="true">{emoji}</span>
+      <span className="stat-pill__value">{valueText}{suffix}</span>
+    </div>
+  )
+}
+
 function partnerColorOverride(state, stage) {
   const c = PARTNER_COLORS[state.partnerColor]
   if (!c || state.partnerColor === 'mint') return stage.colors
@@ -146,9 +158,9 @@ export default function HomeScreen({ onStartTask, onGo }) {
             </button>
           </div>
           <div className="home-topbar__row home-topbar__row--stats">
-            {state.streak > 1 && <div className="pill">🔥 {state.streak}にち</div>}
-            <div className="pill">✨ {state.xp}</div>
-            <div className="pill">✦ {state.starShards || 0}</div>
+            {state.streak > 1 && <StatPill emoji="🔥" value={state.streak} suffix="にち" />}
+            <StatPill emoji="✨" value={state.xp} />
+            <StatPill emoji="✦" value={state.starShards || 0} />
           </div>
         </div>
         <button
