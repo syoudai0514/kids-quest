@@ -255,6 +255,10 @@ export default function ParentScreen({ onBack }) {
   useEffect(() => subscribeNarratorStatus(setNarratorStatus), [])
 
   const prepareNarrator = async () => {
+    // 「端末のよみあげ」を選んでいても、準備ボタンは常に見せる。
+    // 押した時点でアプリ音声へ切り替えるため、保護者が設定順を
+    // 覚えておく必要がない。
+    if (state.settings.ttsVoice !== 'neural') setTtsOption('ttsVoice', 'neural')
     try {
       await prepareNarratorVoice()
       await speak('こんにちは。ほしぞらクエストの ナビだよ！ いっしょに たのしく まなぼう！')
@@ -411,38 +415,36 @@ export default function ParentScreen({ onBack }) {
                     </button>
                   ))}
                 </div>
-                {state.settings.ttsVoice !== 'device' && (
-                  <div className="card" style={{ padding: '10px 12px', background: '#f2edff', border: '1px solid #d7c8ff' }}>
-                    <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
-                      ✨ アプリのナビ音声（女性・日本語）
-                    </div>
-                    {narratorStatus.state === 'ready' ? (
-                      <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                        準備できました。このiPhoneの声とは別の、アプリ専用の声で読み上げます。
-                      </p>
-                    ) : narratorStatus.state === 'loading' ? (
-                      <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                        声を準備中… {narratorStatus.progress != null ? `${narratorStatus.progress}%` : '少し待ってね'}
-                      </p>
-                    ) : narratorStatus.state === 'error' ? (
-                      <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                        準備できませんでした。Wi-Fiにつないで、もう一度ためしてください。
-                      </p>
-                    ) : (
-                      <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                        最初の一回だけ声のデータを端末に準備します。以後は端末内で読み上げ、文章は外に送られません。
-                      </p>
-                    )}
-                    <button
-                      className="btn btn--primary"
-                      style={{ minHeight: 44, padding: '7px 14px', marginTop: 8 }}
-                      disabled={narratorStatus.state === 'loading'}
-                      onClick={prepareNarrator}
-                    >
-                      {narratorStatus.state === 'ready' ? '🔊 アプリの声を ためす' : narratorStatus.state === 'loading' ? '⏳ 準備中…' : '✨ ナビ音声を 準備する'}
-                    </button>
+                <div className="card" style={{ padding: '10px 12px', background: '#f2edff', border: '1px solid #d7c8ff' }}>
+                  <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
+                    ✨ アプリのナビ音声（女性・日本語）
                   </div>
-                )}
+                  {narratorStatus.state === 'ready' ? (
+                    <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
+                      準備できました。このiPhoneの声とは別の、アプリ専用の声で読み上げます。
+                    </p>
+                  ) : narratorStatus.state === 'loading' ? (
+                    <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
+                      声を準備中… {narratorStatus.progress != null ? `${narratorStatus.progress}%` : '少し待ってね'}
+                    </p>
+                  ) : narratorStatus.state === 'error' ? (
+                    <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
+                      準備できませんでした。Wi-Fiにつないで、もう一度ためしてください。
+                    </p>
+                  ) : (
+                    <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
+                      最初の一回だけ声のデータを端末に準備します。押すとアプリのナビ音声へ切り替わります。
+                    </p>
+                  )}
+                  <button
+                    className="btn btn--primary"
+                    style={{ minHeight: 44, padding: '7px 14px', marginTop: 8 }}
+                    disabled={narratorStatus.state === 'loading'}
+                    onClick={prepareNarrator}
+                  >
+                    {narratorStatus.state === 'ready' ? '🔊 アプリの声に 切り替えて ためす' : narratorStatus.state === 'loading' ? '⏳ 準備中…' : '✨ ナビ音声を 準備する'}
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ fontWeight: 800 }}>🗣️ よみあげの はやさ</span>
