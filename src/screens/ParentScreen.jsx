@@ -254,29 +254,19 @@ export default function ParentScreen({ onBack }) {
 
   useEffect(() => subscribeNarratorStatus(setNarratorStatus), [])
 
-  const prepareNarrator = async () => {
-    // 「端末のよみあげ」を選んでいても、準備ボタンは常に見せる。
-    // 押した時点でアプリ音声へ切り替えるため、保護者が設定順を
-    // 覚えておく必要がない。
-    if (state.settings.ttsVoice !== 'neural') setTtsOption('ttsVoice', 'neural')
+  const testSelectedVoice = async () => {
+    const voiceStyle = state.settings.ttsVoice === 'device' ? 'device' : 'neural'
     try {
-      await prepareNarratorVoice()
-      await speak('こんにちは。ほしぞらクエストの ナビだよ！ いっしょに たのしく まなぼう！')
+      if (voiceStyle === 'neural') await prepareNarratorVoice()
+      await speak(
+        voiceStyle === 'neural'
+          ? 'こんにちは。つくよみちゃんです。いっしょに、たのしく、まなぼうね。'
+          : 'こんにちは。アイフォンの読み上げ音声です。いっしょに、たのしく、まなぼうね。',
+        { voiceStyle }
+      )
     } catch (_) {
       // エラー内容は narratorStatus として画面に出す。
     }
-  }
-
-  const compareVoice = async (voiceStyle) => {
-    if (voiceStyle === 'neural' && state.settings.ttsVoice !== 'neural') {
-      setTtsOption('ttsVoice', 'neural')
-    }
-    await speak(
-      voiceStyle === 'neural'
-        ? 'ビー。こちらは、アプリ専用のつくよみちゃんです。数字の三と、星のかたちを、いっしょに学ぼう！'
-        : 'エー。こちらは、アイフォンの読み上げ音声です。数字の三と、星のかたちを、いっしょに学ぼう！',
-      { voiceStyle }
-    )
   }
 
   return (
@@ -411,7 +401,7 @@ export default function ParentScreen({ onBack }) {
                 </button>
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                <span style={{ fontWeight: 800 }}>🗣️ ナビの こえ</span>
+                <span style={{ fontWeight: 800 }}>🗣️ いま使う ナビの こえ</span>
                 <div className="row wrap" style={{ gap: 7 }}>
                   {[
                     ['アプリの ナビ音声', 'neural'],
@@ -429,20 +419,22 @@ export default function ParentScreen({ onBack }) {
                 </div>
                 <div className="card" style={{ padding: '10px 12px', background: '#f2edff', border: '1px solid #d7c8ff' }}>
                   <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
-                    ✨ アプリのナビ音声（女性・日本語）
+                    ✨ いま選ばれている声：{state.settings.ttsVoice === 'neural' ? 'つくよみちゃん（アプリの女性ナビ）' : 'iPhoneの読み上げ'}
                   </div>
                   {narratorStatus.state === 'ready' ? (
                     <div className="muted" style={{ fontSize: 12, lineHeight: 1.45 }}>
                       <p style={{ margin: 0 }}>
-                        {narratorStatus.storage === 'cached'
-                          ? '端末に保存した声で準備できました。大きな再ダウンロードはありません。'
-                          : '準備できました。下のテストで、実際にアプリ専用の声が鳴ったか確認できます。'}
+                        {state.settings.ttsVoice === 'device'
+                          ? '今はiPhoneの読み上げを使います。上の「アプリの ナビ音声」を押すと、つくよみちゃんへ切り替わります。'
+                          : narratorStatus.storage === 'cached'
+                            ? '端末に保存した声を使います。大きな再ダウンロードはありません。'
+                            : 'つくよみちゃんを使う準備ができました。下のボタンで聞けます。'}
                       </p>
                       {narratorStatus.playback === 'app' && (
                         <p style={{ margin: '5px 0 0', color: '#167246', fontWeight: 800 }}>
-                          ✅ 実再生を確認：つくよみちゃん
+                          ✅ つくよみちゃんを再生中／再生しました
                           {narratorStatus.audio
-                            ? `（${narratorStatus.audio.seconds}秒・再生状態 ${narratorStatus.audio.context}）`
+                            ? `（${narratorStatus.audio.seconds}秒・${narratorStatus.audio.context}）`
                             : ''}
                         </p>
                       )}
@@ -473,30 +465,14 @@ export default function ParentScreen({ onBack }) {
                   )}
                   <button
                     className="btn btn--primary"
-                    style={{ minHeight: 44, padding: '7px 14px', marginTop: 8 }}
+                    style={{ minHeight: 50, padding: '7px 14px', marginTop: 8, width: '100%' }}
                     disabled={narratorStatus.state === 'loading'}
-                    onClick={prepareNarrator}
+                    onClick={testSelectedVoice}
                   >
-                    {narratorStatus.state === 'ready' ? '🔊 アプリ専用の声を テストする' : narratorStatus.state === 'loading' ? '⏳ 準備中…' : '✨ ナビ音声を 準備する'}
+                    {narratorStatus.state === 'loading'
+                      ? '⏳ 声を準備中…'
+                      : `🔊 いま選んでいる「${state.settings.ttsVoice === 'neural' ? 'つくよみちゃん' : 'iPhoneの声'}」を聞く`}
                   </button>
-                  {narratorStatus.state === 'ready' && (
-                    <div className="row wrap" style={{ gap: 7, marginTop: 8 }}>
-                      <button
-                        className="btn btn--ghost"
-                        style={{ minHeight: 44, padding: '7px 12px' }}
-                        onClick={() => compareVoice('device')}
-                      >
-                        A：iPhoneの声
-                      </button>
-                      <button
-                        className="btn btn--primary"
-                        style={{ minHeight: 44, padding: '7px 12px' }}
-                        onClick={() => compareVoice('neural')}
-                      >
-                        B：つくよみちゃん
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>

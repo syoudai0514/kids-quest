@@ -37,9 +37,13 @@ const piper = await PiperPlus.initialize({
 })
 
 const text = 'こちらは、アプリ専用のつくよみちゃんです。'
-const result = await piper.synthesize(text, { language: 'ja', lengthScale: 1 })
-const slowResult = await piper.synthesize(text, { language: 'ja', lengthScale: 0.98 / 0.84 })
-const fastResult = await piper.synthesize(text, { language: 'ja', lengthScale: 0.98 / 1.08 })
+// 長さだけを検証するため、推論時のランダムな抑揚は固定する。
+// これを指定しないと、正しいlengthScaleでも波形の揺らぎで秒数の順序が
+// たまたま入れ替わり、再生とは無関係な不安定テストになる。
+const fixedVoice = { language: 'ja', noiseScale: 0, noiseW: 0 }
+const result = await piper.synthesize(text, { ...fixedVoice, lengthScale: 1 })
+const slowResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: 0.98 / 0.84 })
+const fastResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: 0.98 / 1.08 })
 
 assert.ok(result.samples instanceof Float32Array)
 assert.ok(result.samples.length > result.sampleRate, 'at least one second of speech is required')

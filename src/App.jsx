@@ -35,7 +35,9 @@ export default function App() {
       unlockSfx()
       if (stateRef.current.settings.bgm) setBgmEnabled(true)
     }
-    window.addEventListener('pointerdown', unlock, { once: true })
+    // iPhone は「最初の1回」だけでなく、画面を開き直した後もタップ中に
+    // 音声出力を解錠する必要があることがある。毎タップで安全に再確認する。
+    window.addEventListener('pointerdown', unlock)
     return () => window.removeEventListener('pointerdown', unlock)
   }, [])
 

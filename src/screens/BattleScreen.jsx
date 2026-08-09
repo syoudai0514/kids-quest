@@ -84,6 +84,16 @@ export default function BattleScreen({ onBack }) {
   const startedRef = useRef(false)
   const wasNewCatchRef = useRef(false)
   const dropRef = useRef(null) // このバトルで手に入れた そうび
+  const [compactBattle, setCompactBattle] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(orientation: portrait)').matches
+  )
+
+  useEffect(() => {
+    const update = () => setCompactBattle(window.matchMedia('(orientation: portrait)').matches)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   useEffect(() => {
     if (mode === 'locked') {
@@ -332,10 +342,10 @@ export default function BattleScreen({ onBack }) {
 
   // ---- イントロ / 戦闘 / 捕獲 ----
   return (
-    <div className="screen fade-in">
+    <div className="screen fade-in battle-screen">
       <Starfield count={14} />
       <div className="topbar">
-        <button className="btn btn--ghost" style={{ minHeight: 60 }} onClick={onBack}>
+        <button className="btn btn--ghost battle-back" onClick={onBack}>
           🏠
         </button>
         <div className="pill">⚔️ バトル</div>
@@ -370,7 +380,7 @@ export default function BattleScreen({ onBack }) {
           >
             {dmgFloat?.side === 'enemy' && <div className="dmg-float">{dmgFloat.text}</div>}
             {mode === 'catch' && <div className="ring-throw" />}
-            <Monster monster={enemy} size={158} bounce={mode === 'intro'} pose={pose.enemy} />
+            <Monster monster={enemy} size={compactBattle ? 108 : 158} bounce={mode === 'intro'} pose={pose.enemy} />
           </div>
         </div>
 
@@ -378,7 +388,7 @@ export default function BattleScreen({ onBack }) {
         <div className="battle-fighter battle-fighter--partner" style={{ alignSelf: 'flex-start', textAlign: 'center', marginLeft: '5vw', position: 'relative' }}>
           <div style={{ position: 'relative', animation: shake === 'partner' ? 'nudge 0.35s ease' : 'none' }}>
             {dmgFloat?.side === 'partner' && <div className="dmg-float">{dmgFloat.text}</div>}
-            <Monster monster={partner} colorsOverride={colors} size={170} bounce={mode === 'intro'} pose={pose.partner} />
+            <Monster monster={partner} colorsOverride={colors} size={compactBattle ? 112 : 170} bounce={mode === 'intro'} pose={pose.partner} />
           </div>
           <div style={{ fontWeight: 900, margin: '2px 0' }}>
             {stage.name} <span className="type-chip">Lv.{level}</span>

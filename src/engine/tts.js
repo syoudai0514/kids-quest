@@ -6,7 +6,7 @@
 // モデルは初回だけ端末へ保存され、文章は外部の読み上げサーバーへ送られない。
 // ============================================================
 
-import { getCtx, unlockAudio } from './audioCtx.js'
+import { unlockAudio } from './audioCtx.js'
 import { loadCachedNarratorModel, ortWithCachedModel } from './narratorCache.js'
 
 let enabled = true
@@ -17,7 +17,8 @@ let voiceStyle = 'neural'
 let requestId = 0
 let pendingTimer = null
 let activeResolve = null
-let activeSource = null
+let activeMedia = null
+let activeMediaUrl = null
 
 // --- 端末内のニューラル音声モデル ---
 let narrator = null
@@ -182,10 +183,51 @@ function splitForNarrator(text) {
 }
 
 function stopNarratorAudio() {
-  if (!activeSource) return
-  try { activeSource.stop() } catch (_) { /* already stopped */ }
-  activeSource.disconnect()
-  activeSource = null
+  if (activeMedia) {
+    try {
+      activeMedia.pause()
+      activeMedia.removeAttribute('src')
+      activeMedia.load()
+    } catch (_) { /* already stopped */ }
+    activeMedia = null
+  }
+  if (activeMediaUrl) {
+    URL.revokeObjectURL(activeMediaUrl)
+    activeMediaUrl = null
+  }
+}
+
+// iPhone の消音モードでは Web Audio (AudioContext) が無音になることがある。
+// つくよみちゃんの波形は WAV にして通常の <audio> 経路で流すと、端末の
+// 「メディア音量」として再生できる。これなら設定画面の再生状態だけが
+// running なのに耳には何も聞こえない、という状態を避けられる。
+function wavUrlFromSamples(samples, sampleRate) {
+  const bytesPerSample = 2
+  const dataSize = samples.length * bytesPerSample
+  const buffer = new ArrayBuffer(44 + dataSize)
+  const view = new DataView(buffer)
+  const put = (offset, text) => {
+    for (let i = 0; i < text.length; i += 1) view.setUint8(offset + i, text.charCodeAt(i))
+  }
+  put(0, 'RIFF')
+  view.setUint32(4, 36 + dataSize, true)
+  put(8, 'WAVE')
+  put(12, 'fmt ')
+  view.setUint32(16, 16, true)
+  view.setUint16(20, 1, true)
+  view.setUint16(22, 1, true)
+  view.setUint32(24, sampleRate, true)
+  view.setUint32(28, sampleRate * bytesPerSample, true)
+  view.setUint16(32, bytesPerSample, true)
+  view.setUint16(34, 16, true)
+  put(36, 'data')
+  view.setUint32(40, dataSize, true)
+  let offset = 44
+  for (let i = 0; i < samples.length; i += 1, offset += 2) {
+    const sample = Math.max(-1, Math.min(1, samples[i] || 0))
+    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
+  }
+  return URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }))
 }
 
 async function playNarratorResult(result, id, loudness) {
@@ -202,44 +244,50 @@ async function playNarratorResult(result, id, loudness) {
   }
   if (peak < 0.001) throw new Error('専用音声の波形が無音でした')
 
-  const ctx = getCtx()
-  if (!ctx) throw new Error('専用音声を再生する機能がありません')
-  if (ctx.state === 'suspended') await ctx.resume()
-  if (ctx.state !== 'running') throw new Error(`音声再生が停止中です（${ctx.state}）`)
   if (id !== requestId || !enabled) return false
 
   return new Promise((resolve, reject) => {
     stopNarratorAudio()
-    const buffer = ctx.createBuffer(1, samples.length, sampleRate)
-    buffer.copyToChannel(samples, 0)
-    const source = ctx.createBufferSource()
-    const gain = ctx.createGain()
-    gain.gain.value = loudness
-    source.buffer = buffer
-    source.connect(gain)
-    gain.connect(ctx.destination)
-    activeSource = source
-    source.onended = () => {
-      if (activeSource === source) activeSource = null
-      resolve(true)
+    const url = wavUrlFromSamples(samples, sampleRate)
+    activeMediaUrl = url
+    const media = new Audio()
+    media.preload = 'auto'
+    media.playsInline = true
+    media.volume = loudness
+    media.src = url
+    activeMedia = media
+    let started = false
+    const cleanup = () => {
+      if (activeMedia === media) activeMedia = null
+      if (activeMediaUrl === url) {
+        URL.revokeObjectURL(url)
+        activeMediaUrl = null
+      }
     }
-    try {
-      source.start()
-      // 「合成できた」ではなく、iPhone の AudioContext が running の状態で
-      // 有効な波形を start できた時だけ専用音声として表示する。
+    media.onplaying = () => {
+      if (id !== requestId || !enabled || started) return
+      started = true
+      // 「合成できた」ではなく、iPhoneの通常の音声プレーヤーが実際に
+      // playing イベントを返した時だけ専用音声として表示する。
       narratorPlayback = 'app'
       narratorError = null
       narratorAudio = {
         seconds: Math.round((samples.length / sampleRate) * 10) / 10,
         peak: Math.round(peak * 100) / 100,
-        context: ctx.state
+        context: 'media-playing'
       }
       narratorDetail = 'つくよみちゃんの音声を再生しました'
       notifyNarrator()
-    } catch (error) {
-      if (activeSource === source) activeSource = null
-      reject(error)
     }
+    media.onended = () => { cleanup(); resolve(true) }
+    media.onerror = () => {
+      cleanup()
+      reject(new Error('iPhoneの音声プレーヤーで再生できませんでした'))
+    }
+    media.play().catch((error) => {
+      cleanup()
+      reject(error)
+    })
   })
 }
 
