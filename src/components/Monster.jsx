@@ -4,7 +4,7 @@
 // 既存IPに頼らない独自デザイン。
 // ============================================================
 
-import React from 'react'
+import React, { useState } from 'react'
 
 function Eyes({ c, cx1 = 38, cx2 = 62, cy = 46, r = 7 }) {
   return (
@@ -242,10 +242,18 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
   const colors = { ...monster.colors, ...(colorsOverride || {}) }
   const Art = ART[monster.art] || ArtBlob
   const animation = pose === 'attack' ? 'monsterAttack 0.42s ease-out' : pose === 'hurt' ? 'monsterHurt 0.42s ease' : pose === 'win' ? 'monsterWin 0.7s ease-in-out infinite' : bounce ? 'twinkle 2.4s ease-in-out infinite' : 'none'
+  const [heroImageFailed, setHeroImageFailed] = useState(false)
+
+  // GitHub Pages ではアプリが /kids-quest/ 配下で公開される。
+  // `/monsters/...` のような先頭スラッシュ付きURLだと github.io の最上位を
+  // 見にいってしまうため、Vite が公開先ごとに設定する BASE_URL を必ず通す。
+  const heroAssetUrl = monster.heroAsset
+    ? `${import.meta.env.BASE_URL}${monster.heroAsset.replace(/^\//, '')}`
+    : null
 
   // 物語の最初に出会う6体は、生成した固有イラストを使用する。
   // ID は変えず、既存の図鑑・捕獲・セーブデータと完全に互換にする。
-  if (monster.heroAsset) {
+  if (monster.heroAsset && !heroImageFailed) {
     return (
       <div
         style={{
@@ -262,9 +270,10 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
         aria-label={monster.name}
       >
         <img
-          src={monster.heroAsset}
+          src={heroAssetUrl}
           alt=""
           draggable="false"
+          onError={() => setHeroImageFailed(true)}
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
         />
       </div>
