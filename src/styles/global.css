@@ -148,6 +148,8 @@ body {
   font-weight: 900;
   letter-spacing: 0.04em;
 }
+.parent-title { flex: 1; min-width: 0; }
+.parent-back { flex: 0 0 auto; white-space: nowrap; }
 
 /* ホームだけはDynamic Islandの下から始める。PWAでは環境によって
    safe-area-inset-top が 0 になるため、iPhone縦画面用の最低余白も持たせる。 */
@@ -902,6 +904,35 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .parent-screen {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .parent-screen .topbar {
+    justify-content: flex-start;
+    padding: 4px 2px 8px;
+  }
+  .parent-screen .parent-back {
+    min-height: 48px !important;
+    padding: 8px 12px;
+    font-size: 18px;
+  }
+  .parent-screen .parent-title {
+    font-size: 19px;
+    line-height: 1.2;
+    overflow-wrap: normal;
+  }
+  .parent-screen .scroll-y {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+  .parent-screen .card {
+    padding: 13px;
+  }
 }
 .muted {
   color: var(--text-dim);
