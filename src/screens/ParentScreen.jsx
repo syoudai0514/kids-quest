@@ -258,7 +258,7 @@ export default function ParentScreen({ onBack }) {
   const testSelectedVoice = async () => {
     const voiceStyle = state.settings.ttsVoice === 'device' ? 'device' : 'neural'
     try {
-      if (voiceStyle === 'neural') await prepareNarratorVoice()
+      if (voiceStyle === 'neural') await prepareNarratorVoice({ allowDownload: false })
       await speak(
         voiceStyle === 'neural'
           ? 'こんにちは。つくよみちゃんです。いっしょに、たのしく、まなぼうね。'
@@ -270,14 +270,21 @@ export default function ParentScreen({ onBack }) {
     }
   }
 
+  const downloadNarratorVoice = async () => {
+    try {
+      await prepareNarratorVoice({ allowDownload: true })
+    } catch (_) {
+      // 詳細は narratorStatus として同じカードに表示する。
+    }
+  }
+
   return (
-    <div className="screen fade-in">
+    <div className="screen fade-in parent-screen">
       <div className="topbar">
-        <button className="btn btn--ghost" style={{ minHeight: 56 }} onClick={onBack}>
+        <button className="btn btn--ghost parent-back" style={{ minHeight: 56 }} onClick={onBack}>
           ← もどる
         </button>
-        <div className="topbar__title">👨‍👩‍👧 おうちのひとへ</div>
-        <div style={{ width: 60 }} />
+        <div className="topbar__title parent-title">👨‍👩‍👧 おうちのひとへ</div>
       </div>
 
       <div className="scroll-y" style={{ flex: 1, padding: '4px 8px 28px' }}>
@@ -459,19 +466,35 @@ export default function ParentScreen({ onBack }) {
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
                       準備できませんでした。Wi‑Fiにつないで、もう一度ためしてください。{narratorStatus.error ? `（${narratorStatus.error}）` : ''}
                     </p>
+                  ) : narratorStatus.state === 'not-downloaded' ? (
+                    <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
+                      つくよみちゃんは、まだ端末にありません。<b>声を選んだだけではダウンロードしません。</b>
+                      Wi‑Fiで、下のボタンから必要なときだけ保存できます（約38MB）。
+                    </p>
                   ) : (
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                      最初の一回だけ声のデータを端末に保存します。2回目から大きな再ダウンロードはしません。
+                      保存済みのつくよみちゃんを確認しています。必要な通信は、下のダウンロード操作をしたときだけです。
                     </p>
+                  )}
+                  {state.settings.ttsVoice === 'neural' && narratorStatus.state === 'not-downloaded' && (
+                    <button
+                      className="btn btn--primary"
+                      style={{ minHeight: 52, padding: '8px 14px', marginTop: 8, width: '100%' }}
+                      onClick={downloadNarratorVoice}
+                    >
+                      ⬇️ つくよみちゃんを ダウンロード（約38MB）
+                    </button>
                   )}
                   <button
                     className="btn btn--primary"
                     style={{ minHeight: 50, padding: '7px 14px', marginTop: 8, width: '100%' }}
-                    disabled={narratorStatus.state === 'loading'}
+                    disabled={narratorStatus.state === 'loading' || (state.settings.ttsVoice === 'neural' && narratorStatus.state === 'not-downloaded')}
                     onClick={testSelectedVoice}
                   >
                     {narratorStatus.state === 'loading'
                       ? '⏳ 声を準備中…'
+                      : state.settings.ttsVoice === 'neural' && narratorStatus.state === 'not-downloaded'
+                        ? '⬆️ 先にダウンロードしてください'
                       : `🔊 いま選んでいる「${state.settings.ttsVoice === 'neural' ? 'つくよみちゃん' : 'iPhoneの声'}」を聞く`}
                   </button>
                 </div>
