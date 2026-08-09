@@ -20,6 +20,9 @@ let pendingTimer = null
 let activeResolve = null
 let activeMedia = null
 let activeMediaUrl = null
+// iOSで pause() した <audio> は ended を発火しない。ここで待機中の
+// Promise を必ず完了させないと、キャンセルした読み上げの波形が残り続ける。
+let stopActiveNarratorPlayback = null
 
 // --- 端末内のニューラル音声モデル ---
 let narrator = null
@@ -169,21 +172,42 @@ export function normalizeForSpeech(text) {
 }
 
 function splitForNarrator(text) {
-  // 長い説明を一息に推論すると待ち時間が伸びるため、自然な区切りで分ける。
+  // iPhone のPWAは、大きな推論結果（Float32Array）とWAV用バッファを同時に
+  // 保持するとOSに終了されることがある。長い説明を一息に作らず、小さな
+  // かたまりごとに「合成→再生→解放」する。内容は省略しない。
+  const maxChars = 24
   const parts = text.match(/[^、。！？!?]+[、。！？!?]?/g) || [text]
   const result = []
   let current = ''
+  const pushChunks = (value) => {
+    for (let start = 0; start < value.length; start += maxChars) {
+      result.push(value.slice(start, start + maxChars))
+    }
+  }
   parts.forEach((part) => {
-    if (current && current.length + part.length > 58) {
-      result.push(current)
-      current = part
-    } else current += part
+    if (current && current.length + part.length > maxChars) {
+      pushChunks(current)
+      current = ''
+    }
+    current += part
+    if (current.length >= maxChars) {
+      pushChunks(current)
+      current = ''
+    }
   })
-  if (current) result.push(current)
+  if (current) pushChunks(current)
   return result
 }
 
 function stopNarratorAudio() {
+  // cancelSpeak() で次の音声へ切り替えた際、古い synthesize() が永遠に
+  // await のまま残らないよう先に解決する。これが低速音声でのメモリ累積を防ぐ。
+  if (stopActiveNarratorPlayback) {
+    const stop = stopActiveNarratorPlayback
+    stopActiveNarratorPlayback = null
+    stop()
+    return
+  }
   if (activeMedia) {
     try {
       activeMedia.pause()
@@ -258,13 +282,43 @@ async function playNarratorResult(result, id, loudness) {
     media.src = url
     activeMedia = media
     let started = false
+    let settled = false
+    let watchdog = null
     const cleanup = () => {
+      if (watchdog) clearTimeout(watchdog)
+      watchdog = null
+      media.onplaying = null
+      media.onended = null
+      media.onerror = null
       if (activeMedia === media) activeMedia = null
       if (activeMediaUrl === url) {
         URL.revokeObjectURL(url)
         activeMediaUrl = null
       }
     }
+    const finish = (played) => {
+      if (settled) return
+      settled = true
+      if (activeMedia === media && !media.paused) {
+        try {
+          media.pause()
+          media.removeAttribute('src')
+          media.load()
+        } catch (_) { /* already stopped */ }
+      }
+      cleanup()
+      if (stopActiveNarratorPlayback === stop) stopActiveNarratorPlayback = null
+      resolve(played)
+    }
+    const fail = (error) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      if (stopActiveNarratorPlayback === stop) stopActiveNarratorPlayback = null
+      reject(error)
+    }
+    const stop = () => finish(false)
+    stopActiveNarratorPlayback = stop
     media.onplaying = () => {
       if (id !== requestId || !enabled || started) return
       started = true
@@ -280,15 +334,16 @@ async function playNarratorResult(result, id, loudness) {
       narratorDetail = 'つくよみちゃんの音声を再生しました'
       notifyNarrator()
     }
-    media.onended = () => { cleanup(); resolve(true) }
+    media.onended = () => finish(true)
     media.onerror = () => {
-      cleanup()
-      reject(new Error('iPhoneの音声プレーヤーで再生できませんでした'))
+      fail(new Error('iPhoneの音声プレーヤーで再生できませんでした'))
     }
     media.play().catch((error) => {
-      cleanup()
-      reject(error)
+      fail(error)
     })
+    // iOSがバックグラウンド化などで ended を返さなくても、音声待機を
+    // 永久に残さない。通常の再生を途中で止めないよう余裕を持たせる。
+    watchdog = setTimeout(() => finish(false), Math.max(8000, (samples.length / sampleRate) * 1000 + 3000))
   })
 }
 
