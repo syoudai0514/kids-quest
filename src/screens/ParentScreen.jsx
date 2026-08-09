@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useGame, skillOf } from '../state/GameContext.jsx'
-import { DOMAINS } from '../engine/activities.js'
+import { DOMAINS, domainName } from '../engine/activities.js'
 import { trendLabel } from '../engine/difficulty.js'
 import {
   getNarratorStatus,
