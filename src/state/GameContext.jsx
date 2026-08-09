@@ -19,6 +19,7 @@ import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
 import { MAX_GRADE, MASTER_LEVEL } from '../data/grades.js'
 import { getWeapon, weaponScore, starterWeaponsFor } from '../data/weapons.js'
 import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engine/srs.js'
+import { DEFAULT_TTS_RATE, migrateTtsRate } from '../config/ttsRates.js'
 import { snapshotQuestion } from '../engine/reviewKey.js'
 
 const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
@@ -138,7 +139,7 @@ function createInitialState() {
     daily: freshDaily(today, 0),
     battle: freshBattle(today),
     // neural は端末の声ではなく、アプリ内で動く女性ナビ音声。
-    settings: { tts: true, ttsRate: 0.96, ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true },
+    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true },
     history: {},
     pendingCelebration: null
   }
@@ -151,7 +152,8 @@ function settingsForCurrentVersion(savedSettings) {
     ...(savedSettings || {}),
     // 以前の「gentle / lively」は同じ端末音声を指していたため、
     // 本物のアプリ専用ナビへ自動移行する。
-    ttsVoice: savedSettings?.ttsVoice === 'device' ? 'device' : 'neural'
+    ttsVoice: savedSettings?.ttsVoice === 'device' ? 'device' : 'neural',
+    ttsRate: migrateTtsRate(savedSettings?.ttsRate)
   }
 }
 

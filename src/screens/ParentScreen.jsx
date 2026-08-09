@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react'
 import { useGame, skillOf } from '../state/GameContext.jsx'
 import { DOMAINS, domainName } from '../engine/activities.js'
 import { trendLabel } from '../engine/difficulty.js'
+import { TTS_RATE_PRESETS } from '../config/ttsRates.js'
 import {
   getNarratorStatus,
   prepareNarratorVoice,
@@ -477,13 +478,9 @@ export default function ParentScreen({ onBack }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ fontWeight: 800 }}>🗣️ よみあげの はやさ</span>
-                <span className="muted" style={{ fontSize: 12 }}>つくよみちゃんにも反映されます</span>
+                <span className="muted" style={{ fontSize: 12 }}>ゆっくり＝かなりゆっくり ／ ふつう＝標準 ／ はやめ＝かなり早め</span>
                 <div className="row wrap" style={{ gap: 7 }}>
-                  {[
-                    ['ゆっくり', 0.84],
-                    ['ふつう', 0.96],
-                    ['はやめ', 1.08]
-                  ].map(([label, value]) => (
+                  {TTS_RATE_PRESETS.map(({ label, value }) => (
                     <button
                       key={label}
                       className={'btn ' + (state.settings.ttsRate === value ? 'btn--primary' : 'btn--ghost')}

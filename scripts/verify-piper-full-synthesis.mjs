@@ -41,29 +41,29 @@ const text = 'こちらは、アプリ専用のつくよみちゃんです。'
 // これを指定しないと、正しいlengthScaleでも波形の揺らぎで秒数の順序が
 // たまたま入れ替わり、再生とは無関係な不安定テストになる。
 const fixedVoice = { language: 'ja', noiseScale: 0, noiseW: 0 }
-const result = await piper.synthesize(text, { ...fixedVoice, lengthScale: 1 })
-const slowResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: 0.98 / 0.84 })
-const fastResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: 0.98 / 1.08 })
+const normalResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: 0.98 / 0.8 })
+const slowResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: 0.98 / 0.6 })
+const fastResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: 0.98 / 1.2 })
 
-assert.ok(result.samples instanceof Float32Array)
-assert.ok(result.samples.length > result.sampleRate, 'at least one second of speech is required')
-const peak = result.samples.reduce((max, value) => Math.max(max, Math.abs(value)), 0)
+assert.ok(normalResult.samples instanceof Float32Array)
+assert.ok(normalResult.samples.length > normalResult.sampleRate, 'at least one second of speech is required')
+const peak = normalResult.samples.reduce((max, value) => Math.max(max, Math.abs(value)), 0)
 assert.ok(peak > 0.001, 'generated speech must not be silent')
 const speedSeconds = {
   slow: slowResult.samples.length / slowResult.sampleRate,
-  normal: result.samples.length / result.sampleRate,
+  normal: normalResult.samples.length / normalResult.sampleRate,
   fast: fastResult.samples.length / fastResult.sampleRate
 }
 console.log('speed durations', speedSeconds)
 assert.ok(
-  slowResult.samples.length > result.samples.length && result.samples.length > fastResult.samples.length,
+  slowResult.samples.length > normalResult.samples.length && normalResult.samples.length > fastResult.samples.length,
   'the three narrator speed choices must produce slow > normal > fast durations'
 )
 
 console.log(JSON.stringify({
-  samples: result.samples.length,
-  sampleRate: result.sampleRate,
-  seconds: result.samples.length / result.sampleRate,
+  samples: normalResult.samples.length,
+  sampleRate: normalResult.sampleRate,
+  seconds: normalResult.samples.length / normalResult.sampleRate,
   peak,
   speedSeconds
 }))

@@ -84,6 +84,10 @@ export default function ActivityPlayer({ task, onDone }) {
   const wrongCountRef = useRef(0)
   const firstAttemptRef = useRef(true)
   const comboRef = useRef(0)
+  // 正誤コメントを最後まで聞いてから次問へ進めるための識別子。
+  // 以前は固定の 1.25 秒後に遷移しており、長いナビ音声を途中で止めていた。
+  const feedbackSpeechRef = useRef(0)
+  const feedbackTimerRef = useRef(null)
   const domainIdRef = useRef(task.domainId)
   const stateRef = useRef(state)
   stateRef.current = state
@@ -99,6 +103,8 @@ export default function ActivityPlayer({ task, onDone }) {
   const domain = DOMAIN_BY_ID[currentDomainId()]
 
   const makeQuestion = () => {
+    feedbackSpeechRef.current += 1
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
     const domainId = currentDomainId()
     domainIdRef.current = domainId
     const dom = DOMAIN_BY_ID[domainId]
@@ -149,7 +155,11 @@ export default function ActivityPlayer({ task, onDone }) {
   }, [qIndex, inLesson])
 
   // 画面を離れたときに、前の問題文を次画面まで読ませない。
-  useEffect(() => () => cancelSpeak(), [])
+  useEffect(() => () => {
+    feedbackSpeechRef.current += 1
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
+    cancelSpeak()
+  }, [])
 
   // ---- 授業（勉強ターン）----
   if (inLesson && lessonPlan?.lesson) {
@@ -187,9 +197,25 @@ export default function ActivityPlayer({ task, onDone }) {
               ? 'ぜんぶ できた！ バトルチケットを ゲット！'
               : 'ぜんぶ とけたね！ つぎも ゆっくり かんがえて いこう！'
             : 'タスク クリア！ よくがんばったね！'
-      speak(line)
-      setTimeout(onDone, 1100)
+      // クリア時の言葉も、画面を切り替える前に最後まで聞かせる。
+      void speak(line).finally(() => {
+        feedbackTimerRef.current = setTimeout(onDone, 500)
+      })
     }
+  }
+
+  const advanceAfterFeedback = (line, { rate: feedbackRate, minVisibleMs = 900 } = {}) => {
+    const speechId = ++feedbackSpeechRef.current
+    const startedAt = Date.now()
+    // speak() は、専用音声なら <audio> の ended、iPhone音声なら utterance の
+    // end を待って解決する。したがって次問の問題文がコメントを止めない。
+    void speak(line, { rate: feedbackRate }).finally(() => {
+      if (speechId !== feedbackSpeechRef.current) return
+      const remain = Math.max(0, minVisibleMs - (Date.now() - startedAt))
+      feedbackTimerRef.current = setTimeout(() => {
+        if (speechId === feedbackSpeechRef.current) advance()
+      }, remain)
+    })
   }
 
   // この問題が復習キューにある（＝克服チャンス）か
@@ -241,13 +267,14 @@ export default function ActivityPlayer({ task, onDone }) {
     if (conquer) {
       setFeedback({ good: true, word: 'ちからに なった！', gold: true })
       sfx.levelUp()
-      speak('まちがいが ちからに なった！ ✨')
       setPhase('feedback')
-      setTimeout(advance, 1400)
+      advanceAfterFeedback('まちがいが ちからに なった！ ボーナス ゲット！')
       return
     }
+    const word = pick(PRAISE)
+    setFeedback({ good: true, word })
     setPhase('feedback')
-    setTimeout(advance, 300)
+    advanceAfterFeedback(word)
   }
 
   const handleAnswerId = (answerId) => {
@@ -265,15 +292,13 @@ export default function ActivityPlayer({ task, onDone }) {
         sfx.levelUp()
         setFeedback({ good: true, word: 'ちからに なった！', gold: true })
         const tail = question.answerWord ? `${question.answerWord.text}！ ` : ''
-        speak(`${tail}まちがいが ちからに なった！ ボーナス ゲット！`)
-        setTimeout(advance, 1500)
+        advanceAfterFeedback(`${tail}まちがいが ちからに なった！ ボーナス ゲット！`)
       } else {
         sfx.correct()
         const word = combo >= 2 ? `${combo}れんぞく！` : pick(PRAISE)
         setFeedback({ good: true, word })
         const tail = question.answerWord ? `${question.answerWord.text}！ ` : ''
-        speak(`${tail}${combo >= 2 ? `${combo}れんぞく せいかい！ すごい！` : pick(PRAISE)}`)
-        setTimeout(advance, 1250)
+        advanceAfterFeedback(`${tail}${combo >= 2 ? `${combo}れんぞく せいかい！ すごい！` : word}`)
       }
     } else {
       comboRef.current = 0
@@ -315,10 +340,10 @@ export default function ActivityPlayer({ task, onDone }) {
     const ans = question.choices?.find((c) => c.id === question.answerId)
     const ansText = question.answerWord?.text || ans?.label || ''
     setFeedback({ good: false, word: 'いっしょに おぼえよう' })
-    speak(`だいじょうぶ。こたえは 「${ansText}」。${question.explain || ''} つぎは できるよ！`, {
-      rate: 0.9
-    })
-    setTimeout(advance, 2600)
+    advanceAfterFeedback(
+      `だいじょうぶ。こたえは 「${ansText}」。${question.explain || ''} つぎは できるよ！`,
+      { rate: 0.9, minVisibleMs: 1200 }
+    )
   }
 
   const choiceClass = (choice) => {

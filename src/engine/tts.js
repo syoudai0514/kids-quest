@@ -8,9 +8,10 @@
 
 import { unlockAudio } from './audioCtx.js'
 import { loadCachedNarratorModel, ortWithCachedModel } from './narratorCache.js'
+import { DEFAULT_TTS_RATE } from '../config/ttsRates.js'
 
 let enabled = true
-let rate = 0.96
+let rate = DEFAULT_TTS_RATE
 let volume = 0.9
 // 旧セーブの gentle / lively も、今回から本物のナビ音声に移行する。
 let voiceStyle = 'neural'
@@ -294,8 +295,9 @@ async function playNarratorResult(result, id, loudness) {
 async function speakWithNarrator(text, id, opts) {
   const tts = await prepareNarratorVoice()
   // rate は端末音声と共通の3段階設定。Piperは lengthScale が大きいほど
-  // ゆっくりになるため反比例させる（ゆっくり=約17%長く、はやめ=約9%短く）。
-  const lengthScale = Math.max(0.78, Math.min(1.2, 0.98 / (opts.rate ?? rate)))
+  // ゆっくりになるため反比例させる。標準を聞き取りやすく遅めに置き、
+  // ゆっくり／はやめは一聴して区別できる幅を持たせる。
+  const lengthScale = Math.max(0.72, Math.min(1.75, 0.98 / (opts.rate ?? rate)))
   const loudness = opts.volume ?? volume
   for (const sentence of splitForNarrator(text)) {
     if (id !== requestId || !enabled) return
@@ -338,7 +340,7 @@ export function setTtsEnabled(value) {
 }
 
 export function setTtsPreferences(next = {}) {
-  if (Number.isFinite(next.rate)) rate = Math.min(1.15, Math.max(0.75, next.rate))
+  if (Number.isFinite(next.rate)) rate = Math.min(1.3, Math.max(0.55, next.rate))
   if (Number.isFinite(next.volume)) volume = Math.min(1, Math.max(0, next.volume))
   if (next.voiceStyle) voiceStyle = next.voiceStyle === 'device' ? 'device' : 'neural'
 }
