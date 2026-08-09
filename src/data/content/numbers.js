@@ -10,8 +10,8 @@
 //   小5: + 小数×整数 / 異分母分数のたし算 / 百分率(%)
 //   小6: + 分数×整数 / 比 / 速さ
 //
-// 各問題は itemKey = 出題タイプ名 を持ち、間違えると復習キューに入る。
-// generateNumbersQuestion(params, reviewKind) で同タイプを再出題できる。
+// 各問題は itemKey = 出題タイプ名 を持つ。実際の復習キーは画面側で
+// 問題ごとに分け、元の問題スナップショットを優先して再出題する。
 // ============================================================
 
 const COUNT_EMOJI = ['🦕', '⭐', '🦖', '🪐', '🚀', '🌙', '🥚', '☄️', '🍎', '🐟']
@@ -58,18 +58,19 @@ function stringChoices(answer, dummies, count) {
   return shuffle(opts).map((v) => ({ id: v, label: v }))
 }
 
-function numQ(kind, { visual, instruction, speak, answer, cc, spread, say, explain, choices }) {
+function numQ(kind, { visual, instruction, speak, answer, cc, spread, say, explain, choices, type = 'choice', ...rest }) {
   return {
     domain: 'suuji',
-    type: 'choice',
+    type,
     itemKey: `n:${kind}`,
     visual,
     instruction,
     speak,
     answerId: String(answer),
-    choices: choices || numberChoices(answer, cc, spread),
+    choices: type === 'choice' ? (choices || numberChoices(answer, cc, spread)) : undefined,
     answerWord: { text: say },
-    explain: explain || `こたえは ${answer}`
+    explain: explain || `こたえは ${answer}`,
+    ...rest
   }
 }
 
@@ -89,6 +90,19 @@ const BUILDERS = {
       speak: 'いくつ あるか かぞえて、すうじを えらんでね',
       answer: n, cc: p.cc, spread: 2, say: `${n}こ`,
       explain: `5こずつ かぞえると はやいよ。ぜんぶで ${n}こ`
+    })
+  },
+  // 年長から「自分で数字を入れる」感覚を育てる。選択肢を当てるだけでなく、
+  // 数を頭から取り出す想起練習になるので、簡単な範囲だけテンキーにする。
+  countKeypad(p) {
+    const emoji = pick(COUNT_EMOJI)
+    const n = rng(3, 9)
+    return numQ('countKeypad', {
+      type: 'keypad', visual: { kind: 'groups', groups: [{ emoji, n }] },
+      instruction: 'いくつ あるかな？ すうじを いれてね',
+      speak: 'いくつ あるか かぞえて、テンキーで すうじを いれてね',
+      answer: n, say: `${n}こ`,
+      explain: `ゆびで ひとつずつ かぞえると、${n}こだよ`
     })
   },
   compareCards(p) {
@@ -120,6 +134,18 @@ const BUILDERS = {
       explain: `ぜんぶ あわせて かぞえよう。${a}たす${b}は ${a + b}`
     })
   },
+  addKeypad(p) {
+    const emoji = pick(COUNT_EMOJI)
+    const a = rng(1, 5)
+    const b = rng(1, 5)
+    return numQ('addKeypad', {
+      type: 'keypad', visual: { kind: 'groups', groups: [{ emoji, n: a }, { emoji, n: b }], op: '＋' },
+      instruction: `${a} ＋ ${b} ＝ ？ すうじを いれてね`,
+      speak: `${a} たす ${b} は いくつ？ テンキーで こたえてね`,
+      answer: a + b, say: `${a}たす${b}は${a + b}`,
+      explain: `ぜんぶ あわせて かぞえると ${a + b}`
+    })
+  },
   make10(p) {
     const a = rng(1, 9)
     return numQ('make10', {
@@ -143,6 +169,52 @@ const BUILDERS = {
       answer: ans, cc: p.cc, spread: step, say: `${ans}`,
       explain: `${step}ずつ ふえているね。こたえは ${ans}`
     })
+  },
+  orderNumbers(p) {
+    const start = rng(1, 7)
+    const nums = shuffle([start, start + rng(2, 4), start + rng(6, 9)])
+    const correct = [...nums].sort((a, b) => a - b)
+    const items = nums.map((n) => ({ id: String(n), label: String(n) }))
+    return {
+      domain: 'suuji', type: 'order', itemKey: 'n:orderNumbers', visual: { kind: 'bigtext', text: '🔢 じゅんばんに ならべよう' },
+      instruction: 'ちいさい じゅんに タッチ！',
+      speak: 'かずを ちいさい じゅんに、ひとつずつ タッチして ならべよう',
+      items, correctOrder: correct.map(String), answerId: correct.map(String).join('|'),
+      answerWord: { text: correct.join('、') },
+      explain: `${correct.join('、')}の じゅんだよ`
+    }
+  },
+  shapeName(p) {
+    const shapes = [
+      { id: 'circle', label: 'まる', color: '#76d8ff' },
+      { id: 'triangle', label: 'さんかく', color: '#ffd166' },
+      { id: 'square', label: 'しかく', color: '#ff91b8' },
+      { id: 'rectangle', label: 'ながしかく', color: '#9ef0b8' }
+    ]
+    const target = pick(shapes)
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:shapeName',
+      visual: { kind: 'shape', shape: target.id, color: target.color },
+      instruction: 'この かたちは なに？', speak: 'この かたちの なまえは なにかな？',
+      answerId: target.id, choices: shuffle(shapes.slice(0, 3).includes(target) ? shapes.slice(0, 3) : [target, ...shapes.filter((s) => s.id !== target).slice(0, 2)]).map((s) => ({ id: s.id, label: s.label })),
+      answerWord: { text: target.label }, explain: `これは ${target.label}だよ`
+    }
+  },
+  shapeGroups(p) {
+    const items = shuffle([
+      { id: 'circle', label: 'あお', shape: 'circle', color: '#76d8ff', group: 'round' },
+      { id: 'triangle', label: 'きいろ', shape: 'triangle', color: '#ffd166', group: 'corners' },
+      { id: 'square', label: 'ももいろ', shape: 'square', color: '#ff91b8', group: 'corners' },
+      { id: 'oval', label: 'みどり', shape: 'circle', color: '#9ef0b8', group: 'round' }
+    ])
+    const correctGroups = Object.fromEntries(items.map((item) => [item.id, item.group]))
+    return {
+      domain: 'suuji', type: 'group', itemKey: 'n:shapeGroups', visual: { kind: 'shapes', items },
+      instruction: 'かたちの なかまで わけよう！', speak: 'まるい かたちと、かどが ある かたちに わけよう',
+      items, groups: [{ id: 'round', label: 'まるい' }, { id: 'corners', label: 'かどがある' }], correctGroups,
+      answerId: items.map((item) => `${item.id}:${item.group}`).join('|'),
+      answerWord: { text: 'まるい・かどがある' }, explain: 'まるには かどがないよ。さんかくと しかくには かどがあるね'
+    }
   },
   sub10(p) {
     const a = rng(4, 10)
@@ -797,8 +869,8 @@ const BUILDERS = {
 // 学年ごとの出題タイプ（あとの学年ほど前の学年の一部も混ざる）
 function kindsForGrade(grade, level) {
   if (grade <= 0) {
-    const k = ['count', 'compareCards', 'add10', 'make10']
-    if (level >= 3) k.push('sub10', 'sequence')
+    const k = ['count', 'compareCards', 'add10', 'make10', 'countKeypad', 'addKeypad', 'orderNumbers', 'shapeName', 'shapeGroups']
+    if (level >= 3) k.push('sub10', 'sequence', 'orderNumbers')
     return k
   }
   if (grade === 1) {
@@ -836,14 +908,15 @@ function kindsForGrade(grade, level) {
 /**
  * すうじの問題を1問生成する。
  * @param {object} params 難易度パラメータ（grade を含む）
- * @param {string|null} reviewKey 'n:タイプ名'（復習したい出題タイプ）
+ * @param {string|null} reviewKey 'n:タイプ名' または 'n:タイプ名#識別子'
  */
 export function generateNumbersQuestion(params, reviewKey = null) {
   const grade = params.grade || 0
   const p = { ...params, grade, cc: Math.max(3, params.choiceCount) }
 
   if (reviewKey && reviewKey.startsWith('n:')) {
-    const kind = reviewKey.slice(2)
+    // 古いセーブにある "n:add10" も、新しい "n:add10#xxxx" も受け入れる。
+    const kind = reviewKey.slice(2).split('#')[0]
     if (BUILDERS[kind]) return BUILDERS[kind](p)
   }
   const kind = pick(kindsForGrade(grade, params.level))
@@ -853,6 +926,8 @@ export function generateNumbersQuestion(params, reviewKey = null) {
 // 復習画面でのラベル表示用
 export const KIND_LABELS = {
   count: 'かぞえる', compareCards: 'くらべっこ', add10: 'たしざん', make10: '10づくり',
+  countKeypad: 'テンキーでかぞえる', addKeypad: 'テンキーたしざん', orderNumbers: 'かずをならべる',
+  shapeName: 'かたちのなまえ', shapeGroups: 'かたちをグループ分け',
   sequence: 'かずのならび', sub10: 'ひきざん', addCarry: 'くり上がり', subBorrow: 'くり下がり',
   compareNum: 'かずくらべ', add3nums: '3つのかず', add2digit: '2けたのたしざん',
   sub2digit: '2けたのひきざん', kuku: '九九', div: 'わり算', divRemainder: 'あまりのわり算',

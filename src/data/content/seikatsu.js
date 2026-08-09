@@ -72,16 +72,16 @@ function strChoices(answer, dummies, count) {
   return shuffle(opts).map((v) => ({ id: v, label: v, speak: v }))
 }
 
-function sq(kind, { visual, instruction, speak, answer, dummies, cc, explain, say }) {
+function sq(kind, { visual, instruction, speak, answer, answerId = answer, dummies, cc, explain, say, type = 'choice' }) {
   return {
     domain: 'seikatsu',
-    type: 'choice',
+    type,
     itemKey: `s:${kind}`,
     visual: visual || null,
     instruction,
     speak,
-    answerId: answer,
-    choices: strChoices(answer, dummies, cc),
+    answerId,
+    choices: type === 'choice' ? strChoices(answer, dummies, cc) : undefined,
     answerWord: { text: say || answer },
     explain
   }
@@ -265,7 +265,7 @@ const BUILDERS = {
       visual: { kind: 'clock', h, m },
       instruction: 'なんじ？',
       speak: 'とけいを みて、なんじか こたえてね',
-      answer: ans, dummies, cc: p.cc,
+      answer: ans, answerId: `${h}:${m}`, dummies, cc: p.cc, type: 'clock',
       explain: half
         ? `みじかい はりが ${h}と ${(h % 12) + 1}の あいだ、ながい はりが 6。だから ${h}じ30ぷん`
         : `みじかい はりが ${h}、ながい はりが 12。だから ${h}じ`

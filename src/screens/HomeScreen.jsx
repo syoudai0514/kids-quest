@@ -13,7 +13,8 @@ import {
   PARTNER_COLORS,
   masteryProgress,
   missedCount,
-  equippedWeapon
+  equippedWeapon,
+  starTrialInfo
 } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
@@ -52,6 +53,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const nMissed = missedCount(state)
   const weapon = equippedWeapon(state)
   const testDone = !!state.testPassed?.[state.grade]?.passed
+  const starTrial = starTrialInfo(state, state.grade)
 
   const daily = state.daily
   const coreDone = daily.coreDone
@@ -105,7 +107,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
   }
   const startExtra = () => {
     sfx.tap()
-    speak('ついか もんだいに ちょうせん！ せいかい率 70パーセント いじょうで バトルチケットが もらえるよ')
+    speak('ついか もんだいに ちょうせん！ 3もん中 2もん できたら、バトルチケットが もらえるよ。ゆっくり よんで こたえよう！')
     onStartTask(buildExtraTask(daily.extraIndex, state.grade))
   }
 
@@ -145,6 +147,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
         <div className="row" style={{ gap: 8 }}>
           {state.streak > 1 && <div className="pill">🔥 {state.streak}にち</div>}
           <div className="pill">✨ {state.xp}</div>
+          <div className="pill">✦ {state.starShards || 0}</div>
           <button
             className="btn btn--ghost"
             style={{ minHeight: 58, padding: '10px 16px' }}
@@ -260,7 +263,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__emoji">⚔️</span>
             <span className="menu-tile__label">バトル</span>
             <span className="menu-tile__sub">
-              {canBattle ? `あと ${battlePlaysLeft + state.battle.tickets}かい` : 'チケットで あそべる'}
+              {canBattle ? `あと ${battlePlaysLeft + state.battle.tickets}かい` : 'ついかもんだいで ふやせる！'}
             </span>
             {state.battle.tickets > 0 && <span className="notice-badge">🎟{state.battle.tickets}</span>}
           </button>
@@ -272,7 +275,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
           >
             <span className="menu-tile__emoji">🎟️</span>
             <span className="menu-tile__label">ついかもんだい</span>
-            <span className="menu-tile__sub">クリアで チケット</span>
+            <span className="menu-tile__sub">2/3せいかいで チケット</span>
           </button>
 
           <button
@@ -307,17 +310,21 @@ export default function HomeScreen({ onStartTask, onGo }) {
             onClick={() => {
               sfx.tap()
               speak(
-                `${grade.name}の しょうまつテスト。ごうかくすると つぎの がくねんが あくよ！`
+                `${grade.name}の ほしのしれん。きょうは 6もん。2かいで 9こ できたら つぎの がくねんが あくよ！`
               )
               onGo('test')
             }}
           >
-            <span className="menu-tile__emoji">🎓</span>
-            <span className="menu-tile__label">しょうまつテスト</span>
+            <span className="menu-tile__emoji">🌟</span>
+            <span className="menu-tile__label">ほしのしれん</span>
             <span className="menu-tile__sub">
               {testDone
-                ? `ごうかくずみ（さいこう ${Math.round((state.testPassed[state.grade]?.rate || 0) * 100)}てん）`
-                : `ごうかくで ${state.grade < 6 ? gradeOf(state.grade + 1).short : 'そつぎょう'} かいほう`}
+                ? `クリアずみ（${Math.round((state.testPassed[state.grade]?.rate || 0) * 100)}%）`
+                : starTrial.todayDone
+                  ? 'つづきは あした'
+                  : starTrial.rounds.length === 1
+                    ? `あと 1かい（いま ${starTrial.correct} / 6こ）`
+                    : `2かいで 9こ できたら クリア`}
             </span>
             {!testDone && mastery >= 0.6 && <span className="notice-badge">!</span>}
           </button>
@@ -333,7 +340,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__emoji">{weapon ? weapon.emoji : '⚔️'}</span>
             <span className="menu-tile__label">そうび</span>
             <span className="menu-tile__sub">
-              {weapon ? `${weapon.name}（⚔️+${weapon.atk}）` : 'バトルで てにいれよう'}
+              {weapon ? `${weapon.name}（そうび中）` : 'まなぶと 宝箱が ひらく'}
             </span>
           </button>
         </div>

@@ -17,9 +17,12 @@
 export const MIN_LEVEL = 1
 export const MAX_LEVEL = 12
 
-// 何連続正解でレベルアップするか（得意ならどんどん進む）
-// 2連続でどんどん上げて、物足りなさを感じさせない。
-const LEVEL_UP_STREAK = 2
+// 難易度を上げるには、直近4問のうち3問を「最初の答え」で正解する。
+// 2回だけ偶然当たって急に難しくなるのを防ぎ、ほどよい成功率を保つ。
+const PROMOTION_WINDOW = 4
+const PROMOTION_CORRECT = 3
+const DEMOTION_WINDOW = 5
+const DEMOTION_MISSES = 3
 
 // 最初から少し歯ごたえのあるレベルで開始する
 const START_LEVEL = 2
@@ -30,6 +33,8 @@ export function makeSkill() {
     streak: 0,
     miss: 0,
     recent: [],
+    lastLevelUpAt: 0,
+    lastLevelDownAt: 0,
     correct: 0,
     attempts: 0
   }
@@ -42,32 +47,56 @@ export function makeSkill() {
  * @returns {{skill: object, leveledUp: boolean}}
  */
 export function applyResult(skill, wasCorrect) {
-  const s = { ...skill, recent: [...skill.recent].slice(-9) }
+  const s = {
+    ...skill,
+    recent: [...(skill.recent || [])].slice(-(DEMOTION_WINDOW - 1)),
+    lastLevelUpAt: skill.lastLevelUpAt || 0,
+    lastLevelDownAt: skill.lastLevelDownAt || 0
+  }
   s.attempts += 1
   s.recent.push(wasCorrect)
   if (s.recent.length > 10) s.recent.shift()
 
   let leveledUp = false
+  let leveledDown = false
   if (wasCorrect) {
     s.correct += 1
     s.streak += 1
     s.miss = 0
-    // 連続正解でレベルアップ。得意分野はテンポよく上がる。
-    if (s.streak >= LEVEL_UP_STREAK && s.level < MAX_LEVEL) {
-      s.level = Math.min(MAX_LEVEL, s.level + 1)
-      s.streak = 0
-      leveledUp = true
-    }
   } else {
     s.streak = 0
     s.miss += 1
-    // 苦手化のサイン。レベルは「半段」だけそっと下げて支える（最低でも MIN_LEVEL）。
-    // 一気に下げると後退感が出るので 0.5 ずつ。
-    if (s.miss >= 2 && s.level > MIN_LEVEL) {
-      s.level = Math.max(MIN_LEVEL, Math.round((s.level - 0.5) * 2) / 2)
-    }
+    // 1回のミスでは難易度を下げない。直近5問で3回以上つまずいたときだけ、
+    // 半段ぶん支えを厚くする（後退感を小さくする）。
   }
-  return { skill: s, leveledUp }
+
+  // 直近の窓がそろった時点で判定する。最後の1問が正解／不正解のどちらでも、
+  // 「4問中3問」「5問中3回つまずき」を正しく反映する。
+  const recent4 = s.recent.slice(-PROMOTION_WINDOW)
+  const correct4 = recent4.filter(Boolean).length
+  if (
+    recent4.length === PROMOTION_WINDOW &&
+    correct4 >= PROMOTION_CORRECT &&
+    s.attempts - s.lastLevelUpAt >= PROMOTION_WINDOW &&
+    s.level < MAX_LEVEL
+  ) {
+    s.level = Math.min(MAX_LEVEL, s.level + 1)
+    s.lastLevelUpAt = s.attempts
+    leveledUp = true
+  }
+  const recent5 = s.recent.slice(-DEMOTION_WINDOW)
+  const misses5 = recent5.filter((v) => !v).length
+  if (
+    recent5.length === DEMOTION_WINDOW &&
+    misses5 >= DEMOTION_MISSES &&
+    s.attempts - s.lastLevelDownAt >= DEMOTION_WINDOW &&
+    s.level > MIN_LEVEL
+  ) {
+    s.level = Math.max(MIN_LEVEL, Math.round((s.level - 0.5) * 2) / 2)
+    s.lastLevelDownAt = s.attempts
+    leveledDown = true
+  }
+  return { skill: s, leveledUp, leveledDown }
 }
 
 /**
@@ -75,8 +104,9 @@ export function applyResult(skill, wasCorrect) {
  * 連続ミスが増えるほど段階を細かくし、足場を厚くする。
  *  0: ヒント無し / 1: 軽いヒント / 2: 強いヒント（最初の文字や色などを強調）
  */
-export function hintLevel(skill) {
-  if (skill.miss >= 2) return 2
+export function hintLevel(skill = {}) {
+  const recent5 = (skill.recent || []).slice(-DEMOTION_WINDOW)
+  if (recent5.filter((v) => !v).length >= DEMOTION_MISSES) return 2
   if (skill.miss >= 1) return 1
   return 0
 }
@@ -85,8 +115,8 @@ export function hintLevel(skill) {
  * コンテンツ生成に渡す難易度パラメータをレベルから導出する。
  * 分野ごとのジェネレータが参照する共通の「つまみ」。
  */
-export function difficultyParams(skill) {
-  const lvl = Math.floor(skill.level)
+export function difficultyParams(skill = {}) {
+  const lvl = Math.floor(Number.isFinite(skill.level) ? skill.level : START_LEVEL)
   return {
     level: lvl,
     rawLevel: skill.level,

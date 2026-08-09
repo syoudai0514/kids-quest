@@ -6,24 +6,31 @@
 
 let jaVoice = null
 let voicesReady = false
+let voiceStyle = 'gentle'
 
-// 自然に聞こえる日本語音声を優先して選ぶ。
-// 端末の既定音声は機械的なことが多いので、質の良いものから順に探す。
-const PREFERRED_VOICES = [
-  'google 日本語', 'google japanese',
-  'microsoft nanami', 'microsoft ayumi', 'microsoft haruka', 'microsoft keita',
-  'o-ren', 'kyoko', 'otoya', 'hattori', 'sora',
-  'ja-jp-neural', 'ja-jp-wavenet', 'ja-jp-standard'
-]
+// 端末ごとに入っている日本語音声名は違う。声名を一つに固定すると iPhone /
+// Android / PC のどれかで無音になるので、キャラクターごとに「近い声」の順番を
+// 持ち、実際に使える声へフォールバックする。
+const VOICE_STYLES = {
+  gentle: [
+    'kyoko', 'o-ren', 'nanami', 'ayumi', 'haruka',
+    'google 日本語', 'google japanese', 'ja-jp-neural', 'ja-jp-wavenet'
+  ],
+  lively: [
+    'sora', 'otoya', 'keita', 'hattori',
+    'google 日本語', 'google japanese', 'ja-jp-neural', 'ja-jp-wavenet'
+  ]
+}
 
-function pickJapaneseVoice() {
+function pickJapaneseVoice(style = 'gentle') {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null
   const voices = window.speechSynthesis.getVoices()
   if (!voices.length) return null
   const jaAll = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('ja'))
   if (!jaAll.length) return null
-  // 名前が好みリストに近いものを優先
-  for (const want of PREFERRED_VOICES) {
+  // 「やさしい おねえさん」を標準にする。端末に無ければ、同じ日本語音声の
+  // なかから質のよいものを選ぶので、音が出なくなることはない。
+  for (const want of VOICE_STYLES[style] || VOICE_STYLES.gentle) {
     const hit = jaAll.find((v) => (v.name || '').toLowerCase().includes(want))
     if (hit) return hit
   }
@@ -66,25 +73,43 @@ export function normalizeForSpeech(text) {
 }
 
 function ensureVoices() {
-  if (voicesReady) return
-  jaVoice = pickJapaneseVoice()
+  if (voicesReady && jaVoice) return
+  jaVoice = pickJapaneseVoice(voiceStyle)
   if (jaVoice) voicesReady = true
 }
 
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   // voices は非同期で揃うことがある
   window.speechSynthesis.onvoiceschanged = () => {
-    jaVoice = pickJapaneseVoice()
+    jaVoice = pickJapaneseVoice(voiceStyle)
     voicesReady = !!jaVoice
   }
   ensureVoices()
 }
 
 let enabled = true
+// 読み上げの好みはセーブデータ側で保持し、ここは実行時の設定だけ持つ。
+// iOS は cancel() の直後に speak() すると、次の発話まで無音になることがある。
+// ほんの短い間を空け、最新の1件だけを話すようにしている。
+let rate = 0.96
+let volume = 0.9
+let requestId = 0
+let pendingTimer = null
+let activeResolve = null
 
 export function setTtsEnabled(v) {
   enabled = v
   if (!v) cancelSpeak()
+}
+
+export function setTtsPreferences(next = {}) {
+  if (Number.isFinite(next.rate)) rate = Math.min(1.15, Math.max(0.75, next.rate))
+  if (Number.isFinite(next.volume)) volume = Math.min(1, Math.max(0, next.volume))
+  if (next.voiceStyle && VOICE_STYLES[next.voiceStyle]) {
+    voiceStyle = next.voiceStyle
+    jaVoice = pickJapaneseVoice(voiceStyle)
+    voicesReady = !!jaVoice
+  }
 }
 
 export function isTtsEnabled() {
@@ -92,6 +117,15 @@ export function isTtsEnabled() {
 }
 
 export function cancelSpeak() {
+  requestId += 1
+  if (pendingTimer) {
+    clearTimeout(pendingTimer)
+    pendingTimer = null
+  }
+  if (activeResolve) {
+    activeResolve()
+    activeResolve = null
+  }
   if (typeof window === 'undefined' || !window.speechSynthesis) return
   window.speechSynthesis.cancel()
 }
@@ -110,27 +144,42 @@ export function speak(text, opts = {}) {
     }
     ensureVoices()
     const synth = window.speechSynthesis
-    if (opts.interrupt !== false) synth.cancel()
+    if (opts.interrupt !== false) cancelSpeak()
 
     const said = normalizeForSpeech(text)
     if (!said) {
       resolve()
       return
     }
-    const u = new SpeechSynthesisUtterance(said)
-    u.lang = 'ja-JP'
-    if (jaVoice) u.voice = jaVoice
-    // 自然に聞こえる範囲で、子ども向けに ほんの少しだけ ゆっくり。
-    // ピッチを上げすぎると 機械的・かん高く 聞こえるので ほぼ標準にする。
-    u.rate = opts.rate ?? 1.0
-    u.pitch = opts.pitch ?? 1.02
-    u.volume = opts.volume ?? 1
-    u.onend = () => {
-      opts.onEnd && opts.onEnd()
-      resolve()
+    const id = ++requestId
+    const start = () => {
+      pendingTimer = null
+      if (id !== requestId || !enabled) {
+        resolve()
+        return
+      }
+      const u = new SpeechSynthesisUtterance(said)
+      u.lang = 'ja-JP'
+      if (jaVoice) u.voice = jaVoice
+      // 子ども向けには、少しゆっくりを標準にする。保護者画面で変更可能。
+      u.rate = opts.rate ?? rate
+      // デフォルトは、速すぎず少し明るい「おねえさんナビ」の雰囲気。
+      // 実在人物や特定サービスの声を模倣せず、端末の合成音声だけで作る。
+      u.pitch = opts.pitch ?? (voiceStyle === 'gentle' ? 1.13 : 1.03)
+      u.volume = opts.volume ?? volume
+      activeResolve = () => resolve()
+      const finish = () => {
+        if (id !== requestId) return
+        activeResolve = null
+        opts.onEnd && opts.onEnd()
+        resolve()
+      }
+      u.onend = finish
+      u.onerror = finish
+      synth.speak(u)
     }
-    u.onerror = () => resolve()
-    synth.speak(u)
+    // cancel → 即speak が不安定な Safari でも、発話が切れずに再開する。
+    pendingTimer = setTimeout(start, opts.interrupt === false ? 0 : 70)
   })
 }
 

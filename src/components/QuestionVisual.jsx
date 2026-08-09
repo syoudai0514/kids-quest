@@ -90,6 +90,20 @@ function TenFrame({ filled }) {
   )
 }
 
+function Shape({ shape, color = '#7af0d0', small = false }) {
+  const common = { fill: color, stroke: '#ffffff', strokeWidth: 5, strokeLinejoin: 'round' }
+  const body = shape === 'circle'
+    ? <circle cx="50" cy="50" r="34" {...common} />
+    : shape === 'triangle'
+      ? <path d="M50 12 L91 86 H9 Z" {...common} />
+      : shape === 'square'
+        ? <rect x="17" y="17" width="66" height="66" rx="5" {...common} />
+        : shape === 'rectangle'
+          ? <rect x="9" y="27" width="82" height="46" rx="5" {...common} />
+          : <path d="M50 8 L60 36 L90 37 L66 55 L74 86 L50 68 L26 86 L34 55 L10 37 L40 36 Z" {...common} />
+  return <svg className={small ? 'shape-icon shape-icon--small' : 'shape-icon'} viewBox="0 0 100 100" role="img" aria-label={shape}>{body}</svg>
+}
+
 export default function QuestionVisual({ question }) {
   const v = question.visual
   if (!v) return null
@@ -101,6 +115,10 @@ export default function QuestionVisual({ question }) {
   else if (v.kind === 'bigtext') inner = <span className="q-bigtext">{v.text}</span>
   else if (v.kind === 'tenframe') inner = <TenFrame filled={v.filled} />
   else if (v.kind === 'clock') inner = <Clock h={v.h} m={v.m} />
+  else if (v.kind === 'shape') inner = <Shape shape={v.shape} color={v.color} />
+  else if (v.kind === 'shapes') {
+    inner = <div className="shape-row">{v.items.map((item) => <Shape key={item.id} shape={item.shape} color={item.color} small />)}</div>
+  }
   else if (v.kind === 'groups') {
     inner = (
       <div className="groups-row">
@@ -121,3 +139,5 @@ export default function QuestionVisual({ question }) {
     </button>
   )
 }
+
+export { Shape }

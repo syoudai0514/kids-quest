@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { useEffect, useMemo, useRef } from 'react'
-import { speak } from '../engine/tts.js'
+import { speak, cancelSpeak } from '../engine/tts.js'
 
 // きらめく星の背景
 export function Starfield({ count = 28 }) {
@@ -88,7 +88,10 @@ export function useSpeakOnMount(text, deps = []) {
     if (!text || text === last.current) return
     last.current = text
     const id = setTimeout(() => speak(text), 250)
-    return () => clearTimeout(id)
+    return () => {
+      clearTimeout(id)
+      cancelSpeak()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 }

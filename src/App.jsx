@@ -3,10 +3,10 @@
 // 背景の空の色は「いまいる惑星」で変わる（--bg-a / --bg-b）。
 // ============================================================
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useGame } from './state/GameContext.jsx'
 import { currentPlanet } from './data/planets.js'
-import { unlockTts, setTtsEnabled } from './engine/tts.js'
+import { unlockTts, setTtsEnabled, setTtsPreferences, cancelSpeak } from './engine/tts.js'
 import { unlockSfx, setSfxEnabled } from './engine/sfx.js'
 import { setBgmEnabled } from './engine/bgm.js'
 import OnboardingScreen from './screens/OnboardingScreen.jsx'
@@ -42,8 +42,13 @@ export default function App() {
   // 保存済みの設定（音声・効果音 ON/OFF）をエンジンへ反映
   useEffect(() => {
     setTtsEnabled(state.settings.tts)
+    setTtsPreferences({
+      rate: state.settings.ttsRate,
+      volume: state.settings.ttsVolume,
+      voiceStyle: state.settings.ttsVoice
+    })
     setSfxEnabled(state.settings.sfx)
-  }, [state.settings.tts, state.settings.sfx])
+  }, [state.settings.tts, state.settings.ttsRate, state.settings.ttsVolume, state.settings.ttsVoice, state.settings.sfx])
 
   // BGM の ON/OFF（初回は unlock 時に開始される）
   useEffect(() => {
@@ -64,6 +69,16 @@ export default function App() {
   const go = (s) => setScreen(s)
 
   const planet = currentPlanet(state.totalClears)
+
+  // React が同じスクロール要素を再利用しても、画面遷移では必ず先頭から見せる。
+  useLayoutEffect(() => {
+    // 前画面の読み上げを、新しい画面へ持ち越さない。
+    cancelSpeak()
+    window.scrollTo(0, 0)
+    document.querySelectorAll('.scroll-col').forEach((el) => {
+      el.scrollTop = 0
+    })
+  }, [screen, activeTask])
 
   return (
     <div className="app-shell" style={{ '--bg-a': planet.bg[0], '--bg-b': planet.bg[1] }}>

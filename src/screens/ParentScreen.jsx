@@ -9,12 +9,13 @@ import React, { useState } from 'react'
 import { useGame, skillOf } from '../state/GameContext.jsx'
 import { DOMAINS } from '../engine/activities.js'
 import { trendLabel } from '../engine/difficulty.js'
-import { setTtsEnabled } from '../engine/tts.js'
+import { setTtsEnabled, setTtsPreferences, speak } from '../engine/tts.js'
 import { setSfxEnabled } from '../engine/sfx.js'
 import { setBgmEnabled } from '../engine/bgm.js'
 import { serializeForExport, parseImport } from '../engine/storage.js'
 import { GRADES, MAX_GRADE, gradeOf } from '../data/grades.js'
 import { boxCounts, dueCount, daysUntilNext, MAX_BOX } from '../engine/srs.js'
+import { getWeapon } from '../data/weapons.js'
 
 function downloadText(filename, text) {
   try {
@@ -211,9 +212,20 @@ export default function ParentScreen({ onBack }) {
   const d = state.daily
   const accuracy = d.attemptsToday ? Math.round((d.correctToday / d.attemptsToday) * 100) : 0
   const [confirmReset, setConfirmReset] = useState(false)
+  const [weaponToRemove, setWeaponToRemove] = useState(null)
 
   // 直近7日間の取り組み日数
   const activeDays = Object.keys(state.history).length + (d.attemptsToday > 0 ? 1 : 0)
+  const currentDomains = DOMAINS.filter((dom) => dom.available && dom.grades.includes(state.grade))
+  // 「にがて」のラベルだけでは次に何をすればよいか分かりにくいので、
+  // 直近の正答率と回答数を使って、家で声かけしやすい1教科を出す。
+  const priorityDomain = [...currentDomains]
+    .map((dom) => {
+      const acc = state.domainAccuracy?.[`${state.grade}:${dom.id}`] || { c: 0, n: 0 }
+      return { dom, acc, rate: acc.n ? acc.c / acc.n : null }
+    })
+    .filter((x) => x.acc.n >= 3)
+    .sort((a, b) => (a.rate - b.rate) || (b.acc.n - a.acc.n))[0]
 
   const toggle = (key) => {
     const next = !state.settings[key]
@@ -221,6 +233,15 @@ export default function ParentScreen({ onBack }) {
     if (key === 'tts') setTtsEnabled(next)
     if (key === 'sfx') setSfxEnabled(next)
     if (key === 'bgm') setBgmEnabled(next)
+  }
+
+  const setTtsOption = (key, value) => {
+    dispatch({ type: 'SET_SETTING', key, value })
+    setTtsPreferences({
+      rate: key === 'ttsRate' ? value : state.settings.ttsRate,
+      volume: key === 'ttsVolume' ? value : state.settings.ttsVolume,
+      voiceStyle: key === 'ttsVoice' ? value : state.settings.ttsVoice
+    })
   }
 
   return (
@@ -291,6 +312,20 @@ export default function ParentScreen({ onBack }) {
               ※「おうえん中」の分野は、アプリが自動でヒントを増やし、段階を細かくして支えます。
               苦手意識を持たせない設計です。
             </p>
+            <div className="card" style={{ marginTop: 10 }}>
+              <div style={{ fontWeight: 900 }}>🎯 つぎに ひとつ やるなら</div>
+              {priorityDomain ? (
+                <p className="muted" style={{ margin: '6px 0 0', lineHeight: 1.6 }}>
+                  <b style={{ color: 'var(--text)' }}>{priorityDomain.dom.emoji} {domainName(priorityDomain.dom, state.grade)}</b>
+                  {' '}（直近 {priorityDomain.acc.c}/{priorityDomain.acc.n}問 正解）
+                  <br />「できない」ではなく、いま一番のびしろが大きい教科です。短いミッションを1回やると、復習が自動で混ざります。
+                </p>
+              ) : (
+                <p className="muted" style={{ margin: '6px 0 0', lineHeight: 1.6 }}>
+                  まだデータを集めているところです。各教科を3問以上やると、次に優先する教科が出ます。
+                </p>
+              )}
+            </div>
           </div>
 
           {/* 学年（先取り解放の保護者操作） */}
@@ -340,6 +375,72 @@ export default function ParentScreen({ onBack }) {
                   {state.settings.tts ? 'ON' : 'OFF'}
                 </button>
               </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <span style={{ fontWeight: 800 }}>🗣️ ナビの こえ</span>
+                <div className="row wrap" style={{ gap: 7 }}>
+                  {[
+                    ['やさしい おねえさん', 'gentle'],
+                    ['げんきな ナビ', 'lively']
+                  ].map(([label, value]) => (
+                    <button
+                      key={value}
+                      className={'btn ' + (state.settings.ttsVoice === value ? 'btn--primary' : 'btn--ghost')}
+                      style={{ minHeight: 44, padding: '7px 14px' }}
+                      onClick={() => setTtsOption('ttsVoice', value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
+                  端末に入っている日本語音声から、いちばん近い声を自動で選びます。
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <span style={{ fontWeight: 800 }}>🗣️ よみあげの はやさ</span>
+                <div className="row wrap" style={{ gap: 7 }}>
+                  {[
+                    ['ゆっくり', 0.84],
+                    ['ふつう', 0.96],
+                    ['はやめ', 1.08]
+                  ].map(([label, value]) => (
+                    <button
+                      key={label}
+                      className={'btn ' + (state.settings.ttsRate === value ? 'btn--primary' : 'btn--ghost')}
+                      style={{ minHeight: 44, padding: '7px 14px' }}
+                      onClick={() => setTtsOption('ttsRate', value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <span style={{ fontWeight: 800 }}>🔉 よみあげの おおきさ</span>
+                <div className="row wrap" style={{ gap: 7 }}>
+                  {[
+                    ['小', 0.55],
+                    ['ふつう', 0.9],
+                    ['大', 1]
+                  ].map(([label, value]) => (
+                    <button
+                      key={label}
+                      className={'btn ' + (state.settings.ttsVolume === value ? 'btn--primary' : 'btn--ghost')}
+                      style={{ minHeight: 44, padding: '7px 14px' }}
+                      onClick={() => setTtsOption('ttsVolume', value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    className="btn btn--ghost"
+                    style={{ minHeight: 44, padding: '7px 14px' }}
+                    onClick={() => speak('こんにちは。ほしぞらクエストだよ！ ゆっくり きいてね。')}
+                  >
+                    🔊 ためす
+                  </button>
+                </div>
+              </div>
               <label className="row" style={{ justifyContent: 'space-between' }}>
                 <span style={{ fontWeight: 800 }}>🎵 こうかおん</span>
                 <button
@@ -360,6 +461,55 @@ export default function ParentScreen({ onBack }) {
                   {state.settings.bgm ? 'ON' : 'OFF'}
                 </button>
               </label>
+            </div>
+          </div>
+
+          {/* 武器の整理。子ども用の装備画面には置かず、保護者だけが変更できる。 */}
+          <div>
+            <h3 style={{ margin: '4px 0 10px' }}>そうびの かんり</h3>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                持っている武器を整理できます。そうび中の武器を消すと、残っている武器に自動で切り替わります。
+              </p>
+              {!state.weapons?.length ? (
+                <div className="muted" style={{ fontWeight: 700 }}>いま持っている武器はありません。</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {state.weapons.map((id) => {
+                    const weapon = getWeapon(id)
+                    if (!weapon) return null
+                    const confirming = weaponToRemove === id
+                    return (
+                      <div key={id} className="row wrap" style={{ justifyContent: 'space-between', gap: 8 }}>
+                        <div style={{ fontWeight: 800 }}>
+                          {weapon.emoji} {weapon.name}{state.equipped === id ? '（そうび中）' : ''}
+                        </div>
+                        {confirming ? (
+                          <div className="row wrap" style={{ gap: 6 }}>
+                            <button
+                              className="btn btn--pink"
+                              style={{ minHeight: 44, padding: '7px 12px' }}
+                              onClick={() => {
+                                dispatch({ type: 'REMOVE_WEAPON', weaponId: id })
+                                setWeaponToRemove(null)
+                              }}
+                            >
+                              消す
+                            </button>
+                            <button className="btn btn--ghost" style={{ minHeight: 44, padding: '7px 12px' }} onClick={() => setWeaponToRemove(null)}>
+                              やめる
+                            </button>
+                          </div>
+                        ) : (
+                          <button className="btn btn--ghost" style={{ minHeight: 44, padding: '7px 12px' }} onClick={() => setWeaponToRemove(id)}>
+                            整理する
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
 

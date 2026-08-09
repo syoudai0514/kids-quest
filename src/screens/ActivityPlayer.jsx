@@ -17,13 +17,22 @@ import { pickLesson, hasLesson } from '../data/lessons.js'
 import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
-import { speak } from '../engine/tts.js'
+import { speak, cancelSpeak } from '../engine/tts.js'
+import { reviewKeyFor, savedReviewQuestion, snapshotQuestion } from '../engine/reviewKey.js'
 import { sfx } from '../engine/sfx.js'
 import { Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
+import QuestionInteraction from '../components/QuestionInteraction.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
 
-const PRAISE = ['せいかい！', 'すごい！', 'やったね！', 'てんさい！', 'かんぺき！', 'いいね！', 'さすが！']
+// 「才能」ではなく、思い出す・数え直すなど再現できる行動をほめる。
+const PRAISE = [
+  'よく おもいだせたね！',
+  'ゆっくり みて できたね！',
+  'じぶんで えらべたね！',
+  'かんがえて できたね！',
+  'さいごまで よく みたね！'
+]
 const CHEER = [
   'だいじょうぶ、もういっかい いけるよ！',
   'おしい！ もういちど みてみよう',
@@ -63,6 +72,14 @@ export default function ActivityPlayer({ task, onDone }) {
   const [wrongIds, setWrongIds] = useState([])
   const [showAnswerHint, setShowAnswerHint] = useState(false)
   const [feedback, setFeedback] = useState(null)
+  const [supportHint, setSupportHint] = useState(false)
+  const [reinforcementCount, setReinforcementCount] = useState(0)
+  const baseQuestionCount = isReviewTask ? task.plan.length : task.questionCount
+  const questionCount = baseQuestionCount + reinforcementCount
+  // 正誤演出の setTimeout は古い render の関数を持つため、直前に増やした
+  // 再挑戦問題を見落とさないよう、終了判定だけは常に最新値を見る。
+  const questionCountRef = useRef(questionCount)
+  questionCountRef.current = questionCount
 
   const wrongCountRef = useRef(0)
   const firstAttemptRef = useRef(true)
@@ -71,9 +88,11 @@ export default function ActivityPlayer({ task, onDone }) {
   const stateRef = useRef(state)
   stateRef.current = state
 
-  // このタスクの「ちゃんと解いたか」の記録（チケットの判定に使う）
+  // このタスクの「ちゃんと解いたか」の記録（追加問題のチケット判定に使う）
   const tallyRef = useRef({ correct: 0, total: 0, fastWrong: 0 })
   const shownAtRef = useRef(Date.now())
+  const reinforcementQueueRef = useRef([])
+  const reinforcementAttemptsRef = useRef({})
 
   const currentDomainId = () =>
     isReviewTask ? task.plan[Math.min(qIndex, task.plan.length - 1)].domainId : task.domainId
@@ -87,19 +106,29 @@ export default function ActivityPlayer({ task, onDone }) {
       ...difficultyParams(skillOf(stateRef.current, domainId)),
       grade: stateRef.current.grade
     }
+    setSupportHint(params.hint >= 2)
 
     let review = null
     if (isReviewTask) {
       review = task.plan[Math.min(qIndex, task.plan.length - 1)].key
     } else {
+      // このタスクで間違えた問題は、2問ほど間を空けて同じ問題をもう一度。
+      // その場で答えを押し直すだけで終わらせず、思い出す練習にする。
+      const reinforcementIndex = reinforcementQueueRef.current.findIndex((entry) => entry.after <= qIndex)
+      if (reinforcementIndex >= 0) {
+        review = reinforcementQueueRef.current.splice(reinforcementIndex, 1)[0].key
+      }
       // 通常タスクでも、きょうが復習の期限になっている問題を混ぜる
       // （間隔反復: 忘れかけた ちょうどよい タイミングで もう一度 出会う）
       const due = dueKeys(stateRef.current.srs, domainId)
-      if (due.length && Math.random() < 0.45) {
+      if (!review && due.length && Math.random() < 0.45) {
         review = due[Math.floor(Math.random() * Math.min(due.length, 5))]
       }
     }
-    const q = dom.generateQuestion(params, review)
+    const saved = savedReviewQuestion(stateRef.current, domainId, review)
+    const generated = saved || dom.generateQuestion(params, review)
+    // 旧セーブの「種類だけ」の復習キーも、そのまま復習として扱えるようにする。
+    const q = review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated
     setQuestion(q)
     setPhase('answering')
     setChosenId(null)
@@ -109,14 +138,18 @@ export default function ActivityPlayer({ task, onDone }) {
     wrongCountRef.current = 0
     firstAttemptRef.current = true
     shownAtRef.current = Date.now()
-    setTimeout(() => speak(q.speak), 300)
+    return setTimeout(() => speak(q.speak), 300)
   }
 
   useEffect(() => {
     if (inLesson) return // 授業中は まだ問題を作らない
-    makeQuestion()
+    const speechTimer = makeQuestion()
+    return () => clearTimeout(speechTimer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qIndex, inLesson])
+
+  // 画面を離れたときに、前の問題文を次画面まで読ませない。
+  useEffect(() => () => cancelSpeak(), [])
 
   // ---- 授業（勉強ターン）----
   if (inLesson && lessonPlan?.lesson) {
@@ -136,10 +169,8 @@ export default function ActivityPlayer({ task, onDone }) {
 
   if (!question) return null
 
-  const questionCount = isReviewTask ? task.plan.length : task.questionCount
-
   const advance = () => {
-    if (qIndex + 1 < questionCount) {
+    if (qIndex + 1 < questionCountRef.current) {
       setQIndex(qIndex + 1)
     } else {
       const t = tallyRef.current
@@ -152,7 +183,9 @@ export default function ActivityPlayer({ task, onDone }) {
         task.kind === 'review'
           ? 'とっくん クリア！ まちがいが どんどん ちからに かわっていくよ！'
           : task.kind === 'extra'
-            ? 'ぜんぶ できた！ バトルチケットを ゲット！'
+            ? accuracy >= 2 / 3 && !suspicious
+              ? 'ぜんぶ できた！ バトルチケットを ゲット！'
+              : 'ぜんぶ とけたね！ つぎも ゆっくり かんがえて いこう！'
             : 'タスク クリア！ よくがんばったね！'
       speak(line)
       setTimeout(onDone, 1100)
@@ -161,24 +194,42 @@ export default function ActivityPlayer({ task, onDone }) {
 
   // この問題が復習キューにある（＝克服チャンス）か
   const isConquerTarget = () =>
-    !!question.itemKey &&
-    isDue(stateRef.current.srs?.[domainIdRef.current]?.[question.itemKey], dayNumber())
+    !!reviewKeyFor(question) &&
+    isDue(stateRef.current.srs?.[domainIdRef.current]?.[reviewKeyFor(question)], dayNumber())
+
+  const addReinforcement = (key) => {
+    if (isReviewTask || !key) return
+    const attempts = reinforcementAttemptsRef.current[key] || 0
+    // 同じ問題を何度も間違えても、1タスク内で終わらなくならないよう上限は2回。
+    if (attempts >= 2) return
+    reinforcementAttemptsRef.current[key] = attempts + 1
+    reinforcementQueueRef.current.push({ key, after: qIndex + 2 })
+    setReinforcementCount((n) => n + 1)
+  }
 
   const recordAnswer = (correct) => {
     if (!firstAttemptRef.current) return false
-    // 1問目の答えだけを「実力」として数える（チケットの判定に使う）
+    // 初回の3問だけをチケット判定に使う。誤答後の類題は、
+    // 思い出す練習として大切だが、報酬の合否には混ぜない。
     const elapsed = Date.now() - shownAtRef.current
-    tallyRef.current.total += 1
-    if (correct) tallyRef.current.correct += 1
-    // 問題が出て すぐ（1.5秒未満）に まちがえるのは 読まずに連打した可能性が高い
-    else if (elapsed < 1500) tallyRef.current.fastWrong += 1
+    const countsForTicket = task.kind !== 'extra' || tallyRef.current.total < task.questionCount
+    if (countsForTicket) {
+      tallyRef.current.total += 1
+      if (correct) tallyRef.current.correct += 1
+      // 問題が出てすぐ（1.5秒未満）に誤答する行為が2回以上なら、
+      // 実力の低さではなく「読まずに連打」と判断する。
+      else if (elapsed < 1500) tallyRef.current.fastWrong += 1
+    }
+    const itemKey = reviewKeyFor(question)
     const conquer = correct && isConquerTarget()
     dispatch({
       type: 'ANSWER',
       domainId: domainIdRef.current,
       correct,
-      itemKey: question.itemKey
+      itemKey,
+      question: correct ? null : snapshotQuestion(question, itemKey)
     })
+    if (!correct) addReinforcement(itemKey)
     firstAttemptRef.current = false
     return conquer
   }
@@ -199,14 +250,13 @@ export default function ActivityPlayer({ task, onDone }) {
     setTimeout(advance, 300)
   }
 
-  const handleChoose = (choice) => {
+  const handleAnswerId = (answerId) => {
     if (phase === 'feedback') return
-    if (wrongIds.includes(choice.id)) return
-    const correct = choice.id === question.answerId
+    const correct = answerId === question.answerId
     const conquer = recordAnswer(correct)
 
     if (correct) {
-      setChosenId(choice.id)
+      setChosenId(answerId)
       setPhase('feedback')
       comboRef.current += 1
       const combo = comboRef.current
@@ -228,7 +278,7 @@ export default function ActivityPlayer({ task, onDone }) {
     } else {
       comboRef.current = 0
       wrongCountRef.current += 1
-      setWrongIds((w) => [...w, choice.id])
+      setWrongIds((w) => [...w, answerId])
       sfx.wrongSoft()
       setFeedback({ good: false, word: 'もういっかい！' })
       setTimeout(() => setFeedback(null), 900)
@@ -245,6 +295,12 @@ export default function ActivityPlayer({ task, onDone }) {
         speak(hint)
       }
     }
+    return correct
+  }
+
+  const handleChoose = (choice) => {
+    if (wrongIds.includes(choice.id)) return false
+    return handleAnswerId(choice.id)
   }
 
   // 「わからない」= 正直に。適当に答えるより、答えを一緒に見て覚える。
@@ -256,7 +312,7 @@ export default function ActivityPlayer({ task, onDone }) {
     setChosenId(question.answerId) // 正解を光らせて見せる
     setWrongIds([])
     setPhase('feedback')
-    const ans = question.choices.find((c) => c.id === question.answerId)
+    const ans = question.choices?.find((c) => c.id === question.answerId)
     const ansText = question.answerWord?.text || ans?.label || ''
     setFeedback({ good: false, word: 'いっしょに おぼえよう' })
     speak(`だいじょうぶ。こたえは 「${ansText}」。${question.explain || ''} つぎは できるよ！`, {
@@ -275,6 +331,7 @@ export default function ActivityPlayer({ task, onDone }) {
   }
 
   const isTrace = question.type === 'trace'
+  const isChoice = !question.type || question.type === 'choice'
   const grid =
     question.choices && question.choices.length === 3
       ? 'choice-grid choice-grid--3'
@@ -304,6 +361,9 @@ export default function ActivityPlayer({ task, onDone }) {
         {isConquerTarget() && phase === 'answering' && (
           <div className="conquer-tag">⭐ できたら「ちから」になる もんだい！</div>
         )}
+        {supportHint && phase === 'answering' && (
+          <div className="conquer-tag">💡 きょうは ヒントを つかいながら ゆっくり いこう</div>
+        )}
 
         <div className="muted" style={{ fontSize: 'clamp(16px,3vw,24px)', fontWeight: 800 }}>
           {question.instruction}
@@ -319,23 +379,29 @@ export default function ActivityPlayer({ task, onDone }) {
         ) : (
           <>
             <QuestionVisual question={question} />
-            <div className={grid}>
-              {question.choices.map((choice) => (
-                <button
-                  key={choice.id}
-                  className={choiceClass(choice)}
-                  disabled={phase === 'feedback' && choice.id !== chosenId}
-                  onClick={() => {
-                    if (choice.speak) speak(choice.speak)
-                    handleChoose(choice)
-                  }}
-                >
-                  {choice.emoji && <span className="choice__emoji">{choice.emoji}</span>}
-                  {choice.grid && <CountGrid emoji={choice.grid.emoji} n={choice.grid.n} mini />}
-                  {choice.label && <span className="choice__label">{choice.label}</span>}
-                </button>
-              ))}
-            </div>
+            {isChoice ? (
+              <div className={grid}>
+                {question.choices.map((choice) => (
+                  <button
+                    key={choice.id}
+                    className={choiceClass(choice)}
+                    disabled={phase === 'feedback' && choice.id !== chosenId}
+                    onClick={() => handleChoose(choice)}
+                  >
+                    {choice.emoji && <span className="choice__emoji">{choice.emoji}</span>}
+                    {choice.grid && <CountGrid emoji={choice.grid.emoji} n={choice.grid.n} mini />}
+                    {choice.label && <span className="choice__label">{choice.label}</span>}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <QuestionInteraction
+                question={question}
+                onSubmit={handleAnswerId}
+                disabled={phase === 'feedback'}
+                showHint={showAnswerHint && phase === 'answering'}
+              />
+            )}
             {phase === 'answering' && (
               <button
                 className="btn btn--ghost dontknow-btn"
