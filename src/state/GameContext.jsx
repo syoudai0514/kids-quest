@@ -139,7 +139,7 @@ function createInitialState() {
     daily: freshDaily(today, 0),
     battle: freshBattle(today),
     // neural は端末の声ではなく、アプリ内で動く女性ナビ音声。
-    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true },
+    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsVolume: 0.9, ttsVoice: 'neural', narratorMode: 'lite', sfx: true, bgm: true },
     history: {},
     pendingCelebration: null
   }
@@ -153,6 +153,7 @@ function settingsForCurrentVersion(savedSettings) {
     // 以前の「gentle / lively」は同じ端末音声を指していたため、
     // 本物のアプリ専用ナビへ自動移行する。
     ttsVoice: savedSettings?.ttsVoice === 'device' ? 'device' : 'neural',
+    narratorMode: savedSettings?.narratorMode === 'dictionary' ? 'dictionary' : 'lite',
     ttsRate: migrateTtsRate(savedSettings?.ttsRate)
   }
 }

@@ -185,4 +185,7 @@ export function createLiteJapaneseWasmModule() {
   return { WasmPhonemizer: LiteJapanesePhonemizer }
 }
 
+// tts.js が辞書版と同じインターフェースで動的に呼べるようにする。
+export const createJapanesePhonemizerModule = createLiteJapaneseWasmModule
+
 export const liteJapaneseInternals = { toReadableKana, encodeKana }
