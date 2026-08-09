@@ -66,17 +66,28 @@ export const PARTNER_MOVES = [
 ]
 
 // 会心の一撃（たまに大ダメージ。えらぶ楽しさに「運」も少し足す）
-const CRIT_CHANCE = 0.08
+const CRIT_CHANCE = 0.06
 const CRIT_MULT = 1.5
 
+// 武器の数字は「強くなった実感」を出すための表示用の元データ。
+// そのまま全量を足すと、レア武器を1本取った時点で属性を考えなくても
+// 倒せてしまうため、実戦で使うぶんは小さく丸める。
+export function battleAttackBonus(weapon) {
+  return weapon ? Math.max(1, Math.round((weapon.atk || 0) * 0.25)) : 0
+}
+
+export function battleHpBonus(weapon) {
+  return weapon ? Math.max(0, Math.round((weapon.hp || 0) * 0.35)) : 0
+}
+
 /** わざのダメージ。そうびの こうげき力(weapon.atk)が そのまま のる。
- *  → 良い武器を そうびすると 目に見えて はやく たおせる。 */
+ *  → 良い武器を そうびすると少し有利。ただし属性を選ぶ方が大事。 */
 export function rollDamage(move, enemyType, partnerLv = 1, weapon = null) {
   // レベルが上がるほど わざも強くなる（相棒の成長を実感できるように）
-  const growth = 1 + partnerLv * 0.022
+  const growth = 1 + partnerLv * 0.018
   const base =
     Math.floor((move.min + Math.random() * (move.max - move.min + 1)) * growth) +
-    (weapon ? weapon.atk : 0)
+    battleAttackBonus(weapon)
   const mult = effectiveness(move.type, enemyType)
   const crit = Math.random() < CRIT_CHANCE
   const dmg = Math.max(1, Math.round(base * mult * (crit ? CRIT_MULT : 1)))
@@ -102,14 +113,15 @@ export const ELITE_MIN_LEVEL = 4
 // 「そうびを ととのえて 考えて選べば 気持ちよく勝てる」バランス。
 // 武器なしだと 高レベルでは 苦戦する（＝武器をあつめる動機になる）。
 export function enemyMaxHp(enemyLevel, elite = false) {
-  const base = 30 + enemyLevel * 10
-  return Math.round(elite ? base * 1.35 : base)
+  // 有利属性なら2回前後、等倍なら3〜4回で倒せる目安。
+  const base = 36 + enemyLevel * 4
+  return Math.round(elite ? base * 1.28 : base)
 }
 export function partnerMaxHp(level, weapon = null) {
-  return 58 + level * 6 + (weapon ? weapon.hp : 0)
+  return 58 + level * 6 + battleHpBonus(weapon)
 }
 export function enemyDamage(enemyLevel, elite = false) {
-  const base = 3 + enemyLevel * 0.75
+  const base = 3 + enemyLevel * 0.65
   const mn = Math.max(2, Math.round(base - 2))
   const mx = Math.round(base + (elite ? 4 : 3))
   return Math.floor(mn + Math.random() * (mx - mn + 1))

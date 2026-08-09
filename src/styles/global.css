@@ -642,6 +642,30 @@ body {
 .move-btn__emoji {
   font-size: clamp(26px, 4.5vw, 38px);
 }
+.move-btn--strong {
+  border-color: #86efac;
+  box-shadow: 0 0 0 3px rgba(134, 239, 172, 0.22), 0 6px 0 rgba(0, 0, 0, 0.3);
+}
+.move-btn__hint {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+.move-btn__hint--strong { color: #b9fbc0; opacity: 1; }
+.move-btn__hint--weak { color: #ffb3c9; }
+.battle-guide {
+  text-align: center;
+  margin: 0 auto 8px;
+  padding: 8px 12px;
+  width: fit-content;
+  max-width: 96%;
+  font-weight: 900;
+  font-size: clamp(13px, 2.5vw, 17px);
+  border-radius: 14px;
+  background: rgba(134, 239, 172, 0.16);
+  border: 2px solid rgba(134, 239, 172, 0.5);
+}
 .ring-throw {
   position: absolute;
   left: 50%;

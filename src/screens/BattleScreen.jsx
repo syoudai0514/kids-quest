@@ -11,18 +11,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame, partnerLevel, PARTNER_COLORS, equippedWeapon } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, getWildMonsters, MONSTERS } from '../data/monsters.js'
-import { rollWeaponDrop, RARITIES } from '../data/weapons.js'
+import { rollScheduledWeaponReward, RARITIES } from '../data/weapons.js'
 import {
   TYPES,
   typeOfElement,
   PARTNER_MOVES,
   rollDamage,
+  effectiveness,
   effectLabel,
   enemyLevelFor,
   ELITE_MIN_LEVEL,
   enemyMaxHp,
   partnerMaxHp,
-  enemyDamage
+  enemyDamage,
+  battleAttackBonus,
+  battleHpBonus
 } from '../engine/battle.js'
 import Monster from '../components/Monster.jsx'
 import { Starfield, Confetti } from '../components/common.jsx'
@@ -44,7 +47,7 @@ export default function BattleScreen({ onBack }) {
   const playsLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
   const canPlay = playsLeft > 0 || state.battle.tickets > 0
 
-  const ELITE_CHANCE = 0.25 // 4回に1回くらい「つよい てき」が出る
+  const ELITE_CHANCE = 0.15 // 強敵は「ときどき」。通常戦の成功体験を中心にする。
 
   const [round, setRound] = useState(0) // もう一回 のたびに敵を引き直す
   const enemy = useMemo(() => {
@@ -66,6 +69,7 @@ export default function BattleScreen({ onBack }) {
   const enemyLv = useMemo(() => enemyLevelFor(level, isElite), [round, level, isElite])
 
   const weapon = equippedWeapon(state)
+  const isTutorialBattle = (state.rewardProgress?.battleTutorialsSeen || 0) < 5
   const E_MAX = enemyMaxHp(enemyLv, isElite)
   const P_MAX = partnerMaxHp(level, weapon)
 
@@ -102,7 +106,12 @@ export default function BattleScreen({ onBack }) {
     sfx.swoosh()
     setMode('fight')
     setLog('どの わざで たたかう？')
-    speak(`あいては ${TYPES[enemyType].name}タイプ。どの わざが きくかな？`)
+    const bestMove = PARTNER_MOVES.find((move) => effectiveness(move.type, enemyType) > 1)
+    speak(
+      isTutorialBattle && bestMove
+        ? `あいては ${TYPES[enemyType].name}タイプ。${bestMove.name}の みどりの やじるしを おしてみよう！`
+        : `あいては ${TYPES[enemyType].name}タイプ。どの わざが きくかな？`
+    )
   }
 
   const showDmg = (side, text) => {
@@ -162,13 +171,19 @@ export default function BattleScreen({ onBack }) {
     const alreadyCaught = state.unlockedMonsters.includes(enemy.id)
     wasNewCatchRef.current = !alreadyCaught
 
-    // そうび品のドロップ抽選。今より強ければ自動でそうびされる
-    const drop = rollWeaponDrop(level, isElite, state.weapons || [])
+    // 武器は勝利の運ではなく、学習を続けた活動日で開く宝箱から渡す。
+    // これにより「バトルだけを何度も回す」より、明日の学習を楽しみにできる。
+    const drop = rollScheduledWeaponReward({
+      activityDays: state.rewardProgress?.activityDays?.length || 0,
+      ownedIds: state.weapons || [],
+      eliteWins: state.rewardProgress?.eliteWins || 0,
+      chapterPassed: Object.values(state.testPassed || {}).some((result) => result?.passed)
+    })
     const upgraded = drop && (!weapon || drop.atk * 2 + drop.hp > weapon.atk * 2 + weapon.hp)
     dropRef.current = drop ? { ...drop, upgraded } : null
 
     const dropLine = drop
-      ? ` ${drop.name}を てにいれた！${upgraded ? ' そうび したよ！' : ''}`
+      ? ` 宝箱から ${drop.name}を てにいれた！${upgraded ? ' そうび したよ！' : ''}`
       : ''
 
     if (alreadyCaught) {
@@ -262,7 +277,7 @@ export default function BattleScreen({ onBack }) {
               {win
                 ? wasNewCatchRef.current
                   ? `${enemy.name}が なかまに なった！（ずかん ${state.unlockedMonsters.length}/${MONSTERS.length}）`
-                  : `${enemy.name}に かった！ ✨+${isElite ? 20 : 12}`
+                  : `${enemy.name}に かった！ ✦+${isElite ? 12 : 6}`
                 : `つぎは きっと かてるよ！（Lv.${enemyLv}${isElite ? ' ・ つよい てきだった' : ''}）`}
             </div>
           </div>
@@ -279,15 +294,15 @@ export default function BattleScreen({ onBack }) {
               }}
             >
               <div style={{ fontWeight: 900, color: RARITIES[dropRef.current.rarity].color, fontSize: 13 }}>
-                🎁 {RARITIES[dropRef.current.rarity].name} そうび を てにいれた！
+                🎁 宝箱から {RARITIES[dropRef.current.rarity].name} そうび を てにいれた！
               </div>
               <div style={{ fontSize: 46, lineHeight: 1.2 }}>{dropRef.current.emoji}</div>
               <div style={{ fontWeight: 900, fontSize: 'clamp(16px,3vw,21px)' }}>
                 {dropRef.current.name}
               </div>
               <div className="row" style={{ justifyContent: 'center', gap: 12, fontWeight: 900, marginTop: 4 }}>
-                <span style={{ color: 'var(--accent-2)' }}>⚔️ +{dropRef.current.atk}</span>
-                <span style={{ color: 'var(--accent)' }}>❤️ +{dropRef.current.hp}</span>
+                <span style={{ color: 'var(--accent-2)' }}>⚔️ +{battleAttackBonus(dropRef.current)}</span>
+                <span style={{ color: 'var(--accent)' }}>❤️ +{battleHpBonus(dropRef.current)}</span>
               </div>
               {dropRef.current.upgraded && (
                 <div className="pill" style={{ marginTop: 6, background: 'var(--good)', color: '#10231c', border: 'none' }}>
@@ -365,7 +380,7 @@ export default function BattleScreen({ onBack }) {
             {stage.name} <span className="type-chip">Lv.{level}</span>
             {weapon && (
               <span className="type-chip" style={{ marginLeft: 4 }}>
-                {weapon.emoji} ⚔️+{weapon.atk}
+                {weapon.emoji} ⚔️+{battleAttackBonus(weapon)}
               </span>
             )}
           </div>
@@ -386,6 +401,11 @@ export default function BattleScreen({ onBack }) {
           <div className="pill" style={{ fontSize: 'clamp(17px,3vw,22px)' }}>🌀 ほしのわを なげた…！</div>
         ) : (
           <div style={{ width: 'min(760px,96vw)' }}>
+            {isTutorialBattle && (
+              <div className="battle-guide">
+                {TYPES[enemyType].emoji} {TYPES[enemyType].name}には、みどりの「ばつぐん！」を えらぼう！
+              </div>
+            )}
             <div
               className="muted"
               style={{ textAlign: 'center', fontWeight: 800, marginBottom: 8, minHeight: 24 }}
@@ -399,12 +419,27 @@ export default function BattleScreen({ onBack }) {
                 gap: 10
               }}
             >
-              {PARTNER_MOVES.map((m) => (
-                <button key={m.name} className="move-btn" disabled={busy} onClick={() => useMove(m)}>
+              {PARTNER_MOVES.map((m) => {
+                const mult = effectiveness(m.type, enemyType)
+                const isStrong = mult > 1
+                const isWeak = mult < 1
+                return (
+                <button
+                  key={m.name}
+                  className={'move-btn' + (isTutorialBattle && isStrong ? ' move-btn--strong' : '')}
+                  disabled={busy}
+                  onClick={() => useMove(m)}
+                >
                   <span className="move-btn__emoji">{m.emoji}</span>
                   <span>{m.name}</span>
+                  {isTutorialBattle && (
+                    <small className={isStrong ? 'move-btn__hint move-btn__hint--strong' : isWeak ? 'move-btn__hint move-btn__hint--weak' : 'move-btn__hint'}>
+                      {isStrong ? '↑ ばつぐん！' : isWeak ? '↓ ちょっと にがて' : '→ ふつう'}
+                    </small>
+                  )}
                 </button>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}

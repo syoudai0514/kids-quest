@@ -10,8 +10,8 @@
 //   小5: + 小数×整数 / 異分母分数のたし算 / 百分率(%)
 //   小6: + 分数×整数 / 比 / 速さ
 //
-// 各問題は itemKey = 出題タイプ名 を持ち、間違えると復習キューに入る。
-// generateNumbersQuestion(params, reviewKind) で同タイプを再出題できる。
+// 各問題は itemKey = 出題タイプ名 を持つ。実際の復習キーは画面側で
+// 問題ごとに分け、元の問題スナップショットを優先して再出題する。
 // ============================================================
 
 const COUNT_EMOJI = ['🦕', '⭐', '🦖', '🪐', '🚀', '🌙', '🥚', '☄️', '🍎', '🐟']
@@ -836,14 +836,15 @@ function kindsForGrade(grade, level) {
 /**
  * すうじの問題を1問生成する。
  * @param {object} params 難易度パラメータ（grade を含む）
- * @param {string|null} reviewKey 'n:タイプ名'（復習したい出題タイプ）
+ * @param {string|null} reviewKey 'n:タイプ名' または 'n:タイプ名#識別子'
  */
 export function generateNumbersQuestion(params, reviewKey = null) {
   const grade = params.grade || 0
   const p = { ...params, grade, cc: Math.max(3, params.choiceCount) }
 
   if (reviewKey && reviewKey.startsWith('n:')) {
-    const kind = reviewKey.slice(2)
+    // 古いセーブにある "n:add10" も、新しい "n:add10#xxxx" も受け入れる。
+    const kind = reviewKey.slice(2).split('#')[0]
     if (BUILDERS[kind]) return BUILDERS[kind](p)
   }
   const kind = pick(kindsForGrade(grade, params.level))

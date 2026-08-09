@@ -8,8 +8,8 @@
 
 import React from 'react'
 import { useGame, equippedWeapon, partnerLevel } from '../state/GameContext.jsx'
-import { WEAPONS, RARITIES, getWeapon } from '../data/weapons.js'
-import { partnerMaxHp } from '../engine/battle.js'
+import { WEAPONS, RARITIES, getWeapon, nextWeaponAwardDay, weaponAwardsDue } from '../data/weapons.js'
+import { partnerMaxHp, battleAttackBonus, battleHpBonus } from '../engine/battle.js'
 import { Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
@@ -27,6 +27,9 @@ export default function EquipScreen({ onBack }) {
   const owned = new Set(state.weapons || [])
   const cur = equippedWeapon(state)
   const level = partnerLevel(state.xp)
+  const activityDays = state.rewardProgress?.activityDays?.length || 0
+  const chestReady = weaponAwardsDue(activityDays) > owned.size
+  const nextChestDay = nextWeaponAwardDay(activityDays + 1, owned.size)
 
   const equip = (w) => {
     if (!owned.has(w.id)) {
@@ -37,7 +40,7 @@ export default function EquipScreen({ onBack }) {
     if (state.equipped === w.id) return
     dispatch({ type: 'EQUIP_WEAPON', weaponId: w.id })
     sfx.levelUp()
-    speak(`${w.name}を そうびした！ こうげき プラス${w.atk}！`)
+    speak(`${w.name}を そうびした！ こうげき プラス${battleAttackBonus(w)}！`)
   }
 
   return (
@@ -77,8 +80,8 @@ export default function EquipScreen({ onBack }) {
               className="row"
               style={{ justifyContent: 'center', gap: 14, marginTop: 8, fontWeight: 900 }}
             >
-              <span style={{ color: 'var(--accent-2)' }}>⚔️ こうげき +{cur ? cur.atk : 0}</span>
-              <span style={{ color: 'var(--accent)' }}>❤️ たいりょく +{cur ? cur.hp : 0}</span>
+              <span style={{ color: 'var(--accent-2)' }}>⚔️ こうげき +{battleAttackBonus(cur)}</span>
+              <span style={{ color: 'var(--accent)' }}>❤️ たいりょく +{battleHpBonus(cur)}</span>
             </div>
             <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
               いまの さいだいたいりょく {partnerMaxHp(level, cur)}
@@ -86,7 +89,11 @@ export default function EquipScreen({ onBack }) {
           </div>
 
           <div className="muted" style={{ fontWeight: 800, marginBottom: 8, fontSize: 14 }}>
-            もっている そうびを タップで つけかえ（バトルに かつと あたらしい そうびが てにはいる）
+            {chestReady
+              ? '🎁 宝箱が じゅんびできた！ バトルに かつと ひらくよ'
+              : nextChestDay
+                ? `🎁 つぎの 宝箱まで あと ${Math.max(0, nextChestDay - activityDays)} かつどうび`
+                : '🎁 まなぶと 宝箱が ひらくよ'}
           </div>
 
           {/* 一覧 */}
@@ -140,7 +147,7 @@ export default function EquipScreen({ onBack }) {
                         </div>
                         {has && (
                           <div className="muted" style={{ fontSize: 11, fontWeight: 800 }}>
-                            ⚔️+{w.atk} ❤️+{w.hp}
+                            ⚔️+{battleAttackBonus(w)} ❤️+{battleHpBonus(w)}
                           </div>
                         )}
                         {isOn && (
