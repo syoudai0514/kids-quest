@@ -9,9 +9,11 @@
 import { unlockAudio } from './audioCtx.js'
 import {
   hasNarratorInstallMarker,
+  markNarratorInstalled,
   NARRATOR_MODEL_URL,
   loadCachedNarratorModel,
-  ortWithCachedModel
+  ortWithCachedModel,
+  removeLegacyNarratorRuntimeCaches
 } from './narratorCache.js'
 import { DEFAULT_TTS_RATE } from '../config/ttsRates.js'
 
@@ -70,7 +72,7 @@ export function getNarratorStatus() {
     detail: narratorDetail,
     error: narratorError,
     playback: narratorPlayback,
-    engine: 'つくよみちゃん（Piper）',
+    engine: 'つくよみちゃん（iPhone対応・軽量版）',
     storage: narratorStorage,
     audio: narratorAudio
   }
@@ -112,13 +114,15 @@ export async function prepareNarratorVoice({ allowDownload = false } = {}) {
 
   narratorPromise = (async () => {
     try {
-      const [{ PiperPlus, ModelManager }, ort, japanesePhonemizer] = await Promise.all([
-        import('piper-plus'),
-        import('onnxruntime-web'),
-        // パッケージ内部の相対URLに任せると、Viteでハッシュ名へ変わったWASMを
-        // 見つけられない。ここで明示的に読ませ、iPhoneでも確実に日本語を解析する。
-        import('piper-plus/wasm/multilingual')
-      ])
+      // 旧PWAが保存した約60MBの日本語WASMを端末から外す。
+      // 失敗しても軽量版の起動には影響させない。
+      await removeLegacyNarratorRuntimeCaches()
+      // 大きな部品をPromise.allで同時展開すると、iPhone 11 Proでは一時的な
+      // ピークメモリだけでPWAが終了する。小さいJS → WASM専用ORT → モデルの
+      // 順に読み込み、約60MBの多言語フォネマイザーは使わない。
+      const { PiperPlus, ModelManager } = await import('piper-plus')
+      const ort = await import('onnxruntime-web/wasm')
+      const { createLiteJapaneseWasmModule } = await import('./liteJapanesePhonemizer.js')
       const cachedModel = await loadCachedNarratorModel(ModelManager, (status) => {
         narratorStorage = status.storage
         narratorProgress = status.progress
@@ -137,15 +141,14 @@ export async function prepareNarratorVoice({ allowDownload = false } = {}) {
       narrator = await PiperPlus.initialize({
         // つきよみちゃん: 日本語の女性単一話者モデル（MIT）。
         model,
+        // ModelManagerは音声本体と同じ設定JSONもIndexedDBへ保存する。
+        // これをPiperへ直接渡し、「再ダウンロードなし」の起動時に
+        // 小さな設定JSONだけ通信失敗する経路もなくす。
+        modelConfig: cachedModel?.config,
         ort: narratorOrt,
-        // piper-plus の DI loader は、通常の dynamic import と違って
-        // WASM の default init() を自動では呼ばない。以前は未初期化の
-        // module を返していたため日本語 phonemizer が内部で除外され、
-        // 合成時に端末音声へフォールバックしていた。
-        wasmLoader: async () => {
-          await japanesePhonemizer.default()
-          return japanesePhonemizer
-        },
+        // アプリ内の発音用かなを直接モデルの音素へ変換する。巨大な日本語辞書
+        // WASMを常駐させず、つくよみちゃんのモデルと声質は維持する。
+        wasmLoader: async () => createLiteJapaneseWasmModule(),
         onProgress: ({ stage, progress, message }) => {
           const percent = Number.isFinite(progress) ? Math.round(progress * 100) : null
           // 30% はPiper PlusがONNXセッション作成直前に発行する固定値。
@@ -164,13 +167,16 @@ export async function prepareNarratorVoice({ allowDownload = false } = {}) {
           notifyNarrator()
         }
       })
+      // 音声モデルの保存だけでなく、軽量実行部分の初期化まで
+      // 通った時にだけv3導入済みとする。起動失敗後のループを防ぐ。
+      if (narratorStorage === 'cached' || narratorStorage === 'saved') markNarratorInstalled()
       narratorState = 'ready'
       narratorProgress = 100
       narratorDetail = narratorStorage === 'cached'
-        ? '端末に保存した声で準備できました（再ダウンロードなし）'
+        ? '端末に保存した声を、iPhone対応の軽量版で準備できました（モデルの再ダウンロードなし）'
         : narratorStorage === 'saved'
-          ? '声を端末へ保存し、準備できました'
-          : '日本語エンジンの準備ができました'
+          ? '声を端末へ保存し、iPhone対応の軽量版で準備できました'
+          : '軽量日本語エンジンの準備ができました'
       notifyNarrator()
       return narrator
     } catch (error) {

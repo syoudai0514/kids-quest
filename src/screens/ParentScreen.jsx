@@ -427,7 +427,7 @@ export default function ParentScreen({ onBack }) {
                 </div>
                 <div className="card" style={{ padding: '10px 12px', background: '#f2edff', border: '1px solid #d7c8ff' }}>
                   <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
-                    ✨ いま選ばれている声：{state.settings.ttsVoice === 'neural' ? 'つくよみちゃん（アプリの女性ナビ）' : 'iPhoneの読み上げ'}
+                    ✨ いま選ばれている声：{state.settings.ttsVoice === 'neural' ? 'つくよみちゃん（iPhone対応・軽量版）' : 'iPhoneの読み上げ'}
                   </div>
                   {narratorStatus.state === 'ready' ? (
                     <div className="muted" style={{ fontSize: 12, lineHeight: 1.45 }}>
@@ -435,7 +435,7 @@ export default function ParentScreen({ onBack }) {
                         {state.settings.ttsVoice === 'device'
                           ? '今はiPhoneの読み上げを使います。上の「アプリの ナビ音声」を押すと、つくよみちゃんへ切り替わります。'
                           : narratorStatus.storage === 'cached'
-                            ? '端末に保存した声を使います。大きな再ダウンロードはありません。'
+                            ? '端末に保存した声を軽量版で使います。音声モデルの大きな再ダウンロードはありません。'
                             : 'つくよみちゃんを使う準備ができました。下のボタンで聞けます。'}
                       </p>
                       {narratorStatus.playback === 'app' && (
@@ -468,8 +468,8 @@ export default function ParentScreen({ onBack }) {
                     </p>
                   ) : narratorStatus.state === 'not-downloaded' ? (
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                      つくよみちゃんは、まだ端末にありません。<b>声を選んだだけではダウンロードしません。</b>
-                      Wi‑Fiで、下のボタンから必要なときだけ保存できます（約38MB）。
+                      つくよみちゃん軽量版は、まだ準備されていません。<b>声を選んだだけではダウンロードしません。</b>
+                      Wi‑Fiで、下のボタンから必要なときだけ準備できます（最大約50MB、保存済みモデルは再利用）。
                     </p>
                   ) : (
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
@@ -482,7 +482,7 @@ export default function ParentScreen({ onBack }) {
                       style={{ minHeight: 52, padding: '8px 14px', marginTop: 8, width: '100%' }}
                       onClick={downloadNarratorVoice}
                     >
-                      ⬇️ つくよみちゃんを ダウンロード（約38MB）
+                      ⬇️ つくよみちゃん軽量版を 準備（最大約50MB）
                     </button>
                   )}
                   <button

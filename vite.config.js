@@ -34,18 +34,17 @@ export default defineConfig(({ command }) => ({
         // この実行環境では Workbox の terser 子プロセスが終了し、SW 生成だけが失敗する。
         // development モードなら機能は同じで圧縮だけを省くため、確実に PWA を生成できる。
         mode: 'development',
-        // ナビ音声のWASMは85MBほどあるため、通常のアプリ更新で全員に
-        // ダウンロードさせない。保護者が「ナビ音声を準備する」を押した時だけ
-        // 取得する。WASMは下の実行時キャッシュ、音声モデルはIndexedDBへ保存する。
+        // ナビ音声は通常のアプリ更新で全員にダウンロードさせない。保護者が
+        // 「ダウンロード」を押した時だけ、音声モデルと推論WASMを取得する。
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         runtimeCaching: [
           {
-            // 日本語解析WASMとONNX Runtime WASM。初回の音声準備後は
-            // Service Workerから返し、約85MBを毎回取り直さない。
+            // ONNX RuntimeのWASM。日本語解析はアプリ内の軽量実装へ移行済み。
+            // 旧 narrator-wasm-v1 の約60MB辞書WASMを再利用しないよう世代を変える。
             urlPattern: /\/assets\/.*\.wasm$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'narrator-wasm-v1',
+              cacheName: 'narrator-wasm-v2-lite',
               cacheableResponse: { statuses: [0, 200] },
               expiration: { maxEntries: 6, maxAgeSeconds: 60 * 60 * 24 * 365 }
             }

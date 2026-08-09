@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { PiperPlus } from 'piper-plus'
+import { createLiteJapaneseWasmModule } from '../src/engine/liteJapanesePhonemizer.js'
 
 class FakeTensor {
   constructor(type, data, dims) {
@@ -49,4 +50,34 @@ assert.ok(capturedFeeds.speaker_embedding_mask, 'speaker_embedding_mask must be 
 assert.deepEqual(capturedFeeds.speaker_embedding_mask.dims, [1, 1])
 assert.equal(capturedFeeds.speaker_embedding_mask.data[0], 0n)
 
-console.log('Piper built-in speaker feed verified')
+// 保存済み音声は、モデルと一緒にIndexedDBにある設定を
+// 使う。オフライン起動時にconfig JSONのfetchを発生させない。
+const originalFetch = globalThis.fetch
+let fetchCalls = 0
+globalThis.fetch = async () => {
+  fetchCalls += 1
+  throw new Error('cached initialization must not fetch')
+}
+try {
+  const cachedPiper = await PiperPlus.initialize({
+    model: 'https://example.test/voice.onnx',
+    modelConfig: {
+      audio: { sample_rate: 22050 },
+      language_id_map: { ja: 0 },
+      phoneme_id_map: {}
+    },
+    ort: {
+      Tensor: FakeTensor,
+      InferenceSession: {
+        create: async () => ({ inputNames: [], inputMetadata: {}, release() {} })
+      }
+    },
+    wasmLoader: async () => createLiteJapaneseWasmModule()
+  })
+  assert.equal(fetchCalls, 0, 'cached config must prevent a network request')
+  cachedPiper.dispose()
+} finally {
+  globalThis.fetch = originalFetch
+}
+
+console.log('Piper built-in speaker feed and cached config verified')

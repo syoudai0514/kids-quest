@@ -6,8 +6,12 @@ export const NARRATOR_MODEL_URL =
 
 const LEGACY_NARRATOR_CACHE_KEY = 'ayousanz/piper-plus-tsukuyomi-chan'
 // 「声を選んだ」ことと「約38MBを端末に保存してよい」ことは別の意思決定。
-// この印は、明示的なダウンロードが完了した場合だけ付ける。
-const NARRATOR_INSTALL_KEY = 'hoshizora:narrator-model-v2-installed'
+// v3 は、旧約60MBの日本語WASMを使わない iPhone対応軽量版。
+// 旧v2導入済み端末でも、保存済みモデルを再利用しつつ、
+// 保護者が新しい実行部分の準備を明示的に開始する。
+const NARRATOR_INSTALL_KEY = 'hoshizora:narrator-model-v3-lite-installed'
+const LEGACY_NARRATOR_INSTALL_KEYS = ['hoshizora:narrator-model-v2-installed']
+const LEGACY_NARRATOR_RUNTIME_CACHES = ['narrator-wasm-v1']
 
 export class NarratorNotDownloadedError extends Error {
   constructor() {
@@ -25,11 +29,21 @@ export function hasNarratorInstallMarker() {
 }
 
 export function markNarratorInstalled() {
-  try { globalThis.localStorage?.setItem(NARRATOR_INSTALL_KEY, '1') } catch (_) { /* noop */ }
+  try {
+    globalThis.localStorage?.setItem(NARRATOR_INSTALL_KEY, '1')
+    LEGACY_NARRATOR_INSTALL_KEYS.forEach((key) => globalThis.localStorage?.removeItem(key))
+  } catch (_) { /* noop */ }
 }
 
 export function clearNarratorInstallMarker() {
   try { globalThis.localStorage?.removeItem(NARRATOR_INSTALL_KEY) } catch (_) { /* noop */ }
+}
+
+export function removeLegacyNarratorRuntimeCaches() {
+  if (!globalThis.caches?.delete) return Promise.resolve()
+  return Promise.all(
+    LEGACY_NARRATOR_RUNTIME_CACHES.map((cacheName) => globalThis.caches.delete(cacheName).catch(() => false))
+  ).then(() => undefined)
 }
 
 function removeLegacyNarratorModel() {
@@ -104,7 +118,6 @@ export async function loadCachedNarratorModel(ModelManager, onStatus = () => {},
     const loaded = await manager.loadModel(NARRATOR_MODEL_URL)
     // 旧74MB版は同じ声だが、以後使わない。新38MB版の保存後にだけ削除する。
     removeLegacyNarratorModel()
-    markNarratorInstalled()
     onStatus({
       storage: 'saved',
       progress: 100,

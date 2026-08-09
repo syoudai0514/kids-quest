@@ -1,9 +1,16 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import * as ort from 'onnxruntime-web'
+import * as ort from 'onnxruntime-web/wasm'
 import { PiperPlus } from 'piper-plus'
-import * as japanesePhonemizer from 'piper-plus/wasm/multilingual'
 import { NARRATOR_MODEL_URL } from '../src/engine/narratorCache.js'
+import { createLiteJapaneseWasmModule } from '../src/engine/liteJapanesePhonemizer.js'
+
+// Browser版はViteがWASM URLを解決する。NodeにはそのアセットURLが
+// ないため、本番ビルドと同じ12MB版バイナリを直接渡す。
+ort.env.wasm.numThreads = 1
+ort.env.wasm.wasmBinary = await readFile(
+  new URL('../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm', import.meta.url)
+)
 
 // onnxruntime-web expects browsers to fetch remote model URLs itself. In this
 // Node verification, fetch the exact same bytes first and pass them to ORT.
@@ -24,20 +31,15 @@ const testOrt = {
 const piper = await PiperPlus.initialize({
   model: NARRATOR_MODEL_URL,
   ort: testOrt,
-  wasmLoader: async () => {
-    const wasmBytes = await readFile(
-      new URL('../node_modules/piper-plus/dist/rust-wasm/piper_plus_wasm_bg.wasm', import.meta.url)
-    )
-    await japanesePhonemizer.default(wasmBytes)
-    return japanesePhonemizer
-  },
+  wasmLoader: async () => createLiteJapaneseWasmModule(),
   onProgress: ({ stage, progress, message }) => {
     const percentage = Number.isFinite(progress) ? `${Math.round(progress * 100)}%` : ''
     console.log(`${stage} ${percentage} ${message || ''}`.trim())
   }
 })
 
-const text = 'こちらは、アプリ専用のつくよみちゃんです。'
+// 設定画面で実際に再生する確認文を、本番と同じ軽量経路で合成する。
+const text = 'こんにちは。つくよみちゃんです。いっしょに、たのしく、まなぼうね。'
 // 長さだけを検証するため、推論時のランダムな抑揚は固定する。
 // これを指定しないと、正しいlengthScaleでも波形の揺らぎで秒数の順序が
 // たまたま入れ替わり、再生とは無関係な不安定テストになる。
@@ -60,6 +62,14 @@ assert.ok(
   slowResult.samples.length > normalResult.samples.length && normalResult.samples.length > fastResult.samples.length,
   'the three narrator speed choices must produce slow > normal > fast durations'
 )
+
+// 報告された「国語でわからないを2回」の経路。回答と解説を
+// 続けて合成しても、波形が作られ、前回結果を保持し続けないことを確認する。
+const dontKnowText = 'だいじょうぶ。こたえは「ほし」。これは「ほし」。ほしだよ。つぎはできるよ！'
+for (let index = 0; index < 2; index += 1) {
+  const feedbackResult = await piper.synthesize(dontKnowText, { ...fixedVoice, lengthScale: 0.98 / 0.9 })
+  assert.ok(feedbackResult.samples.length > feedbackResult.sampleRate, `feedback ${index + 1} must not be silent`)
+}
 
 console.log(JSON.stringify({
   samples: normalResult.samples.length,

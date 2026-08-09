@@ -1,8 +1,47 @@
 diff --git a/node_modules/piper-plus/src/index.js b/node_modules/piper-plus/src/index.js
-index 885d291..b4e2d28 100644
+index 885d291..6b0df53 100644
 --- a/node_modules/piper-plus/src/index.js
 +++ b/node_modules/piper-plus/src/index.js
-@@ -627,6 +627,36 @@ export class PiperPlus {
+@@ -352,6 +352,7 @@ export class PiperPlus {
+    *   (e.g. "ayousanz/piper-plus-css10-ja-6lang") or direct URL to an ONNX file.
+    * @param {Object} [options.ort] - onnxruntime-web instance.  When omitted
+    *   the global `globalThis.ort` is used.
++   * @param {Object} [options.modelConfig] - Already-cached Piper model config.
+    * @param {Function} [options.onProgress] - Progress callback receiving
+    *   `{ stage: string, progress: number, message: string }`.
+    * @param {string} [options.wasmG2pUrl] - Custom URL for Rust WASM G2P module.
+@@ -598,15 +599,22 @@ export class PiperPlus {
+       const modelManager = new ModelManager();
+       const { modelUrl, configUrl, configFallbackUrl } = await modelManager.resolveUrls(options.model);
+
+-      progress({ stage: 'model', progress: 0.1, message: 'Downloading config...' });
+-      let configResponse = await fetch(configUrl);
+-      if (!configResponse.ok && configResponse.status === 404 && configFallbackUrl) {
+-        configResponse = await fetch(configFallbackUrl);
+-      }
+-      if (!configResponse.ok) {
+-        throw new Error(`Failed to fetch config: ${configResponse.status} ${configResponse.statusText}`);
++      progress({ stage: 'model', progress: 0.1, message: 'Loading config...' });
++      // Applications that explicitly cache a model already have its matching
++      // config in IndexedDB. Reuse it so a cached/offline voice never needs a
++      // second network request merely to initialize Piper.
++      if (options.modelConfig) {
++        this._config = options.modelConfig;
++      } else {
++        let configResponse = await fetch(configUrl);
++        if (!configResponse.ok && configResponse.status === 404 && configFallbackUrl) {
++          configResponse = await fetch(configFallbackUrl);
++        }
++        if (!configResponse.ok) {
++          throw new Error(`Failed to fetch config: ${configResponse.status} ${configResponse.statusText}`);
++        }
++        this._config = await configResponse.json();
+       }
+-      this._config = await configResponse.json();
+
+       // --- PUA compatibility check ------------------------------------------
+       const puaCheck = checkPuaCompat(this._config.pua_compat_version);
+@@ -627,6 +635,36 @@ export class PiperPlus {
        this._modelUrl = modelUrl;
        this._session = await this._sessionManager.createSession(modelUrl);
  
@@ -39,7 +78,7 @@ index 885d291..b4e2d28 100644
        progress({ stage: 'model', progress: 0.7, message: 'Model loaded.' });
  
        // --- 3. Initialise phonemizer (Adapter pattern) --------------------------
-@@ -835,22 +865,45 @@ export class PiperPlus {
+@@ -835,22 +873,45 @@ export class PiperPlus {
        }
      }
  
@@ -93,7 +132,7 @@ index 885d291..b4e2d28 100644
        const flat = [];
        for (const [a1, a2, a3] of prosodyFeatures) {
          flat.push(BigInt(a1), BigInt(a2), BigInt(a3));
-@@ -886,12 +939,19 @@ export class PiperPlus {
+@@ -886,12 +947,19 @@ export class PiperPlus {
        }
      }
      const audioTensor = results.output || results[Object.keys(results)[0]];
