@@ -24,6 +24,10 @@ let narratorPromise = null
 let narratorState = 'idle' // idle | loading | ready | error
 let narratorProgress = null
 let narratorError = null
+let narratorDetail = null
+// "ready"（モデルを保存済み）と、実際にアプリの声を再生できたかは別物。
+// iPhone では後者だけが失敗し、以前は端末音声へ黙って戻っていた。
+let narratorPlayback = 'not-tested' // not-tested | app | device-fallback
 const narratorListeners = new Set()
 
 function notifyNarrator() {
@@ -32,7 +36,16 @@ function notifyNarrator() {
 }
 
 export function getNarratorStatus() {
-  return { state: narratorState, progress: narratorProgress, error: narratorError }
+  return {
+    state: narratorState,
+    // Piper Plus はモデル本体をONNX Runtimeに渡す時、0.3（=30%）を
+    // 出したまま長時間かかる。これはダウンロードの30%ではないため、
+    // 数字を見せず「読み込み中」として扱う。
+    progress: narratorProgress,
+    detail: narratorDetail,
+    error: narratorError,
+    playback: narratorPlayback
+  }
 }
 
 export function subscribeNarratorStatus(listener) {
@@ -50,6 +63,8 @@ export async function prepareNarratorVoice() {
   narratorState = 'loading'
   narratorProgress = 0
   narratorError = null
+  narratorDetail = '準備をはじめています…'
+  narratorPlayback = 'not-tested'
   notifyNarrator()
 
   narratorPromise = (async () => {
@@ -66,20 +81,31 @@ export async function prepareNarratorVoice() {
         model: 'tsukuyomi',
         ort,
         wasmLoader: async () => japanesePhonemizer,
-        onProgress: ({ progress, message }) => {
-          narratorProgress = Number.isFinite(progress) ? Math.round(progress * 100) : null
+        onProgress: ({ stage, progress, message }) => {
+          const percent = Number.isFinite(progress) ? Math.round(progress * 100) : null
+          // 30% はPiper PlusがONNXセッション作成直前に発行する固定値。
+          // 85MB前後のモデル取得・展開がここで起きるため、実進捗のように
+          // 表示すると「30%で止まった」と誤解させてしまう。
+          narratorProgress = stage === 'model' && percent === 30 ? null : percent
+          narratorDetail = stage === 'model' && percent === 30
+            ? '声のデータを読み込んでいます…（Wi‑Fi推奨・数分かかることがあります）'
+            : stage === 'phonemizer'
+              ? '日本語を話せるように仕上げています…'
+              : message || '準備しています…'
           narratorState = 'loading'
-          if (message) narratorError = null
+          narratorError = null
           notifyNarrator()
         }
       })
       narratorState = 'ready'
       narratorProgress = 100
+      narratorDetail = '準備できました'
       notifyNarrator()
       return narrator
     } catch (error) {
       narratorState = 'error'
       narratorError = error?.message || 'ナビ音声の準備に失敗しました'
+      narratorDetail = null
       narratorPromise = null
       notifyNarrator()
       throw error
@@ -169,6 +195,11 @@ async function speakWithNarrator(text, id, opts) {
       noiseW: 0.62
     })
     if (id !== requestId || !enabled) return
+    // ここまで来た時だけ、端末の読み上げではないことを画面へ確定表示する。
+    narratorPlayback = 'app'
+    narratorError = null
+    narratorDetail = 'アプリのナビ音声で再生できました'
+    notifyNarrator()
     await playNarratorResult(result, id, loudness)
   }
 }
@@ -234,8 +265,14 @@ export function speak(text, opts = {}) {
         if (voiceStyle === 'neural') await speakWithNarrator(said, id, opts)
         else await speakWithDevice(said, id, opts)
       } catch (error) {
-        // オフラインの初回など、モデルがまだ取れない時だけ端末音声へ戻す。
-        // 失敗を黙殺せず設定画面に状態を残すので、次回は再試行できる。
+        // 学習を止めないため端末音声へ戻すが、絶対に成功したようには見せない。
+        // この表示で、専用音声が実際に使われたかをiPhone上で判定できる。
+        if (voiceStyle === 'neural') {
+          narratorPlayback = 'device-fallback'
+          narratorError = error?.message || 'アプリのナビ音声を再生できませんでした'
+          narratorDetail = '端末の読み上げに戻っています'
+          notifyNarrator()
+        }
         if (id === requestId && enabled) await speakWithDevice(said, id, opts)
       }
       if (id === requestId) opts.onEnd?.()

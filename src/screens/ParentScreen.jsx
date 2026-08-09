@@ -420,16 +420,29 @@ export default function ParentScreen({ onBack }) {
                     ✨ アプリのナビ音声（女性・日本語）
                   </div>
                   {narratorStatus.state === 'ready' ? (
-                    <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                      準備できました。このiPhoneの声とは別の、アプリ専用の声で読み上げます。
-                    </p>
+                    <div className="muted" style={{ fontSize: 12, lineHeight: 1.45 }}>
+                      <p style={{ margin: 0 }}>
+                        準備できました。下のテストで、実際にアプリ専用の声が鳴ったか確認できます。
+                      </p>
+                      {narratorStatus.playback === 'app' && (
+                        <p style={{ margin: '5px 0 0', color: '#167246', fontWeight: 800 }}>
+                          ✅ 確認済み：いま鳴ったのはアプリのナビ音声です
+                        </p>
+                      )}
+                      {narratorStatus.playback === 'device-fallback' && (
+                        <p style={{ margin: '5px 0 0', color: '#b54708', fontWeight: 800 }}>
+                          ⚠️ アプリ音声の再生に失敗し、端末の読み上げが鳴っています
+                          {narratorStatus.error ? `（${narratorStatus.error}）` : ''}
+                        </p>
+                      )}
+                    </div>
                   ) : narratorStatus.state === 'loading' ? (
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                      声を準備中… {narratorStatus.progress != null ? `${narratorStatus.progress}%` : '少し待ってね'}
+                      声を準備中… {narratorStatus.progress != null ? `${narratorStatus.progress}%` : narratorStatus.detail || '少し待ってね'}
                     </p>
                   ) : narratorStatus.state === 'error' ? (
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                      準備できませんでした。Wi-Fiにつないで、もう一度ためしてください。
+                      準備できませんでした。Wi‑Fiにつないで、もう一度ためしてください。{narratorStatus.error ? `（${narratorStatus.error}）` : ''}
                     </p>
                   ) : (
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
@@ -442,7 +455,7 @@ export default function ParentScreen({ onBack }) {
                     disabled={narratorStatus.state === 'loading'}
                     onClick={prepareNarrator}
                   >
-                    {narratorStatus.state === 'ready' ? '🔊 アプリの声に 切り替えて ためす' : narratorStatus.state === 'loading' ? '⏳ 準備中…' : '✨ ナビ音声を 準備する'}
+                    {narratorStatus.state === 'ready' ? '🔊 アプリ専用の声を テストする' : narratorStatus.state === 'loading' ? '⏳ 準備中…' : '✨ ナビ音声を 準備する'}
                   </button>
                 </div>
               </div>
