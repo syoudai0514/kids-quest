@@ -49,7 +49,16 @@ class EmptyManager extends CachedManager {
   }
 }
 const missStatuses = []
-await loadCachedNarratorModel(EmptyManager, (status) => missStatuses.push(status))
+// 通常の読み上げ経路は、キャッシュが無ければ通信しない。
+await assert.rejects(
+  () => loadCachedNarratorModel(EmptyManager, (status) => missStatuses.push(status)),
+  { name: 'NarratorNotDownloadedError' }
+)
+assert.equal(downloaded, 0, 'selecting the narrator must never download its model')
+assert.equal(missStatuses.at(-1).storage, 'not-downloaded')
+
+// 保護者が明示的にダウンロード操作をした時だけ取得する。
+await loadCachedNarratorModel(EmptyManager, (status) => missStatuses.push(status), { allowDownload: true })
 assert.equal(downloaded, 1)
 assert.equal(missStatuses.at(-1).storage, 'saved')
 assert.equal(missStatuses.at(-1).progress, 100)
