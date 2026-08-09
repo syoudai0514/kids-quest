@@ -137,9 +137,21 @@ function createInitialState() {
     totalClears: 0,
     daily: freshDaily(today, 0),
     battle: freshBattle(today),
-    settings: { tts: true, ttsRate: 0.96, ttsVolume: 0.9, ttsVoice: 'gentle', sfx: true, bgm: true },
+    // neural は端末の声ではなく、アプリ内で動く女性ナビ音声。
+    settings: { tts: true, ttsRate: 0.96, ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true },
     history: {},
     pendingCelebration: null
+  }
+}
+
+function settingsForCurrentVersion(savedSettings) {
+  const fresh = createInitialState().settings
+  return {
+    ...fresh,
+    ...(savedSettings || {}),
+    // 以前の「gentle / lively」は同じ端末音声を指していたため、
+    // 本物のアプリ専用ナビへ自動移行する。
+    ttsVoice: savedSettings?.ttsVoice === 'device' ? 'device' : 'neural'
   }
 }
 
@@ -153,7 +165,7 @@ function migrateOld(saved) {
     unlockedMonsters: saved.unlockedMonsters?.length ? saved.unlockedMonsters : fresh.unlockedMonsters,
     totalClears: saved.totalClears || 0,
     history: saved.history || {},
-    settings: { ...fresh.settings, ...(saved.settings || {}) },
+    settings: settingsForCurrentVersion(saved.settings),
     xp: saved.xp ?? (saved.totalClears || 0) * 10,
     streak: saved.streak || 0,
     lastActiveDate: saved.lastActiveDate || null,
@@ -172,7 +184,7 @@ function normalizeSaved(saved) {
     base = {
       ...fresh,
       ...saved,
-      settings: { ...fresh.settings, ...(saved.settings || {}) },
+      settings: settingsForCurrentVersion(saved.settings),
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
       srs: saved.srs || migrateMissed(saved.missed),
       reviewQuestions: saved.reviewQuestions || {}

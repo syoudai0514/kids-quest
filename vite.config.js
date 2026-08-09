@@ -34,6 +34,9 @@ export default defineConfig(({ command }) => ({
         // この実行環境では Workbox の terser 子プロセスが終了し、SW 生成だけが失敗する。
         // development モードなら機能は同じで圧縮だけを省くため、確実に PWA を生成できる。
         mode: 'development',
+        // ナビ音声のWASMは85MBほどあるため、通常のアプリ更新で全員に
+        // ダウンロードさせない。保護者が「ナビ音声を準備する」を押した時だけ
+        // 取得し、ブラウザのキャッシュとIndexedDBへ保存する。
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // 全アセットをキャッシュしてオフラインでも完全に動くように
         navigateFallback: 'index.html'

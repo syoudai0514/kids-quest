@@ -1,199 +1,260 @@
 // ============================================================
-// 日本語の音声読み上げ（Web Speech API）
-// 指示・問題文・正誤は必ずこれを通して声でも伝える。
-// 5歳が一人で操作できるよう、テキストが出るところは必ず speak する想定。
+// ほしぞらクエストの読み上げ
+//
+// 標準は、端末の SpeechSynthesis ではなくアプリ専用の日本語ニューラル音声。
+// iPhone に日本語音声が一つしかなくても、ナビの声が同じに戻らない。
+// モデルは初回だけ端末へ保存され、文章は外部の読み上げサーバーへ送られない。
 // ============================================================
 
-let jaVoice = null
-let voicesReady = false
-let voiceStyle = 'gentle'
+import { getCtx, unlockAudio } from './audioCtx.js'
 
-// 端末ごとに入っている日本語音声名は違う。声名を一つに固定すると iPhone /
-// Android / PC のどれかで無音になるので、キャラクターごとに「近い声」の順番を
-// 持ち、実際に使える声へフォールバックする。
-const VOICE_STYLES = {
-  gentle: [
-    'kyoko', 'o-ren', 'nanami', 'ayumi', 'haruka',
-    'google 日本語', 'google japanese', 'ja-jp-neural', 'ja-jp-wavenet'
-  ],
-  lively: [
-    'sora', 'otoya', 'keita', 'hattori',
-    'google 日本語', 'google japanese', 'ja-jp-neural', 'ja-jp-wavenet'
-  ]
+let enabled = true
+let rate = 0.96
+let volume = 0.9
+// 旧セーブの gentle / lively も、今回から本物のナビ音声に移行する。
+let voiceStyle = 'neural'
+let requestId = 0
+let pendingTimer = null
+let activeResolve = null
+let activeSource = null
+
+// --- 端末内のニューラル音声モデル ---
+let narrator = null
+let narratorPromise = null
+let narratorState = 'idle' // idle | loading | ready | error
+let narratorProgress = null
+let narratorError = null
+const narratorListeners = new Set()
+
+function notifyNarrator() {
+  const status = getNarratorStatus()
+  narratorListeners.forEach((listener) => listener(status))
 }
 
-function pickJapaneseVoice(style = 'gentle') {
+export function getNarratorStatus() {
+  return { state: narratorState, progress: narratorProgress, error: narratorError }
+}
+
+export function subscribeNarratorStatus(listener) {
+  narratorListeners.add(listener)
+  listener(getNarratorStatus())
+  return () => narratorListeners.delete(listener)
+}
+
+// Piper Plus は、初回だけモデルを IndexedDB に保存する。静的 import にすると
+// アプリ起動時のJavaScriptが重くなるため、ナビ音声を使う時だけ読み込む。
+export async function prepareNarratorVoice() {
+  if (narrator) return narrator
+  if (narratorPromise) return narratorPromise
+
+  narratorState = 'loading'
+  narratorProgress = 0
+  narratorError = null
+  notifyNarrator()
+
+  narratorPromise = (async () => {
+    try {
+      const [{ PiperPlus }, ort, japanesePhonemizer] = await Promise.all([
+        import('piper-plus'),
+        import('onnxruntime-web'),
+        // パッケージ内部の相対URLに任せると、Viteでハッシュ名へ変わったWASMを
+        // 見つけられない。ここで明示的に読ませ、iPhoneでも確実に日本語を解析する。
+        import('piper-plus/wasm/multilingual')
+      ])
+      narrator = await PiperPlus.initialize({
+        // つきよみちゃん: 日本語の女性単一話者モデル（MIT）。
+        model: 'tsukuyomi',
+        ort,
+        wasmLoader: async () => japanesePhonemizer,
+        onProgress: ({ progress, message }) => {
+          narratorProgress = Number.isFinite(progress) ? Math.round(progress * 100) : null
+          narratorState = 'loading'
+          if (message) narratorError = null
+          notifyNarrator()
+        }
+      })
+      narratorState = 'ready'
+      narratorProgress = 100
+      notifyNarrator()
+      return narrator
+    } catch (error) {
+      narratorState = 'error'
+      narratorError = error?.message || 'ナビ音声の準備に失敗しました'
+      narratorPromise = null
+      notifyNarrator()
+      throw error
+    }
+  })()
+
+  return narratorPromise
+}
+
+function pickJapaneseVoice() {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null
   const voices = window.speechSynthesis.getVoices()
-  if (!voices.length) return null
-  const jaAll = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('ja'))
-  if (!jaAll.length) return null
-  // 「やさしい おねえさん」を標準にする。端末に無ければ、同じ日本語音声の
-  // なかから質のよいものを選ぶので、音が出なくなることはない。
-  for (const want of VOICE_STYLES[style] || VOICE_STYLES.gentle) {
-    const hit = jaAll.find((v) => (v.name || '').toLowerCase().includes(want))
-    if (hit) return hit
-  }
-  // ローカル合成より、質の高いことが多いネットワーク音声を優先
-  const remote = jaAll.find((v) => v.localService === false)
-  return remote || jaAll.find((v) => v.lang.toLowerCase() === 'ja-jp') || jaAll[0]
+  const ja = voices.filter((v) => v.lang?.toLowerCase().startsWith('ja'))
+  return ja.find((v) => v.lang.toLowerCase() === 'ja-jp') || ja[0] || null
 }
 
-// 画面用の「わかち書き」をそのまま読ませると、空白ごとに不自然な間が入り
-// ロボットのように聞こえる。読み上げ用に自然な文へ整える。
 const SYMBOL_READING = [
-  [/❓/g, 'なに'],
-  [/＋/g, ' たす '],
-  [/−/g, ' ひく '],
-  [/×/g, ' かける '],
-  [/÷/g, ' わる '],
-  [/＝/g, ' は '],
-  [/％/g, 'パーセント'],
-  [/：/g, ' たい '],
-  [/～|〜/g, 'から'],
-  [/[⭐✨🌟💫🎉🎊🚀📅🎌🔬🗾💗🕐👑⚔️❤️🎁]/g, ''] // 絵文字は読み上げない
+  [/❓/g, 'なに'], [/＋/g, ' たす '], [/−/g, ' ひく '], [/×/g, ' かける '],
+  [/÷/g, ' わる '], [/＝/g, ' は '], [/％/g, 'パーセント'], [/：/g, ' たい '],
+  [/～|〜/g, 'から'], [/[⭐✨🌟💫🎉🎊🚀📅🎌🔬🗾💗🕐👑⚔️❤️🎁]/g, '']
 ]
 
 export function normalizeForSpeech(text) {
   let s = String(text)
   for (const [re, to] of SYMBOL_READING) s = s.replace(re, to)
-  // 日本語どうしの間の空白は「わかち書き」なので取り除く（間延び防止）
-  s = s.replace(
-    /([぀-ゟ゠-ヿ一-鿿0-9０-９])[ 　]+([぀-ゟ゠-ヿ一-鿿0-9０-９])/g,
-    '$1$2'
-  )
-  // 上の置換は重なりを1回しか処理できないので もう一度かける
-  s = s.replace(
-    /([぀-ゟ゠-ヿ一-鿿0-9０-９])[ 　]+([぀-ゟ゠-ヿ一-鿿0-9０-９])/g,
-    '$1$2'
-  )
-  // 改行は軽い区切りに
-  s = s.replace(/\n+/g, '、')
-  return s.replace(/\s{2,}/g, ' ').trim()
-}
-
-function ensureVoices() {
-  if (voicesReady && jaVoice) return
-  jaVoice = pickJapaneseVoice(voiceStyle)
-  if (jaVoice) voicesReady = true
-}
-
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  // voices は非同期で揃うことがある
-  window.speechSynthesis.onvoiceschanged = () => {
-    jaVoice = pickJapaneseVoice(voiceStyle)
-    voicesReady = !!jaVoice
+  for (let i = 0; i < 3; i += 1) {
+    s = s.replace(/([぀-ゟ゠-ヿ一-鿿0-9０-９])[ 　]+([぀-ゟ゠-ヿ一-鿿0-9０-９])/g, '$1$2')
   }
-  ensureVoices()
+  return s.replace(/\n+/g, '、').replace(/\s{2,}/g, ' ').trim()
 }
 
-let enabled = true
-// 読み上げの好みはセーブデータ側で保持し、ここは実行時の設定だけ持つ。
-// iOS は cancel() の直後に speak() すると、次の発話まで無音になることがある。
-// ほんの短い間を空け、最新の1件だけを話すようにしている。
-let rate = 0.96
-let volume = 0.9
-let requestId = 0
-let pendingTimer = null
-let activeResolve = null
+function splitForNarrator(text) {
+  // 長い説明を一息に推論すると待ち時間が伸びるため、自然な区切りで分ける。
+  const parts = text.match(/[^、。！？!?]+[、。！？!?]?/g) || [text]
+  const result = []
+  let current = ''
+  parts.forEach((part) => {
+    if (current && current.length + part.length > 58) {
+      result.push(current)
+      current = part
+    } else current += part
+  })
+  if (current) result.push(current)
+  return result
+}
 
-export function setTtsEnabled(v) {
-  enabled = v
-  if (!v) cancelSpeak()
+function stopNarratorAudio() {
+  if (!activeSource) return
+  try { activeSource.stop() } catch (_) { /* already stopped */ }
+  activeSource.disconnect()
+  activeSource = null
+}
+
+function playNarratorResult(result, id, loudness) {
+  return new Promise((resolve) => {
+    const ctx = getCtx()
+    if (!ctx || id !== requestId || !enabled) return resolve()
+    stopNarratorAudio()
+    const buffer = ctx.createBuffer(1, result.samples.length, result.sampleRate)
+    buffer.copyToChannel(result.samples, 0)
+    const source = ctx.createBufferSource()
+    const gain = ctx.createGain()
+    gain.gain.value = loudness
+    source.buffer = buffer
+    source.connect(gain)
+    gain.connect(ctx.destination)
+    activeSource = source
+    source.onended = () => {
+      if (activeSource === source) activeSource = null
+      resolve()
+    }
+    source.start()
+  })
+}
+
+async function speakWithNarrator(text, id, opts) {
+  const tts = await prepareNarratorVoice()
+  const lengthScale = Math.max(0.78, Math.min(1.2, 0.98 / (opts.rate ?? rate)))
+  const loudness = opts.volume ?? volume
+  for (const sentence of splitForNarrator(text)) {
+    if (id !== requestId || !enabled) return
+    const result = await tts.synthesize(sentence, {
+      language: 'ja',
+      lengthScale,
+      // 同じモデルでも毎回ほんの少しだけ自然な抑揚が変わる。
+      noiseScale: 0.54,
+      noiseW: 0.62
+    })
+    if (id !== requestId || !enabled) return
+    await playNarratorResult(result, id, loudness)
+  }
+}
+
+function speakWithDevice(text, id, opts) {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return resolve()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'ja-JP'
+    u.voice = pickJapaneseVoice()
+    u.rate = opts.rate ?? rate
+    u.pitch = opts.pitch ?? 1.05
+    u.volume = opts.volume ?? volume
+    activeResolve = resolve
+    const finish = () => {
+      if (id !== requestId) return
+      activeResolve = null
+      resolve()
+    }
+    u.onend = finish
+    u.onerror = finish
+    window.speechSynthesis.speak(u)
+  })
+}
+
+export function setTtsEnabled(value) {
+  enabled = value
+  if (!value) cancelSpeak()
 }
 
 export function setTtsPreferences(next = {}) {
   if (Number.isFinite(next.rate)) rate = Math.min(1.15, Math.max(0.75, next.rate))
   if (Number.isFinite(next.volume)) volume = Math.min(1, Math.max(0, next.volume))
-  if (next.voiceStyle && VOICE_STYLES[next.voiceStyle]) {
-    voiceStyle = next.voiceStyle
-    jaVoice = pickJapaneseVoice(voiceStyle)
-    voicesReady = !!jaVoice
-  }
+  if (next.voiceStyle) voiceStyle = next.voiceStyle === 'device' ? 'device' : 'neural'
 }
 
-export function isTtsEnabled() {
-  return enabled
-}
+export function isTtsEnabled() { return enabled }
 
 export function cancelSpeak() {
   requestId += 1
-  if (pendingTimer) {
-    clearTimeout(pendingTimer)
-    pendingTimer = null
-  }
+  if (pendingTimer) clearTimeout(pendingTimer)
+  pendingTimer = null
+  stopNarratorAudio()
   if (activeResolve) {
     activeResolve()
     activeResolve = null
   }
-  if (typeof window === 'undefined' || !window.speechSynthesis) return
-  window.speechSynthesis.cancel()
+  if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel()
 }
 
-/**
- * 日本語テキストを読み上げる。
- * @param {string} text
- * @param {object} opts { rate, pitch, interrupt, onEnd }
- * @returns {Promise<void>}
- */
+/** 文章を、選んだナビ音声で読み上げる。 */
 export function speak(text, opts = {}) {
   return new Promise((resolve) => {
-    if (!enabled || typeof window === 'undefined' || !window.speechSynthesis || !text) {
-      resolve()
-      return
-    }
-    ensureVoices()
-    const synth = window.speechSynthesis
-    if (opts.interrupt !== false) cancelSpeak()
-
+    if (!enabled || !text) return resolve()
     const said = normalizeForSpeech(text)
-    if (!said) {
-      resolve()
-      return
-    }
+    if (!said) return resolve()
+    if (opts.interrupt !== false) cancelSpeak()
     const id = ++requestId
-    const start = () => {
+    const start = async () => {
       pendingTimer = null
-      if (id !== requestId || !enabled) {
-        resolve()
-        return
+      if (id !== requestId || !enabled) return resolve()
+      try {
+        if (voiceStyle === 'neural') await speakWithNarrator(said, id, opts)
+        else await speakWithDevice(said, id, opts)
+      } catch (error) {
+        // オフラインの初回など、モデルがまだ取れない時だけ端末音声へ戻す。
+        // 失敗を黙殺せず設定画面に状態を残すので、次回は再試行できる。
+        if (id === requestId && enabled) await speakWithDevice(said, id, opts)
       }
-      const u = new SpeechSynthesisUtterance(said)
-      u.lang = 'ja-JP'
-      if (jaVoice) u.voice = jaVoice
-      // 子ども向けには、少しゆっくりを標準にする。保護者画面で変更可能。
-      u.rate = opts.rate ?? rate
-      // デフォルトは、速すぎず少し明るい「おねえさんナビ」の雰囲気。
-      // 実在人物や特定サービスの声を模倣せず、端末の合成音声だけで作る。
-      u.pitch = opts.pitch ?? (voiceStyle === 'gentle' ? 1.13 : 1.03)
-      u.volume = opts.volume ?? volume
-      activeResolve = () => resolve()
-      const finish = () => {
-        if (id !== requestId) return
-        activeResolve = null
-        opts.onEnd && opts.onEnd()
-        resolve()
-      }
-      u.onend = finish
-      u.onerror = finish
-      synth.speak(u)
+      if (id === requestId) opts.onEnd?.()
+      resolve()
     }
-    // cancel → 即speak が不安定な Safari でも、発話が切れずに再開する。
+    // Safari の cancel 直後の無音を避ける短い間隔。
     pendingTimer = setTimeout(start, opts.interrupt === false ? 0 : 70)
   })
 }
 
-// 多くのブラウザは「ユーザー操作」がないと音声が出ない。
-// 最初のタップで一度だけ無音発話して解錠する。
-let unlocked = false
+// アプリ最初のタップで共有 AudioContext を解錠する。これにより、モデルの
+// 推論が終わった後の再生も iPhone の自動再生制限で無音にならない。
 export function unlockTts() {
-  if (unlocked || typeof window === 'undefined' || !window.speechSynthesis) return
-  try {
-    const u = new SpeechSynthesisUtterance('')
-    u.volume = 0
-    window.speechSynthesis.speak(u)
-    unlocked = true
-  } catch (_) {
-    /* noop */
+  unlockAudio()
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    try {
+      const u = new SpeechSynthesisUtterance('')
+      u.volume = 0
+      window.speechSynthesis.speak(u)
+    } catch (_) { /* noop */ }
   }
 }
