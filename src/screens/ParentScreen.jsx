@@ -501,7 +501,7 @@ export default function ParentScreen({ onBack }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ fontWeight: 800 }}>🗣️ よみあげの はやさ</span>
-                <span className="muted" style={{ fontSize: 12 }}>ゆっくり＝読み聞かせ ／ ふつう＝子ども向け ／ はやめ＝少し速め</span>
+                <span className="muted" style={{ fontSize: 12 }}>ゆっくり＝読み聞かせ ／ ふつう＝前の「ゆっくり」 ／ はやめ＝前の「ふつう」</span>
                 <div className="row wrap" style={{ gap: 7 }}>
                   {TTS_RATE_PRESETS.map(({ label, value }) => (
                     <button

@@ -45,9 +45,9 @@ const text = 'こんにちは。つくよみちゃんです。いっしょに、
 // これを指定しないと、正しいlengthScaleでも波形の揺らぎで秒数の順序が
 // たまたま入れ替わり、再生とは無関係な不安定テストになる。
 const fixedVoice = { language: 'ja', noiseScale: 0, noiseW: 0 }
-const normalResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.8) })
-const slowResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.6) })
-const fastResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(1.2) })
+const normalResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.7) })
+const slowResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.5) })
+const fastResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.9) })
 
 assert.ok(normalResult.samples instanceof Float32Array)
 assert.ok(normalResult.samples.length > normalResult.sampleRate, 'at least one second of speech is required')
@@ -64,15 +64,15 @@ assert.ok(
   'the three narrator speed choices must produce slow > normal > fast durations'
 )
 assert.ok(
-  normalResult.samples.length >= fastResult.samples.length * 1.35,
-  'normal narration must be materially slower than the adult-speed preset'
+  normalResult.samples.length >= fastResult.samples.length * 1.25,
+  'normal narration must be materially slower than the faster child preset'
 )
 
 // 報告された「国語でわからないを2回」の経路。回答と解説を
 // 続けて合成しても、波形が作られ、前回結果を保持し続けないことを確認する。
 const dontKnowText = 'だいじょうぶ。こたえは「ほし」。これは「ほし」。ほしだよ。つぎはできるよ！'
 for (let index = 0; index < 2; index += 1) {
-  const feedbackResult = await piper.synthesize(dontKnowText, { ...fixedVoice, lengthScale: narratorLengthScale(0.8) })
+  const feedbackResult = await piper.synthesize(dontKnowText, { ...fixedVoice, lengthScale: narratorLengthScale(0.7) })
   assert.ok(feedbackResult.samples.length > feedbackResult.sampleRate, `feedback ${index + 1} must not be silent`)
 }
 
