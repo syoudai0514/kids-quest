@@ -7,6 +7,7 @@
 // ============================================================
 
 import { getCtx, unlockAudio } from './audioCtx.js'
+import { loadCachedNarratorModel, ortWithCachedModel } from './narratorCache.js'
 
 let enabled = true
 let rate = 0.96
@@ -26,6 +27,7 @@ let narratorProgress = null
 let narratorError = null
 let narratorDetail = null
 let narratorAudio = null
+let narratorStorage = 'unknown' // unknown | checking | downloading | saved | cached | temporary
 // "ready"（モデルを保存済み）と、実際にアプリの声を再生できたかは別物。
 // iPhone では後者だけが失敗し、以前は端末音声へ黙って戻っていた。
 let narratorPlayback = 'not-tested' // not-tested | app | device | device-fallback
@@ -47,6 +49,7 @@ export function getNarratorStatus() {
     error: narratorError,
     playback: narratorPlayback,
     engine: 'つくよみちゃん（Piper）',
+    storage: narratorStorage,
     audio: narratorAudio
   }
 }
@@ -57,8 +60,8 @@ export function subscribeNarratorStatus(listener) {
   return () => narratorListeners.delete(listener)
 }
 
-// Piper Plus は、初回だけモデルを IndexedDB に保存する。静的 import にすると
-// アプリ起動時のJavaScriptが重くなるため、ナビ音声を使う時だけ読み込む。
+// 静的 import にするとアプリ起動時のJavaScriptが重くなるため、ナビ音声を
+// 使う時だけモデル管理・推論・日本語解析の各部品を読み込む。
 export async function prepareNarratorVoice() {
   if (narrator) return narrator
   if (narratorPromise) return narratorPromise
@@ -73,17 +76,26 @@ export async function prepareNarratorVoice() {
 
   narratorPromise = (async () => {
     try {
-      const [{ PiperPlus }, ort, japanesePhonemizer] = await Promise.all([
+      const [{ PiperPlus, ModelManager }, ort, japanesePhonemizer] = await Promise.all([
         import('piper-plus'),
         import('onnxruntime-web'),
         // パッケージ内部の相対URLに任せると、Viteでハッシュ名へ変わったWASMを
         // 見つけられない。ここで明示的に読ませ、iPhoneでも確実に日本語を解析する。
         import('piper-plus/wasm/multilingual')
       ])
+      const cachedModel = await loadCachedNarratorModel(ModelManager, (status) => {
+        narratorStorage = status.storage
+        narratorProgress = status.progress
+        narratorDetail = status.detail
+        narratorError = status.error || null
+        notifyNarrator()
+      })
+      const model = cachedModel?.modelUrl || 'tsukuyomi'
+      const narratorOrt = ortWithCachedModel(ort, cachedModel)
       narrator = await PiperPlus.initialize({
         // つきよみちゃん: 日本語の女性単一話者モデル（MIT）。
-        model: 'tsukuyomi',
-        ort,
+        model,
+        ort: narratorOrt,
         // piper-plus の DI loader は、通常の dynamic import と違って
         // WASM の default init() を自動では呼ばない。以前は未初期化の
         // module を返していたため日本語 phonemizer が内部で除外され、
@@ -99,7 +111,9 @@ export async function prepareNarratorVoice() {
           // 表示すると「30%で止まった」と誤解させてしまう。
           narratorProgress = stage === 'model' && percent === 30 ? null : percent
           narratorDetail = stage === 'model' && percent === 30
-            ? '声のデータを読み込んでいます…（Wi‑Fi推奨・数分かかることがあります）'
+            ? narratorStorage === 'cached' || narratorStorage === 'saved'
+              ? '端末に保存した声を起動しています…（再ダウンロードなし）'
+              : '声のデータを読み込んでいます…（Wi‑Fi推奨・数分かかることがあります）'
             : stage === 'phonemizer'
               ? '日本語を話せるように仕上げています…'
               : message || '準備しています…'
@@ -110,7 +124,11 @@ export async function prepareNarratorVoice() {
       })
       narratorState = 'ready'
       narratorProgress = 100
-      narratorDetail = '日本語エンジンの準備ができました'
+      narratorDetail = narratorStorage === 'cached'
+        ? '端末に保存した声で準備できました（再ダウンロードなし）'
+        : narratorStorage === 'saved'
+          ? '声を端末へ保存し、準備できました'
+          : '日本語エンジンの準備ができました'
       notifyNarrator()
       return narrator
     } catch (error) {
@@ -227,6 +245,8 @@ async function playNarratorResult(result, id, loudness) {
 
 async function speakWithNarrator(text, id, opts) {
   const tts = await prepareNarratorVoice()
+  // rate は端末音声と共通の3段階設定。Piperは lengthScale が大きいほど
+  // ゆっくりになるため反比例させる（ゆっくり=約17%長く、はやめ=約9%短く）。
   const lengthScale = Math.max(0.78, Math.min(1.2, 0.98 / (opts.rate ?? rate)))
   const loudness = opts.volume ?? volume
   for (const sentence of splitForNarrator(text)) {

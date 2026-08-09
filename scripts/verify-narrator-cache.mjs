@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict'
+import { loadCachedNarratorModel, ortWithCachedModel } from '../src/engine/narratorCache.js'
+
+globalThis.indexedDB = {}
+
+const modelUrl = 'https://example.test/voice.onnx'
+const modelData = new ArrayBuffer(8)
+let loadCalls = 0
+class CachedManager {
+  async resolveUrls() { return { modelUrl, configUrl: `${modelUrl}.json`, cacheKey: 'voice' } }
+  async getFromCache() { return { modelData, config: {} } }
+  async loadModel() { loadCalls += 1; throw new Error('must not download on a cache hit') }
+}
+
+const statuses = []
+const cached = await loadCachedNarratorModel(CachedManager, (status) => statuses.push(status))
+assert.equal(loadCalls, 0)
+assert.equal(cached.modelData, modelData)
+assert.equal(statuses.at(-1).storage, 'cached')
+
+const sources = []
+const ort = {
+  Tensor: class {},
+  InferenceSession: {
+    create: async (source) => { sources.push(source); return { source } }
+  }
+}
+const wrappedOrt = ortWithCachedModel(ort, cached)
+await wrappedOrt.InferenceSession.create(modelUrl)
+await wrappedOrt.InferenceSession.create(modelUrl)
+assert.equal(sources[0], modelData, 'the first session must use IndexedDB bytes')
+assert.equal(sources[1], modelUrl, 'cached bytes must be released after session creation')
+
+let downloaded = 0
+class EmptyManager extends CachedManager {
+  async getFromCache() { return null }
+  async loadModel(_name, { onProgress }) {
+    downloaded += 1
+    onProgress({ percentage: 50 })
+    return { modelData, config: {} }
+  }
+}
+const missStatuses = []
+await loadCachedNarratorModel(EmptyManager, (status) => missStatuses.push(status))
+assert.equal(downloaded, 1)
+assert.equal(missStatuses.at(-1).storage, 'saved')
+assert.equal(missStatuses.at(-1).progress, 100)
+
+console.log('Narrator IndexedDB cache path verified')

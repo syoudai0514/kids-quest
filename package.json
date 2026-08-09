@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "postinstall": "patch-package",
+    "test:tts-cache": "node scripts/verify-narrator-cache.mjs",
     "test:tts-patch": "node scripts/verify-piper-speaker-feed.mjs",
     "test:tts-full": "node scripts/verify-piper-full-synthesis.mjs"
   },

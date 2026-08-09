@@ -434,7 +434,9 @@ export default function ParentScreen({ onBack }) {
                   {narratorStatus.state === 'ready' ? (
                     <div className="muted" style={{ fontSize: 12, lineHeight: 1.45 }}>
                       <p style={{ margin: 0 }}>
-                        準備できました。下のテストで、実際にアプリ専用の声が鳴ったか確認できます。
+                        {narratorStatus.storage === 'cached'
+                          ? '端末に保存した声で準備できました。大きな再ダウンロードはありません。'
+                          : '準備できました。下のテストで、実際にアプリ専用の声が鳴ったか確認できます。'}
                       </p>
                       {narratorStatus.playback === 'app' && (
                         <p style={{ margin: '5px 0 0', color: '#167246', fontWeight: 800 }}>
@@ -466,7 +468,7 @@ export default function ParentScreen({ onBack }) {
                     </p>
                   ) : (
                     <p className="muted" style={{ fontSize: 12, lineHeight: 1.45, margin: 0 }}>
-                      最初の一回だけ声のデータを端末に準備します。押すとアプリのナビ音声へ切り替わります。
+                      最初の一回だけ声のデータを端末に保存します。2回目から大きな再ダウンロードはしません。
                     </p>
                   )}
                   <button
@@ -499,6 +501,7 @@ export default function ParentScreen({ onBack }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ fontWeight: 800 }}>🗣️ よみあげの はやさ</span>
+                <span className="muted" style={{ fontSize: 12 }}>つくよみちゃんにも反映されます</span>
                 <div className="row wrap" style={{ gap: 7 }}>
                   {[
                     ['ゆっくり', 0.84],

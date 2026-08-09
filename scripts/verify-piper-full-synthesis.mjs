@@ -36,19 +36,30 @@ const piper = await PiperPlus.initialize({
   }
 })
 
-const result = await piper.synthesize(
-  'こちらは、アプリ専用のつくよみちゃんです。',
-  { language: 'ja', lengthScale: 1 }
-)
+const text = 'こちらは、アプリ専用のつくよみちゃんです。'
+const result = await piper.synthesize(text, { language: 'ja', lengthScale: 1 })
+const slowResult = await piper.synthesize(text, { language: 'ja', lengthScale: 0.98 / 0.84 })
+const fastResult = await piper.synthesize(text, { language: 'ja', lengthScale: 0.98 / 1.08 })
 
 assert.ok(result.samples instanceof Float32Array)
 assert.ok(result.samples.length > result.sampleRate, 'at least one second of speech is required')
 const peak = result.samples.reduce((max, value) => Math.max(max, Math.abs(value)), 0)
 assert.ok(peak > 0.001, 'generated speech must not be silent')
+const speedSeconds = {
+  slow: slowResult.samples.length / slowResult.sampleRate,
+  normal: result.samples.length / result.sampleRate,
+  fast: fastResult.samples.length / fastResult.sampleRate
+}
+console.log('speed durations', speedSeconds)
+assert.ok(
+  slowResult.samples.length > result.samples.length && result.samples.length > fastResult.samples.length,
+  'the three narrator speed choices must produce slow > normal > fast durations'
+)
 
 console.log(JSON.stringify({
   samples: result.samples.length,
   sampleRate: result.sampleRate,
   seconds: result.samples.length / result.sampleRate,
-  peak
+  peak,
+  speedSeconds
 }))
