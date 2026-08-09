@@ -25,9 +25,10 @@ let narratorState = 'idle' // idle | loading | ready | error
 let narratorProgress = null
 let narratorError = null
 let narratorDetail = null
+let narratorAudio = null
 // "ready"（モデルを保存済み）と、実際にアプリの声を再生できたかは別物。
 // iPhone では後者だけが失敗し、以前は端末音声へ黙って戻っていた。
-let narratorPlayback = 'not-tested' // not-tested | app | device-fallback
+let narratorPlayback = 'not-tested' // not-tested | app | device | device-fallback
 const narratorListeners = new Set()
 
 function notifyNarrator() {
@@ -44,7 +45,9 @@ export function getNarratorStatus() {
     progress: narratorProgress,
     detail: narratorDetail,
     error: narratorError,
-    playback: narratorPlayback
+    playback: narratorPlayback,
+    engine: 'つくよみちゃん（Piper）',
+    audio: narratorAudio
   }
 }
 
@@ -64,6 +67,7 @@ export async function prepareNarratorVoice() {
   narratorProgress = 0
   narratorError = null
   narratorDetail = '準備をはじめています…'
+  narratorAudio = null
   narratorPlayback = 'not-tested'
   notifyNarrator()
 
@@ -80,7 +84,14 @@ export async function prepareNarratorVoice() {
         // つきよみちゃん: 日本語の女性単一話者モデル（MIT）。
         model: 'tsukuyomi',
         ort,
-        wasmLoader: async () => japanesePhonemizer,
+        // piper-plus の DI loader は、通常の dynamic import と違って
+        // WASM の default init() を自動では呼ばない。以前は未初期化の
+        // module を返していたため日本語 phonemizer が内部で除外され、
+        // 合成時に端末音声へフォールバックしていた。
+        wasmLoader: async () => {
+          await japanesePhonemizer.default()
+          return japanesePhonemizer
+        },
         onProgress: ({ stage, progress, message }) => {
           const percent = Number.isFinite(progress) ? Math.round(progress * 100) : null
           // 30% はPiper PlusがONNXセッション作成直前に発行する固定値。
@@ -99,7 +110,7 @@ export async function prepareNarratorVoice() {
       })
       narratorState = 'ready'
       narratorProgress = 100
-      narratorDetail = '準備できました'
+      narratorDetail = '日本語エンジンの準備ができました'
       notifyNarrator()
       return narrator
     } catch (error) {
@@ -159,13 +170,30 @@ function stopNarratorAudio() {
   activeSource = null
 }
 
-function playNarratorResult(result, id, loudness) {
-  return new Promise((resolve) => {
-    const ctx = getCtx()
-    if (!ctx || id !== requestId || !enabled) return resolve()
+async function playNarratorResult(result, id, loudness) {
+  const samples = result?.samples
+  const sampleRate = result?.sampleRate
+  if (!(samples instanceof Float32Array) || samples.length < 1000 || !Number.isFinite(sampleRate)) {
+    throw new Error('専用音声の波形を作れませんでした')
+  }
+
+  let peak = 0
+  for (let i = 0; i < samples.length; i += 64) {
+    const value = Math.abs(samples[i])
+    if (Number.isFinite(value)) peak = Math.max(peak, value)
+  }
+  if (peak < 0.001) throw new Error('専用音声の波形が無音でした')
+
+  const ctx = getCtx()
+  if (!ctx) throw new Error('専用音声を再生する機能がありません')
+  if (ctx.state === 'suspended') await ctx.resume()
+  if (ctx.state !== 'running') throw new Error(`音声再生が停止中です（${ctx.state}）`)
+  if (id !== requestId || !enabled) return false
+
+  return new Promise((resolve, reject) => {
     stopNarratorAudio()
-    const buffer = ctx.createBuffer(1, result.samples.length, result.sampleRate)
-    buffer.copyToChannel(result.samples, 0)
+    const buffer = ctx.createBuffer(1, samples.length, sampleRate)
+    buffer.copyToChannel(samples, 0)
     const source = ctx.createBufferSource()
     const gain = ctx.createGain()
     gain.gain.value = loudness
@@ -175,9 +203,25 @@ function playNarratorResult(result, id, loudness) {
     activeSource = source
     source.onended = () => {
       if (activeSource === source) activeSource = null
-      resolve()
+      resolve(true)
     }
-    source.start()
+    try {
+      source.start()
+      // 「合成できた」ではなく、iPhone の AudioContext が running の状態で
+      // 有効な波形を start できた時だけ専用音声として表示する。
+      narratorPlayback = 'app'
+      narratorError = null
+      narratorAudio = {
+        seconds: Math.round((samples.length / sampleRate) * 10) / 10,
+        peak: Math.round(peak * 100) / 100,
+        context: ctx.state
+      }
+      narratorDetail = 'つくよみちゃんの音声を再生しました'
+      notifyNarrator()
+    } catch (error) {
+      if (activeSource === source) activeSource = null
+      reject(error)
+    }
   })
 }
 
@@ -195,11 +239,6 @@ async function speakWithNarrator(text, id, opts) {
       noiseW: 0.62
     })
     if (id !== requestId || !enabled) return
-    // ここまで来た時だけ、端末の読み上げではないことを画面へ確定表示する。
-    narratorPlayback = 'app'
-    narratorError = null
-    narratorDetail = 'アプリのナビ音声で再生できました'
-    notifyNarrator()
     await playNarratorResult(result, id, loudness)
   }
 }
@@ -258,19 +297,30 @@ export function speak(text, opts = {}) {
     if (!said) return resolve()
     if (opts.interrupt !== false) cancelSpeak()
     const id = ++requestId
+    const selectedVoice = opts.voiceStyle === 'device' || opts.voiceStyle === 'neural'
+      ? opts.voiceStyle
+      : voiceStyle
     const start = async () => {
       pendingTimer = null
       if (id !== requestId || !enabled) return resolve()
       try {
-        if (voiceStyle === 'neural') await speakWithNarrator(said, id, opts)
-        else await speakWithDevice(said, id, opts)
+        if (selectedVoice === 'neural') await speakWithNarrator(said, id, opts)
+        else {
+          narratorPlayback = 'device'
+          narratorError = null
+          narratorDetail = 'iPhoneの読み上げ音声を再生しています'
+          narratorAudio = null
+          notifyNarrator()
+          await speakWithDevice(said, id, opts)
+        }
       } catch (error) {
         // 学習を止めないため端末音声へ戻すが、絶対に成功したようには見せない。
         // この表示で、専用音声が実際に使われたかをiPhone上で判定できる。
-        if (voiceStyle === 'neural') {
+        if (selectedVoice === 'neural') {
           narratorPlayback = 'device-fallback'
           narratorError = error?.message || 'アプリのナビ音声を再生できませんでした'
           narratorDetail = '端末の読み上げに戻っています'
+          narratorAudio = null
           notifyNarrator()
         }
         if (id === requestId && enabled) await speakWithDevice(said, id, opts)

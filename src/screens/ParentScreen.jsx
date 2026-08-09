@@ -267,6 +267,18 @@ export default function ParentScreen({ onBack }) {
     }
   }
 
+  const compareVoice = async (voiceStyle) => {
+    if (voiceStyle === 'neural' && state.settings.ttsVoice !== 'neural') {
+      setTtsOption('ttsVoice', 'neural')
+    }
+    await speak(
+      voiceStyle === 'neural'
+        ? 'ビー。こちらは、アプリ専用のつくよみちゃんです。数字の三と、星のかたちを、いっしょに学ぼう！'
+        : 'エー。こちらは、アイフォンの読み上げ音声です。数字の三と、星のかたちを、いっしょに学ぼう！',
+      { voiceStyle }
+    )
+  }
+
   return (
     <div className="screen fade-in">
       <div className="topbar">
@@ -426,13 +438,21 @@ export default function ParentScreen({ onBack }) {
                       </p>
                       {narratorStatus.playback === 'app' && (
                         <p style={{ margin: '5px 0 0', color: '#167246', fontWeight: 800 }}>
-                          ✅ 確認済み：いま鳴ったのはアプリのナビ音声です
+                          ✅ 実再生を確認：つくよみちゃん
+                          {narratorStatus.audio
+                            ? `（${narratorStatus.audio.seconds}秒・再生状態 ${narratorStatus.audio.context}）`
+                            : ''}
                         </p>
                       )}
                       {narratorStatus.playback === 'device-fallback' && (
                         <p style={{ margin: '5px 0 0', color: '#b54708', fontWeight: 800 }}>
                           ⚠️ アプリ音声の再生に失敗し、端末の読み上げが鳴っています
                           {narratorStatus.error ? `（${narratorStatus.error}）` : ''}
+                        </p>
+                      )}
+                      {narratorStatus.playback === 'device' && (
+                        <p style={{ margin: '5px 0 0', color: '#56506b', fontWeight: 800 }}>
+                          Aを再生中：これはiPhoneの声です
                         </p>
                       )}
                     </div>
@@ -457,6 +477,24 @@ export default function ParentScreen({ onBack }) {
                   >
                     {narratorStatus.state === 'ready' ? '🔊 アプリ専用の声を テストする' : narratorStatus.state === 'loading' ? '⏳ 準備中…' : '✨ ナビ音声を 準備する'}
                   </button>
+                  {narratorStatus.state === 'ready' && (
+                    <div className="row wrap" style={{ gap: 7, marginTop: 8 }}>
+                      <button
+                        className="btn btn--ghost"
+                        style={{ minHeight: 44, padding: '7px 12px' }}
+                        onClick={() => compareVoice('device')}
+                      >
+                        A：iPhoneの声
+                      </button>
+                      <button
+                        className="btn btn--primary"
+                        style={{ minHeight: 44, padding: '7px 12px' }}
+                        onClick={() => compareVoice('neural')}
+                      >
+                        B：つくよみちゃん
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
