@@ -47,11 +47,10 @@ export default function App() {
     setTtsPreferences({
       rate: state.settings.ttsRate,
       volume: state.settings.ttsVolume,
-      voiceStyle: state.settings.ttsVoice,
-      narratorMode: state.settings.narratorMode
+      voiceStyle: state.settings.ttsVoice
     })
     setSfxEnabled(state.settings.sfx)
-  }, [state.settings.tts, state.settings.ttsRate, state.settings.ttsVolume, state.settings.ttsVoice, state.settings.narratorMode, state.settings.sfx])
+  }, [state.settings.tts, state.settings.ttsRate, state.settings.ttsVolume, state.settings.ttsVoice, state.settings.sfx])
 
   // BGM の ON/OFF（初回は unlock 時に開始される）
   useEffect(() => {

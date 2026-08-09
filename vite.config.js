@@ -39,12 +39,12 @@ export default defineConfig(({ command }) => ({
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         runtimeCaching: [
           {
-            // ONNX RuntimeのWASM。日本語解析はアプリ内の軽量実装へ移行済み。
-            // 旧 narrator-wasm-v1 の約60MB辞書WASMを再利用しないよう世代を変える。
+            // ONNX Runtimeと自然な日本語用の辞書WASM。旧軽量版のキャッシュを
+            // 再利用せず、辞書版だけをこの世代で保存する。
             urlPattern: /\/assets\/.*\.wasm$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'narrator-wasm-v2-lite',
+              cacheName: 'narrator-wasm-v3-dictionary',
               cacheableResponse: { statuses: [0, 200] },
               expiration: { maxEntries: 6, maxAgeSeconds: 60 * 60 * 24 * 365 }
             }

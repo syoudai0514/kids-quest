@@ -38,11 +38,6 @@ let narratorInferenceQueue = Promise.resolve()
 // --- 端末内のニューラル音声モデル ---
 let narrator = null
 let narratorPromise = null
-let narratorEngineMode = null
-let narratorPendingMode = null
-let narratorGeneration = 0
-// lite: iPhone 11 Proで安定する最小構成 / dictionary: 自然な日本語を読む試験構成
-let narratorMode = 'lite'
 let narratorState = hasNarratorInstallMarker() ? 'idle' : 'not-downloaded' // not-downloaded | idle | loading | ready | error
 let narratorProgress = null
 let narratorError = null
@@ -77,10 +72,8 @@ export function getNarratorStatus() {
     detail: narratorDetail,
     error: narratorError,
     playback: narratorPlayback,
-    mode: narratorMode,
-    engine: narratorMode === 'dictionary'
-      ? 'つくよみちゃん（自然な日本語・辞書版／試験中）'
-      : 'つくよみちゃん（iPhone対応・軽量版）',
+    mode: 'dictionary',
+    engine: 'つくよみちゃん（自然な日本語版）',
     storage: narratorStorage,
     audio: narratorAudio
   }
@@ -92,45 +85,11 @@ export function subscribeNarratorStatus(listener) {
   return () => narratorListeners.delete(listener)
 }
 
-function modeLabel(mode = narratorMode) {
-  return mode === 'dictionary' ? '自然な日本語・辞書版（試験中）' : 'iPhone対応・軽量版'
-}
-
-// 切替時に前のWASM・ONNXセッションを残すと、iPhoneでは二重初期化になり
-// メモリが跳ね上がる。必ず先にキャンセル・disposeしてから次を起動する。
-function resetNarratorEngine() {
-  narratorGeneration += 1
-  narratorInferenceQueue = Promise.resolve()
-  stopNarratorAudio()
-  const oldNarrator = narrator
-  narrator = null
-  narratorPromise = null
-  narratorEngineMode = null
-  narratorPendingMode = null
-  try { oldNarrator?.dispose?.() } catch (_) { /* best effort */ }
-}
-
-function setNarratorMode(nextMode) {
-  const normalized = nextMode === 'dictionary' ? 'dictionary' : 'lite'
-  if (normalized === narratorMode) return
-  cancelSpeak()
-  narratorMode = normalized
-  resetNarratorEngine()
-  narratorState = hasNarratorInstallMarker() ? 'idle' : 'not-downloaded'
-  narratorProgress = null
-  narratorError = null
-  narratorAudio = null
-  narratorPlayback = 'not-tested'
-  narratorDetail = `「${modeLabel()}」へ切り替えました。試聴すると、この方式だけを1本で準備します。`
-  notifyNarrator()
-}
-
 // 静的 import にするとアプリ起動時のJavaScriptが重くなるため、ナビ音声を
 // 使う時だけモデル管理・推論・日本語解析の各部品を読み込む。
 export async function prepareNarratorVoice({ allowDownload = false } = {}) {
-  const targetMode = narratorMode
-  if (narrator && narratorEngineMode === targetMode) return narrator
-  if (narratorPromise && narratorPendingMode === targetMode) return narratorPromise
+  if (narrator) return narrator
+  if (narratorPromise) return narratorPromise
 
   // 普段の問題読み上げからは、この先の dynamic import すら行わない。
   // これにより、声を選択しただけでモデル本体や日本語WASMを取得しない。
@@ -146,8 +105,6 @@ export async function prepareNarratorVoice({ allowDownload = false } = {}) {
     throw error
   }
 
-  const generation = narratorGeneration
-  narratorPendingMode = targetMode
   narratorState = 'loading'
   narratorProgress = 0
   narratorError = null
@@ -158,19 +115,15 @@ export async function prepareNarratorVoice({ allowDownload = false } = {}) {
 
   narratorPromise = (async () => {
     try {
-      // 旧PWAが保存した約60MBの日本語WASMを端末から外す。
-      // 失敗しても軽量版の起動には影響させない。
+      // 旧PWAが保存した軽量版用のWASMを端末から外す。
+      // 失敗しても自然な日本語版の起動には影響させない。
       await removeLegacyNarratorRuntimeCaches()
       // 大きな部品をPromise.allで同時展開すると、iPhone 11 Proでは一時的な
-      // ピークメモリだけでPWAが終了する。小さいJS → WASM専用ORT → モデルの
-      // 順に読み込み、約60MBの多言語フォネマイザーは使わない。
+      // ピークメモリだけでPWAが終了する。小さいJS → WASM専用ORT → モデル →
+      // 日本語辞書の順に一つずつ読み込む。
       const { PiperPlus, ModelManager } = await import('piper-plus')
       const ort = await import('onnxruntime-web/wasm')
-      // 辞書版のWASMは実際にこの方式で初期化する時だけ読み込む。
-      // 軽量版の使用中には、約58MBの辞書を一切読み込まない。
-      const { createJapanesePhonemizerModule } = targetMode === 'dictionary'
-        ? await import('./dictionaryJapanesePhonemizer.js')
-        : await import('./liteJapanesePhonemizer.js')
+      const { createJapanesePhonemizerModule } = await import('./dictionaryJapanesePhonemizer.js')
       const cachedModel = await loadCachedNarratorModel(ModelManager, (status) => {
         narratorStorage = status.storage
         narratorProgress = status.progress
@@ -194,8 +147,7 @@ export async function prepareNarratorVoice({ allowDownload = false } = {}) {
         // 小さな設定JSONだけ通信失敗する経路もなくす。
         modelConfig: cachedModel?.config,
         ort: narratorOrt,
-        // 辞書版は正確な日本語の読みを、軽量版はiPhone向けの小さなかな変換を使う。
-        // どちらも同時には生成せず、切替時には前のエンジンをdisposeする。
+        // 日本語辞書で漢字・助詞・説明文を自然に読み上げる。
         wasmLoader: async () => createJapanesePhonemizerModule(),
         onProgress: ({ stage, progress, message }) => {
           const percent = Number.isFinite(progress) ? Math.round(progress * 100) : null
@@ -208,47 +160,31 @@ export async function prepareNarratorVoice({ allowDownload = false } = {}) {
               ? '端末に保存した声を起動しています…（再ダウンロードなし）'
               : '声のデータを読み込んでいます…（Wi‑Fi推奨・数分かかることがあります）'
             : stage === 'phonemizer'
-              ? targetMode === 'dictionary'
-                ? '自然な日本語の辞書を読み込んでいます…（初回は時間がかかります）'
-                : '日本語を話せるように仕上げています…'
+              ? '自然な日本語の辞書を読み込んでいます…（初回は時間がかかります）'
               : message || '準備しています…'
           narratorState = 'loading'
           narratorError = null
           notifyNarrator()
         }
       })
-      // 切替中に先に始めた初期化結果を採用しない。これが辞書版と軽量版の
-      // 同居（二重実行）を防ぐ最後のガードになる。
-      if (generation !== narratorGeneration || targetMode !== narratorMode) {
-        try { createdNarrator.dispose?.() } catch (_) { /* best effort */ }
-        const error = new Error('別の音声方式へ切り替えました。もう一度試してください。')
-        error.code = 'NARRATOR_MODE_CHANGED'
-        throw error
-      }
       narrator = createdNarrator
-      narratorEngineMode = targetMode
-      narratorPendingMode = null
       // 音声モデルの保存だけでなく、選んだ実行部分の初期化まで
       // 通った時にだけ導入済みとする。起動失敗後のループを防ぐ。
       if (narratorStorage === 'cached' || narratorStorage === 'saved') markNarratorInstalled()
       narratorState = 'ready'
       narratorProgress = 100
       narratorDetail = narratorStorage === 'cached'
-        ? `端末に保存した声を、「${modeLabel(targetMode)}」で準備できました（モデルの再ダウンロードなし）`
+        ? '端末に保存した声を、自然な日本語で準備できました（モデルの再ダウンロードなし）'
         : narratorStorage === 'saved'
-          ? `声を端末へ保存し、「${modeLabel(targetMode)}」で準備できました`
-          : `「${modeLabel(targetMode)}」の準備ができました`
+          ? '声を端末へ保存し、自然な日本語で準備できました'
+          : '自然な日本語で準備できました'
       notifyNarrator()
       return narrator
     } catch (error) {
-      // 古い方式の初期化が切替後に失敗しても、現在選ばれている方式を
-      // エラー表示へ戻してはいけない。
-      if (generation !== narratorGeneration || targetMode !== narratorMode) throw error
       narratorState = 'error'
       narratorError = error?.message || 'ナビ音声の準備に失敗しました'
       narratorDetail = null
       narratorPromise = null
-      narratorPendingMode = null
       notifyNarrator()
       throw error
     }
@@ -265,18 +201,26 @@ function pickJapaneseVoice() {
 }
 
 const SYMBOL_READING = [
-  [/❓/g, 'なに'], [/＋/g, ' たす '], [/−/g, ' ひく '], [/×/g, ' かける '],
-  [/÷/g, ' わる '], [/＝/g, ' は '], [/％/g, 'パーセント'], [/：/g, ' たい '],
+  [/❓/g, 'なに'], [/[＋+]/g, ' たす '], [/[−-]/g, ' ひく '], [/×/g, ' かける '],
+  [/÷/g, ' わる '], [/[＝=]/g, ' は '], [/[％%]/g, 'パーセント'], [/[:：]/g, '、'],
+  [/[・／]/g, '、'],
   [/～|〜/g, 'から'], [/[⭐✨🌟💫🎉🎊🚀📅🎌🔬🗾💗🕐👑⚔️❤️🎁]/g, '']
 ]
 
 export function normalizeForSpeech(text) {
-  let s = String(text)
+  let s = String(text).normalize('NFKC')
   for (const [re, to] of SYMBOL_READING) s = s.replace(re, to)
   for (let i = 0; i < 3; i += 1) {
     s = s.replace(/([぀-ゟ゠-ヿ一-鿿0-9０-９])[ 　]+([぀-ゟ゠-ヿ一-鿿0-9０-９])/g, '$1$2')
   }
-  return s.replace(/\n+/g, '、').replace(/\s{2,}/g, ' ').trim()
+  return s
+    .replace(/[「『（(]/g, '、')
+    .replace(/[」』）)]/g, '、')
+    .replace(/\n+/g, '、')
+    .replace(/[、,]{2,}/g, '、')
+    .replace(/[。．]{2,}/g, '。')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 function splitForNarrator(text) {
@@ -286,10 +230,18 @@ function splitForNarrator(text) {
   const maxChars = isAppleTouchDevice() ? 18 : 24
   const parts = text.match(/[^、。！？!?]+[、。！？!?]?/g) || [text]
   const result = []
+  const withListeningPause = (value) => {
+    const trimmed = value.trim()
+    if (!trimmed) return null
+    // 推論用の分割で文節の途中を切る場合も、助詞や単語を詰め込まず一拍置く。
+    // これは個別の問題文に依存せず、今後の長い説明文にも効く。
+    return /[、。！？!?]$/.test(trimmed) ? trimmed : `${trimmed}、`
+  }
   let current = ''
   const pushChunks = (value) => {
     for (let start = 0; start < value.length; start += maxChars) {
-      result.push(value.slice(start, start + maxChars))
+      const chunk = withListeningPause(value.slice(start, start + maxChars))
+      if (chunk) result.push(chunk)
     }
   }
   parts.forEach((part) => {
@@ -334,7 +286,7 @@ function stopNarratorAudio() {
 // つくよみちゃんの波形は WAV にして通常の <audio> 経路で流すと、端末の
 // 「メディア音量」として再生できる。これなら設定画面の再生状態だけが
 // running なのに耳には何も聞こえない、という状態を避けられる。
-function wavUrlFromSamples(samples, sampleRate) {
+function wavUrlFromSamples(samples, sampleRate, gain = 1) {
   const bytesPerSample = 2
   const dataSize = samples.length * bytesPerSample
   const buffer = new ArrayBuffer(44 + dataSize)
@@ -357,7 +309,7 @@ function wavUrlFromSamples(samples, sampleRate) {
   view.setUint32(40, dataSize, true)
   let offset = 44
   for (let i = 0; i < samples.length; i += 1, offset += 2) {
-    const sample = Math.max(-1, Math.min(1, samples[i] || 0))
+    const sample = Math.max(-1, Math.min(1, (samples[i] || 0) * gain))
     view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
   }
   return URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }))
@@ -371,7 +323,7 @@ async function playNarratorResult(result, id, loudness) {
   }
 
   let peak = 0
-  for (let i = 0; i < samples.length; i += 64) {
+  for (let i = 0; i < samples.length; i += 1) {
     const value = Math.abs(samples[i])
     if (Number.isFinite(value)) peak = Math.max(peak, value)
   }
@@ -381,7 +333,10 @@ async function playNarratorResult(result, id, loudness) {
 
   return new Promise((resolve, reject) => {
     stopNarratorAudio()
-    const url = wavUrlFromSamples(samples, sampleRate)
+    // 文によって声量が小さくなり過ぎないよう、歪まない範囲で音量をそろえる。
+    // 端末の音量設定を上げなくても、子どもが聞き取れる一貫した大きさにする。
+    const gain = Math.min(1.35, 0.82 / peak)
+    const url = wavUrlFromSamples(samples, sampleRate, gain)
     activeMediaUrl = url
     const media = new Audio()
     media.preload = 'auto'
@@ -459,8 +414,7 @@ async function speakWithNarrator(text, id, opts) {
   // 問題開始や画面移動からモデルを勝手に取得しない。保存済みの場合だけ起動する。
   const tts = await prepareNarratorVoice({ allowDownload: false })
   // rate は端末音声と共通の3段階設定。Piperは lengthScale が大きいほど
-  // ゆっくりになる。軽量かな変換はテンポが速く聞こえるため、
-  // つくよみちゃんだけ子どもの聞き取りを基準にした変換を使う。
+  // ゆっくりになる。つくよみちゃんは子どもの聞き取りを基準にした変換を使う。
   const lengthScale = narratorLengthScale(opts.rate ?? rate)
   const loudness = opts.volume ?? volume
   for (const sentence of splitForNarrator(text)) {
@@ -511,7 +465,6 @@ export function setTtsPreferences(next = {}) {
   if (Number.isFinite(next.rate)) rate = Math.min(1.3, Math.max(0.55, next.rate))
   if (Number.isFinite(next.volume)) volume = Math.min(1, Math.max(0, next.volume))
   if (next.voiceStyle) voiceStyle = next.voiceStyle === 'device' ? 'device' : 'neural'
-  if (next.narratorMode) setNarratorMode(next.narratorMode)
 }
 
 export function isTtsEnabled() { return enabled }

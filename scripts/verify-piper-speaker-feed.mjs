@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { PiperPlus } from 'piper-plus'
-import { createLiteJapaneseWasmModule } from '../src/engine/liteJapanesePhonemizer.js'
 
 class FakeTensor {
   constructor(type, data, dims) {
@@ -72,7 +71,14 @@ try {
         create: async () => ({ inputNames: [], inputMetadata: {}, release() {} })
       }
     },
-    wasmLoader: async () => createLiteJapaneseWasmModule()
+    wasmLoader: async () => ({
+      WasmPhonemizer: class {
+        getSupportedLanguages() { return ['ja'] }
+        detectLanguage() { return 'ja' }
+        phonemize() { return [] }
+        free() {}
+      }
+    })
   })
   assert.equal(fetchCalls, 0, 'cached config must prevent a network request')
   cachedPiper.dispose()

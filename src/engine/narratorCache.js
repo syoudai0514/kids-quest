@@ -6,12 +6,14 @@ export const NARRATOR_MODEL_URL =
 
 const LEGACY_NARRATOR_CACHE_KEY = 'ayousanz/piper-plus-tsukuyomi-chan'
 // 「声を選んだ」ことと「約38MBを端末に保存してよい」ことは別の意思決定。
-// v3 は、旧約60MBの日本語WASMを使わない iPhone対応軽量版。
-// 旧v2導入済み端末でも、保存済みモデルを再利用しつつ、
-// 保護者が新しい実行部分の準備を明示的に開始する。
-const NARRATOR_INSTALL_KEY = 'hoshizora:narrator-model-v3-lite-installed'
-const LEGACY_NARRATOR_INSTALL_KEYS = ['hoshizora:narrator-model-v2-installed']
-const LEGACY_NARRATOR_RUNTIME_CACHES = ['narrator-wasm-v1']
+// v4 は、自然な日本語の辞書を標準で使う版。
+// 旧版で保存済みの38MB音声モデルはそのまま再利用する。
+const NARRATOR_INSTALL_KEY = 'hoshizora:narrator-model-v4-dictionary-installed'
+const LEGACY_NARRATOR_INSTALL_KEYS = [
+  'hoshizora:narrator-model-v2-installed',
+  'hoshizora:narrator-model-v3-lite-installed'
+]
+const LEGACY_NARRATOR_RUNTIME_CACHES = ['narrator-wasm-v1', 'narrator-wasm-v2-lite']
 
 export class NarratorNotDownloadedError extends Error {
   constructor() {
@@ -22,7 +24,8 @@ export class NarratorNotDownloadedError extends Error {
 
 export function hasNarratorInstallMarker() {
   try {
-    return globalThis.localStorage?.getItem(NARRATOR_INSTALL_KEY) === '1'
+    return globalThis.localStorage?.getItem(NARRATOR_INSTALL_KEY) === '1' ||
+      LEGACY_NARRATOR_INSTALL_KEYS.some((key) => globalThis.localStorage?.getItem(key) === '1')
   } catch (_) {
     return false
   }

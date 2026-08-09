@@ -139,7 +139,7 @@ function createInitialState() {
     daily: freshDaily(today, 0),
     battle: freshBattle(today),
     // neural は端末の声ではなく、アプリ内で動く女性ナビ音声。
-    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsVolume: 0.9, ttsVoice: 'neural', narratorMode: 'lite', sfx: true, bgm: true },
+    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true },
     history: {},
     pendingCelebration: null
   }
@@ -147,14 +147,21 @@ function createInitialState() {
 
 function settingsForCurrentVersion(savedSettings) {
   const fresh = createInitialState().settings
+  const savedRate = migrateTtsRate(savedSettings?.ttsRate)
+  // 前版の「はやめ」を新しい「ふつう」にする。保存データには方式名も残し、
+  // 次回起動時にもう一段ずつ遅く移行してしまうことを防ぐ。
+  const needsDictionaryV4RateMigration = savedSettings?.ttsRateScheme !== 'dictionary-v4'
+  const ttsRate = needsDictionaryV4RateMigration
+    ? savedRate === 0.9 ? 0.7 : savedRate === 0.7 ? 0.5 : savedRate
+    : savedRate
   return {
     ...fresh,
     ...(savedSettings || {}),
     // 以前の「gentle / lively」は同じ端末音声を指していたため、
     // 本物のアプリ専用ナビへ自動移行する。
     ttsVoice: savedSettings?.ttsVoice === 'device' ? 'device' : 'neural',
-    narratorMode: savedSettings?.narratorMode === 'dictionary' ? 'dictionary' : 'lite',
-    ttsRate: migrateTtsRate(savedSettings?.ttsRate)
+    ttsRate,
+    ttsRateScheme: 'dictionary-v4'
   }
 }
 

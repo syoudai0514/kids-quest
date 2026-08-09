@@ -49,12 +49,30 @@ const piper = await PiperPlus.initialize({
   }
 })
 
-const result = await piper.synthesize('今日は国語の問題です。星を見つけよう。', {
-  language: 'ja', lengthScale: narratorLengthScale(0.7), noiseScale: 0, noiseW: 0
+const text = 'こんにちは。つくよみちゃんです。いっしょに、たのしく、まなぼうね。'
+const fixedVoice = { language: 'ja', noiseScale: 0, noiseW: 0 }
+const slowResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.5) })
+const normalResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.7) })
+const fastResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.9) })
+
+assert.ok(normalResult.samples instanceof Float32Array)
+assert.ok(normalResult.samples.length > normalResult.sampleRate, 'dictionary narration must produce audible audio')
+assert.ok(normalResult.samples.some((sample) => Math.abs(sample) > 0.001), 'dictionary narration must not be silent')
+assert.ok(
+  slowResult.samples.length > normalResult.samples.length && normalResult.samples.length > fastResult.samples.length,
+  'the three dictionary narrator speed choices must produce slow > normal > fast durations'
+)
+assert.ok(
+  slowResult.samples.length >= normalResult.samples.length * 1.2 &&
+    normalResult.samples.length >= fastResult.samples.length * 1.2,
+  'each child-facing speed choice must be clearly distinct'
+)
+
+console.log('Dictionary narrator speed durations', {
+  slow: slowResult.samples.length / slowResult.sampleRate,
+  normal: normalResult.samples.length / normalResult.sampleRate,
+  fast: fastResult.samples.length / fastResult.sampleRate
 })
-assert.ok(result.samples instanceof Float32Array)
-assert.ok(result.samples.length > result.sampleRate, 'dictionary narration must produce audible audio')
-assert.ok(result.samples.some((sample) => Math.abs(sample) > 0.001), 'dictionary narration must not be silent')
 piper.dispose()
 
 console.log('Dictionary narrator synthesis verified')
