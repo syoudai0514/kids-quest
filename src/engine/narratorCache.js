@@ -5,6 +5,32 @@ export const NARRATOR_MODEL_URL =
   'https://huggingface.co/ayousanz/piper-plus-tsukuyomi-chan/resolve/36b59c825c36bd386b8960cf3f604382f52f2a87/tsukuyomi-chan-6lang-fp16.onnx'
 
 const LEGACY_NARRATOR_CACHE_KEY = 'ayousanz/piper-plus-tsukuyomi-chan'
+// 「声を選んだ」ことと「約38MBを端末に保存してよい」ことは別の意思決定。
+// この印は、明示的なダウンロードが完了した場合だけ付ける。
+const NARRATOR_INSTALL_KEY = 'hoshizora:narrator-model-v2-installed'
+
+export class NarratorNotDownloadedError extends Error {
+  constructor() {
+    super('つくよみちゃんは、まだ端末にダウンロードされていません')
+    this.name = 'NarratorNotDownloadedError'
+  }
+}
+
+export function hasNarratorInstallMarker() {
+  try {
+    return globalThis.localStorage?.getItem(NARRATOR_INSTALL_KEY) === '1'
+  } catch (_) {
+    return false
+  }
+}
+
+export function markNarratorInstalled() {
+  try { globalThis.localStorage?.setItem(NARRATOR_INSTALL_KEY, '1') } catch (_) { /* noop */ }
+}
+
+export function clearNarratorInstallMarker() {
+  try { globalThis.localStorage?.removeItem(NARRATOR_INSTALL_KEY) } catch (_) { /* noop */ }
+}
 
 function removeLegacyNarratorModel() {
   if (typeof indexedDB === 'undefined') return
@@ -29,7 +55,7 @@ function removeLegacyNarratorModel() {
 // PiperPlus.initialize() は現行版ではモデルURLを直接 ONNX Runtime へ渡すため、
 // ModelManager の IndexedDB キャッシュを通らない。先に ModelManager でモデルを
 // 明示保存し、ONNXセッション作成時だけ保存済みバイト列を渡す。
-export async function loadCachedNarratorModel(ModelManager, onStatus = () => {}) {
+export async function loadCachedNarratorModel(ModelManager, onStatus = () => {}, { allowDownload = false } = {}) {
   if (typeof indexedDB === 'undefined') return null
 
   onStatus({
@@ -55,6 +81,18 @@ export async function loadCachedNarratorModel(ModelManager, onStatus = () => {})
       return { ...urls, ...cached }
     }
 
+    // 音声を選択しただけ／問題を開始しただけでは、通信も保存も始めない。
+    // OSのストレージ整理で保存済みモデルが消えた場合も同じ扱いに戻す。
+    if (!allowDownload) {
+      clearNarratorInstallMarker()
+      onStatus({
+        storage: 'not-downloaded',
+        progress: null,
+        detail: 'つくよみちゃんは、まだ端末に保存されていません'
+      })
+      throw new NarratorNotDownloadedError()
+    }
+
     onStatus({
       storage: 'downloading',
       progress: 0,
@@ -66,6 +104,7 @@ export async function loadCachedNarratorModel(ModelManager, onStatus = () => {})
     const loaded = await manager.loadModel(NARRATOR_MODEL_URL)
     // 旧74MB版は同じ声だが、以後使わない。新38MB版の保存後にだけ削除する。
     removeLegacyNarratorModel()
+    markNarratorInstalled()
     onStatus({
       storage: 'saved',
       progress: 100,
@@ -73,6 +112,9 @@ export async function loadCachedNarratorModel(ModelManager, onStatus = () => {})
     })
     return { ...urls, ...loaded }
   } catch (error) {
+    // これは失敗ではなく「保護者がまだ保存を許可していない」通常状態。
+    // temporary 扱いにすると、後段がURLを使って暗黙に取得してしまう。
+    if (error instanceof NarratorNotDownloadedError) throw error
     // IndexedDBが使えない環境でも音声機能そのものは止めない。ただし毎回取得に
     // 戻ったことを画面に出し、保存できたようには見せない。
     onStatus({
