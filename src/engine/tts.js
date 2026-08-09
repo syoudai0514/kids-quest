@@ -16,6 +16,7 @@ import {
   removeLegacyNarratorRuntimeCaches
 } from './narratorCache.js'
 import { DEFAULT_TTS_RATE, narratorLengthScale } from '../config/ttsRates.js'
+import { applyPronunciationOverrides } from './ttsPronunciation.js'
 
 let enabled = true
 let rate = DEFAULT_TTS_RATE
@@ -209,6 +210,9 @@ const SYMBOL_READING = [
 
 export function normalizeForSpeech(text) {
   let s = String(text).normalize('NFKC')
+  // 表示用の「こん虫」などを、辞書へ渡す前に正しい単語の読みへ直す。
+  // これを記号処理や空白除去の前に行うことで、かな＋漢字の表記も拾える。
+  s = applyPronunciationOverrides(s)
   for (const [re, to] of SYMBOL_READING) s = s.replace(re, to)
   for (let i = 0; i < 3; i += 1) {
     s = s.replace(/([぀-ゟ゠-ヿ一-鿿0-9０-９])[ 　]+([぀-ゟ゠-ヿ一-鿿0-9０-９])/g, '$1$2')

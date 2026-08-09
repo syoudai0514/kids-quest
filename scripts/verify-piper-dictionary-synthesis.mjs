@@ -5,6 +5,7 @@ import { PiperPlus } from 'piper-plus'
 import init, { WasmPhonemizer } from 'piper-plus/wasm/multilingual'
 import { NARRATOR_MODEL_URL } from '../src/engine/narratorCache.js'
 import { narratorLengthScale } from '../src/config/ttsRates.js'
+import { normalizeForSpeech } from '../src/engine/tts.js'
 
 ort.env.wasm.numThreads = 1
 ort.env.wasm.wasmBinary = await readFile(
@@ -50,10 +51,12 @@ const piper = await PiperPlus.initialize({
 })
 
 const text = 'こんにちは。つくよみちゃんです。いっしょに、たのしく、まなぼうね。'
+const scienceText = normalizeForSpeech('こん虫の からだ。クモ（あし8本）は こん虫では ない。')
 const fixedVoice = { language: 'ja', noiseScale: 0, noiseW: 0 }
 const slowResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.5) })
 const normalResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.7) })
 const fastResult = await piper.synthesize(text, { ...fixedVoice, lengthScale: narratorLengthScale(0.9) })
+const scienceResult = await piper.synthesize(scienceText, { ...fixedVoice, lengthScale: narratorLengthScale(0.7) })
 
 assert.ok(normalResult.samples instanceof Float32Array)
 assert.ok(normalResult.samples.length > normalResult.sampleRate, 'dictionary narration must produce audible audio')
@@ -67,12 +70,15 @@ assert.ok(
     normalResult.samples.length >= fastResult.samples.length * 1.2,
   'each child-facing speed choice must be clearly distinct'
 )
+assert.ok(scienceResult.samples.length > scienceResult.sampleRate, 'science lesson narration must produce audible audio')
+assert.ok(scienceResult.samples.some((sample) => Math.abs(sample) > 0.001), 'science lesson narration must not be silent')
 
 console.log('Dictionary narrator speed durations', {
   slow: slowResult.samples.length / slowResult.sampleRate,
   normal: normalResult.samples.length / normalResult.sampleRate,
   fast: fastResult.samples.length / fastResult.sampleRate
 })
+console.log('Science lesson narration verified', { text: scienceText, seconds: scienceResult.samples.length / scienceResult.sampleRate })
 piper.dispose()
 
 console.log('Dictionary narrator synthesis verified')

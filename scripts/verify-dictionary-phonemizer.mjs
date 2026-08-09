@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import init, { WasmPhonemizer } from 'piper-plus/wasm/multilingual'
+import { normalizeForSpeech } from '../src/engine/tts.js'
+
+// 表示用の「こん虫」が、音声では必ず「こんちゅう」になる回帰テスト。
+// この事故を再発させると、子どもが誤った読み方を覚えてしまうため固定する。
+const normalizedLessonText = normalizeForSpeech('こん虫の からだ。昆虫には 6本の あしがあります。')
+assert.equal(normalizedLessonText, 'こんちゅうのからだ。こんちゅうには6本のあしがあります。')
 
 // 本番の辞書WASMを、Nodeでは同じバイナリを直接渡して初期化する。
 // 漢字まじりの出題文を辞書経路で音素にできることを確認する。
@@ -12,7 +18,7 @@ const bytes = await readFile(new URL('../node_modules/piper-plus/dist/rust-wasm/
 await init(bytes)
 
 const phonemizer = new WasmPhonemizer(JSON.stringify(config))
-const result = phonemizer.phonemize('今日は国語の問題です。星を見つけよう。', 'ja')
+const result = phonemizer.phonemize(normalizedLessonText, 'ja')
 assert.ok(result.phonemeIds.length > 50, 'dictionary phonemizer must encode Japanese text')
 assert.equal(result.prosodyFeatures.length, result.phonemeIds.length * 3)
 result.free()
