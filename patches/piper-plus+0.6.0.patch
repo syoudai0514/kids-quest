@@ -1,5 +1,5 @@
 diff --git a/node_modules/piper-plus/src/index.js b/node_modules/piper-plus/src/index.js
-index 885d291..76faba3 100644
+index 885d291..b4e2d28 100644
 --- a/node_modules/piper-plus/src/index.js
 +++ b/node_modules/piper-plus/src/index.js
 @@ -627,6 +627,36 @@ export class PiperPlus {
@@ -93,3 +93,50 @@ index 885d291..76faba3 100644
        const flat = [];
        for (const [a1, a2, a3] of prosodyFeatures) {
          flat.push(BigInt(a1), BigInt(a2), BigInt(a3));
+@@ -886,12 +939,19 @@ export class PiperPlus {
+       }
+     }
+     const audioTensor = results.output || results[Object.keys(results)[0]];
+-    const audio = new Float32Array(audioTensor.data);
++    // ORT Web already returns Float32Array. Copying it again doubles the
++    // generated waveform in JavaScript memory until GC, which is especially
++    // costly when a canceled iPhone request is followed by another request.
++    const audio = audioTensor.data instanceof Float32Array
++      ? audioTensor.data
++      : new Float32Array(audioTensor.data);
+ 
+     // Extract durations tensor if the model supports it (optional output)
+     let durations = null;
+     if (results.durations && results.durations.data) {
+-      durations = new Float32Array(results.durations.data);
++      durations = results.durations.data instanceof Float32Array
++        ? results.durations.data
++        : new Float32Array(results.durations.data);
+     }
+ 
+     return { audio, durations };
+diff --git a/node_modules/piper-plus/src/webgpu-session-manager.js b/node_modules/piper-plus/src/webgpu-session-manager.js
+index 3aef7e6..f14cfb4 100644
+--- a/node_modules/piper-plus/src/webgpu-session-manager.js
++++ b/node_modules/piper-plus/src/webgpu-session-manager.js
+@@ -48,10 +48,19 @@ export class WebGPUSessionManager {
+     const errors = [];
+     for (const provider of providers) {
+       try {
++        const ua = globalThis.navigator?.userAgent || '';
++        const platform = globalThis.navigator?.platform || '';
++        const appleTouchDevice = /iPad|iPhone|iPod/.test(ua)
++          || (platform === 'MacIntel' && globalThis.navigator?.maxTouchPoints > 1);
+         const options = {
+           executionProviders: [provider],
+           graphOptimizationLevel: 'extended',
+-          enableMemPattern: true,
++          // iOS PWA has a tighter per-process memory budget. Avoid retaining
++          // the arena and shape-specific memory pattern between short TTS
++          // requests; the application serializes inference instead.
++          enableMemPattern: !appleTouchDevice,
++          enableCpuMemArena: !appleTouchDevice,
++          executionMode: 'sequential',
+         };
+         const session = await this._ort.InferenceSession.create(modelPath, options);
+ 

@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict'
-import { loadCachedNarratorModel, ortWithCachedModel } from '../src/engine/narratorCache.js'
+import {
+  NARRATOR_MODEL_URL,
+  loadCachedNarratorModel,
+  ortWithCachedModel
+} from '../src/engine/narratorCache.js'
 
 globalThis.indexedDB = {}
 
@@ -7,7 +11,10 @@ const modelUrl = 'https://example.test/voice.onnx'
 const modelData = new ArrayBuffer(8)
 let loadCalls = 0
 class CachedManager {
-  async resolveUrls() { return { modelUrl, configUrl: `${modelUrl}.json`, cacheKey: 'voice' } }
+  async resolveUrls(requested) {
+    assert.equal(requested, NARRATOR_MODEL_URL)
+    return { modelUrl, configUrl: `${modelUrl}.json`, cacheKey: 'voice' }
+  }
   async getFromCache() { return { modelData, config: {} } }
   async loadModel() { loadCalls += 1; throw new Error('must not download on a cache hit') }
 }
@@ -34,9 +41,10 @@ assert.equal(sources[1], modelUrl, 'cached bytes must be released after session 
 let downloaded = 0
 class EmptyManager extends CachedManager {
   async getFromCache() { return null }
-  async loadModel(_name, { onProgress }) {
+  async loadModel(name, options) {
+    assert.equal(name, NARRATOR_MODEL_URL)
+    assert.equal(options, undefined, 'low-memory download must not retain progress chunks')
     downloaded += 1
-    onProgress({ percentage: 50 })
     return { modelData, config: {} }
   }
 }

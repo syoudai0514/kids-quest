@@ -445,7 +445,7 @@ export default function BattleScreen({ onBack }) {
                   onClick={() => useMove(m)}
                 >
                   <span className="move-btn__emoji">{m.emoji}</span>
-                  <span>{m.name}</span>
+                  <span className="move-btn__name">{m.name}</span>
                   {isTutorialBattle && (
                     <small className={isStrong ? 'move-btn__hint move-btn__hint--strong' : isWeak ? 'move-btn__hint move-btn__hint--weak' : 'move-btn__hint'}>
                       {isStrong ? '↑ ばつぐん！' : isWeak ? '↓ ちょっと にがて' : '→ ふつう'}

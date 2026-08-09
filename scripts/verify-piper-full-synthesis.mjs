@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import * as ort from 'onnxruntime-web'
 import { PiperPlus } from 'piper-plus'
 import * as japanesePhonemizer from 'piper-plus/wasm/multilingual'
+import { NARRATOR_MODEL_URL } from '../src/engine/narratorCache.js'
 
 // onnxruntime-web expects browsers to fetch remote model URLs itself. In this
 // Node verification, fetch the exact same bytes first and pass them to ORT.
@@ -21,7 +22,7 @@ const testOrt = {
 }
 
 const piper = await PiperPlus.initialize({
-  model: 'tsukuyomi',
+  model: NARRATOR_MODEL_URL,
   ort: testOrt,
   wasmLoader: async () => {
     const wasmBytes = await readFile(

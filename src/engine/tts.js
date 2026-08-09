@@ -7,7 +7,7 @@
 // ============================================================
 
 import { unlockAudio } from './audioCtx.js'
-import { loadCachedNarratorModel, ortWithCachedModel } from './narratorCache.js'
+import { NARRATOR_MODEL_URL, loadCachedNarratorModel, ortWithCachedModel } from './narratorCache.js'
 import { DEFAULT_TTS_RATE } from '../config/ttsRates.js'
 
 let enabled = true
@@ -17,12 +17,16 @@ let volume = 0.9
 let voiceStyle = 'neural'
 let requestId = 0
 let pendingTimer = null
+let pendingResolve = null
 let activeResolve = null
 let activeMedia = null
 let activeMediaUrl = null
 // iOSで pause() した <audio> は ended を発火しない。ここで待機中の
 // Promise を必ず完了させないと、キャンセルした読み上げの波形が残り続ける。
 let stopActiveNarratorPlayback = null
+// ONNX Runtime Webのrun()は途中キャンセルできない。古い読み上げを止めて
+// すぐ別のボタンを押した場合も、推論だけは重ならないよう必ず1本に直列化する。
+let narratorInferenceQueue = Promise.resolve()
 
 // --- 端末内のニューラル音声モデル ---
 let narrator = null
@@ -37,6 +41,14 @@ let narratorStorage = 'unknown' // unknown | checking | downloading | saved | ca
 // iPhone では後者だけが失敗し、以前は端末音声へ黙って戻っていた。
 let narratorPlayback = 'not-tested' // not-tested | app | device | device-fallback
 const narratorListeners = new Set()
+
+function isAppleTouchDevice() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  const platform = navigator.platform || ''
+  return /iPad|iPhone|iPod/.test(ua) ||
+    (platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+}
 
 function notifyNarrator() {
   const status = getNarratorStatus()
@@ -95,7 +107,13 @@ export async function prepareNarratorVoice() {
         narratorError = status.error || null
         notifyNarrator()
       })
-      const model = cachedModel?.modelUrl || 'tsukuyomi'
+      // iPhoneではWASMワーカーを増やさない。GitHub Pagesは通常
+      // crossOriginIsolatedではないが、明示して端末差による多重確保を防ぐ。
+      if (isAppleTouchDevice() && ort.env?.wasm) {
+        ort.env.wasm.numThreads = 1
+        ort.env.wasm.proxy = false
+      }
+      const model = cachedModel?.modelUrl || NARRATOR_MODEL_URL
       const narratorOrt = ortWithCachedModel(ort, cachedModel)
       narrator = await PiperPlus.initialize({
         // つきよみちゃん: 日本語の女性単一話者モデル（MIT）。
@@ -112,7 +130,7 @@ export async function prepareNarratorVoice() {
         onProgress: ({ stage, progress, message }) => {
           const percent = Number.isFinite(progress) ? Math.round(progress * 100) : null
           // 30% はPiper PlusがONNXセッション作成直前に発行する固定値。
-          // 85MB前後のモデル取得・展開がここで起きるため、実進捗のように
+          // 38MB前後のモデル取得・展開がここで起きるため、実進捗のように
           // 表示すると「30%で止まった」と誤解させてしまう。
           narratorProgress = stage === 'model' && percent === 30 ? null : percent
           narratorDetail = stage === 'model' && percent === 30
@@ -175,7 +193,7 @@ function splitForNarrator(text) {
   // iPhone のPWAは、大きな推論結果（Float32Array）とWAV用バッファを同時に
   // 保持するとOSに終了されることがある。長い説明を一息に作らず、小さな
   // かたまりごとに「合成→再生→解放」する。内容は省略しない。
-  const maxChars = 24
+  const maxChars = isAppleTouchDevice() ? 18 : 24
   const parts = text.match(/[^、。！？!?]+[、。！？!?]?/g) || [text]
   const result = []
   let current = ''
@@ -356,13 +374,17 @@ async function speakWithNarrator(text, id, opts) {
   const loudness = opts.volume ?? volume
   for (const sentence of splitForNarrator(text)) {
     if (id !== requestId || !enabled) return
-    const result = await tts.synthesize(sentence, {
-      language: 'ja',
-      lengthScale,
-      // 同じモデルでも毎回ほんの少しだけ自然な抑揚が変わる。
-      noiseScale: 0.54,
-      noiseW: 0.62
-    })
+    const inference = narratorInferenceQueue.then(() => tts.synthesize(sentence, {
+        language: 'ja',
+        lengthScale,
+        // 同じモデルでも毎回ほんの少しだけ自然な抑揚が変わる。
+        noiseScale: 0.54,
+        noiseW: 0.62
+      }))
+    // キュー自身は大きなAudioResultを保持しない。成功・失敗のどちらでも
+    // undefinedへ変換し、次の推論開始だけを順序づける。
+    narratorInferenceQueue = inference.then(() => undefined, () => undefined)
+    const result = await inference
     if (id !== requestId || !enabled) return
     await playNarratorResult(result, id, loudness)
   }
@@ -406,6 +428,11 @@ export function cancelSpeak() {
   requestId += 1
   if (pendingTimer) clearTimeout(pendingTimer)
   pendingTimer = null
+  if (pendingResolve) {
+    const resolve = pendingResolve
+    pendingResolve = null
+    resolve()
+  }
   stopNarratorAudio()
   if (activeResolve) {
     activeResolve()
@@ -427,6 +454,7 @@ export function speak(text, opts = {}) {
       : voiceStyle
     const start = async () => {
       pendingTimer = null
+      pendingResolve = null
       if (id !== requestId || !enabled) return resolve()
       try {
         if (selectedVoice === 'neural') await speakWithNarrator(said, id, opts)
@@ -454,6 +482,7 @@ export function speak(text, opts = {}) {
       resolve()
     }
     // Safari の cancel 直後の無音を避ける短い間隔。
+    pendingResolve = resolve
     pendingTimer = setTimeout(start, opts.interrupt === false ? 0 : 70)
   })
 }

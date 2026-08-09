@@ -1,3 +1,31 @@
+// 旧74MB版と同じリポジトリ名をキャッシュキーにすると、配布元が38MB版へ
+// 更新されてもiPhoneは古いモデルを使い続ける。軽量化済みFP16モデルを
+// コミット単位で固定し、キャッシュキーも変えて確実に移行する。
+export const NARRATOR_MODEL_URL =
+  'https://huggingface.co/ayousanz/piper-plus-tsukuyomi-chan/resolve/36b59c825c36bd386b8960cf3f604382f52f2a87/tsukuyomi-chan-6lang-fp16.onnx'
+
+const LEGACY_NARRATOR_CACHE_KEY = 'ayousanz/piper-plus-tsukuyomi-chan'
+
+function removeLegacyNarratorModel() {
+  if (typeof indexedDB === 'undefined') return
+  try {
+    const request = indexedDB.open('piper-plus-models', 2)
+    request.onsuccess = () => {
+      const db = request.result
+      try {
+        const tx = db.transaction('models', 'readwrite')
+        tx.objectStore('models').delete(LEGACY_NARRATOR_CACHE_KEY)
+        tx.oncomplete = () => db.close()
+        tx.onerror = () => db.close()
+      } catch (_) {
+        db.close()
+      }
+    }
+  } catch (_) {
+    // 古いキャッシュの削除に失敗しても、新モデルの利用は継続する。
+  }
+}
+
 // PiperPlus.initialize() は現行版ではモデルURLを直接 ONNX Runtime へ渡すため、
 // ModelManager の IndexedDB キャッシュを通らない。先に ModelManager でモデルを
 // 明示保存し、ONNXセッション作成時だけ保存済みバイト列を渡す。
@@ -16,7 +44,7 @@ export async function loadCachedNarratorModel(ModelManager, onStatus = () => {})
     globalThis.navigator?.storage?.persist?.().catch(() => {})
 
     const manager = new ModelManager()
-    const urls = await manager.resolveUrls('tsukuyomi')
+    const urls = await manager.resolveUrls(NARRATOR_MODEL_URL)
     const cached = await manager.getFromCache(urls.cacheKey)
     if (cached?.modelData) {
       onStatus({
@@ -32,17 +60,12 @@ export async function loadCachedNarratorModel(ModelManager, onStatus = () => {})
       progress: 0,
       detail: '初回だけ、声のデータを端末へ保存しています…'
     })
-    const loaded = await manager.loadModel('tsukuyomi', {
-      onProgress: ({ percentage }) => {
-        onStatus({
-          storage: 'downloading',
-          progress: Number.isFinite(percentage) && percentage > 0 ? percentage : null,
-          detail: percentage > 0
-            ? `声のデータを保存しています… ${percentage}%`
-            : '声のデータを保存しています…'
-        })
-      }
-    })
+    // onProgress を渡したModelManagerは、受信チャンクを全保持した後でもう1本の
+    // ArrayBufferへ結合するため、ダウンロード中だけモデル2個分を消費する。
+    // iPhoneではresponse.arrayBuffer()の単一経路を使い、ピークメモリを抑える。
+    const loaded = await manager.loadModel(NARRATOR_MODEL_URL)
+    // 旧74MB版は同じ声だが、以後使わない。新38MB版の保存後にだけ削除する。
+    removeLegacyNarratorModel()
     onStatus({
       storage: 'saved',
       progress: 100,
@@ -72,6 +95,9 @@ export function ortWithCachedModel(ort, cachedModel) {
         if (source === cachedModel.modelUrl && modelData) {
           const bytes = modelData
           modelData = null
+          // cachedModel側の参照も外す。ORTがWASMメモリへモデルを読み込む間に、
+          // 38MBのJavaScript側コピーを余分に保持しない。
+          cachedModel.modelData = null
           return ort.InferenceSession.create(bytes, options)
         }
         return ort.InferenceSession.create(source, options)

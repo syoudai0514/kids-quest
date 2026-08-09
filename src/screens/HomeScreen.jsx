@@ -126,10 +126,10 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const nodes = daily.coreTasks.length
 
   return (
-    <div className="screen screen-in">
+    <div className="screen screen-in home-screen">
       <Starfield />
 
-      <div className="topbar" style={{ flexWrap: 'wrap' }}>
+      <div className="topbar home-topbar" style={{ flexWrap: 'wrap' }}>
         <div className="row" style={{ gap: 8 }}>
           <div className="pill">
             {planet.emoji} {planet.name}
