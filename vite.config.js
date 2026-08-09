@@ -32,7 +32,10 @@ export default defineConfig(({ command }) => ({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // この実行環境では Workbox の terser 子プロセスが終了し、SW 生成だけが失敗する。
+        // development モードなら機能は同じで圧縮だけを省くため、確実に PWA を生成できる。
+        mode: 'development',
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // 全アセットをキャッシュしてオフラインでも完全に動くように
         navigateFallback: 'index.html'
       }

@@ -40,13 +40,13 @@ const BASE = [
   { id: 'cometa', name: 'コメタ', role: 'friend', art: 'star', heroStyle: 'cometa', heroAsset: '/monsters/hero-cometa.png', element: 'つき',
     colors: { body: '#ffd166', belly: '#fff0b8', accent: '#ff8fb1', eye: '#5a3a00' },
     desc: 'すいせいの しっぽを もつ、きらきら モンスター。' },
-  { id: 'gokkon', name: 'ゴッコン', role: 'wild', art: 'rock', element: 'いわ',
+  { id: 'gokkon', name: 'ゴッコン', role: 'wild', art: 'rock', heroAsset: '/monsters/early/gokkon.webp', element: 'いわ',
     colors: { body: '#9aa7c7', belly: '#cdd6ee', accent: '#ffd166', eye: '#1b1140' },
     desc: 'いんせきから うまれた がんこな モンスター。' },
   { id: 'mognyu', name: 'モグニュ', role: 'wild', art: 'slime', heroStyle: 'mognyu', heroAsset: '/monsters/hero-mognyu.png', element: 'いわ',
     colors: { body: '#ff9d5c', belly: '#ffd9b0', accent: '#7af0d0', eye: '#3a1d00' },
     desc: 'あかい わくせいに すむ あったか モンスター。' },
-  { id: 'shadex', name: 'シャデックス', role: 'wild', art: 'ghost', element: 'やみ',
+  { id: 'shadex', name: 'シャデックス', role: 'wild', art: 'ghost', heroAsset: '/monsters/early/shadex.webp', element: 'やみ',
     colors: { body: '#8a7bd8', belly: '#bcb0f0', accent: '#ff8fb1', eye: '#fff' },
     desc: 'うちゅうの すきまに かくれる いたずら モンスター。' }
 ]
@@ -112,11 +112,16 @@ function generateMonsters(count) {
       }
     }
     used.add(name)
+    const id = 'g' + String(i).padStart(3, '0')
+    // 最初の32体は、旅の序盤で会える固有イラスト版。ID・名前・属性は
+    // 以前のデータを維持するため、既存の図鑑・捕獲セーブもそのまま使える。
+    const heroAsset = i < 32 ? `/monsters/early/${id}.webp` : undefined
     out.push({
-      id: 'g' + String(i).padStart(3, '0'),
+      id,
       name,
       role: 'wild', // バトルで捕まえて集める
       art,
+      heroAsset,
       deco: (i * 7 + 3) % 4, // 0:なし 1:つの 2:ほしアンテナ 3:もよう（見た目のバリエーション）
       element: pal.element,
       colors: { body: pal.body, belly: pal.belly, accent: pal.accent, eye: pal.eye },
