@@ -175,6 +175,18 @@ function ArtSlime({ c }) {
   )
 }
 
+// 最初に会う6体だけは、遠目でも名前を思い出せる「顔以外の目印」を持たせる。
+// 既存の1000体は従来どおり art/deco で描画するため、収集データに影響しない。
+function HeroMark({ kind, c }) {
+  if (kind === 'hoshu') return <><path d="M23 42 q-12 8 -7 22 q8 -2 13 -10" fill={c.accent} opacity=".8" /><path d="M77 42 q12 8 7 22 q-8 -2 -13 -10" fill={c.accent} opacity=".8" /></>
+  if (kind === 'pterry') return <><path d="M17 49 q-13 -13 -10 -27 q13 6 18 21" fill={c.body} /><path d="M83 49 q13 -13 10 -27 q-13 6 -18 21" fill={c.body} /><circle cx="50" cy="25" r="5" fill={c.accent} /></>
+  if (kind === 'lunaco') return <><path d="M26 28 q-10 -13 2 -21 q-2 12 9 16" fill={c.accent} /><path d="M74 28 q10 -13 -2 -21 q2 12 -9 16" fill={c.accent} /><circle cx="27" cy="43" r="2" fill="#fff" /><circle cx="73" cy="43" r="2" fill="#fff" /></>
+  if (kind === 'rexa') return <><path d="M24 72 q-15 2 -18 13 q13 -1 22 -8" fill={c.accent} /><path d="M70 36 l7 -12 l5 14" fill={c.accent} /><path d="M33 35 l5 -11 l5 11" fill={c.accent} /></>
+  if (kind === 'cometa') return <><path d="M15 57 q-19 13 -8 28 q13 -13 27 -17" fill={c.accent} opacity=".9" /><path d="M19 62 q-12 12 -4 19" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" /></>
+  if (kind === 'mognyu') return <><path d="M32 30 q4 -18 12 -7 q3 -20 13 -2 q11 -10 12 9" fill={c.accent} /><path d="M29 76 q7 8 14 0 q7 8 14 0 q7 8 14 0" stroke={c.accent} strokeWidth="3" fill="none" /></>
+  return null
+}
+
 // 見た目バリエーション（1000体でも見分けがつくように）
 function Deco({ kind, c }) {
   if (kind === 1) {
@@ -225,7 +237,7 @@ const ART = {
  * @param {number} size  px
  * @param {boolean} bounce  ふわふわ動かす
  */
-export default function Monster({ monster, colorsOverride, size = 160, bounce = true, style }) {
+export default function Monster({ monster, colorsOverride, size = 160, bounce = true, pose = 'idle', style }) {
   if (!monster) return null
   const colors = { ...monster.colors, ...(colorsOverride || {}) }
   const Art = ART[monster.art] || ArtBlob
@@ -236,7 +248,7 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
       height={size}
       style={{
         overflow: 'visible',
-        animation: bounce ? 'twinkle 2.4s ease-in-out infinite' : 'none',
+        animation: pose === 'attack' ? 'monsterAttack 0.42s ease-out' : pose === 'hurt' ? 'monsterHurt 0.42s ease' : pose === 'win' ? 'monsterWin 0.7s ease-in-out infinite' : bounce ? 'twinkle 2.4s ease-in-out infinite' : 'none',
         filter: 'drop-shadow(0 10px 12px rgba(0,0,0,0.35))',
         ...style
       }}
@@ -244,6 +256,7 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
       aria-label={monster.name}
     >
       <Art c={colors} />
+      {monster.heroStyle ? <HeroMark kind={monster.heroStyle} c={colors} /> : null}
       {monster.deco ? <Deco kind={monster.deco} c={colors} /> : null}
     </svg>
   )

@@ -15,7 +15,6 @@ import { setBgmEnabled } from '../engine/bgm.js'
 import { serializeForExport, parseImport } from '../engine/storage.js'
 import { GRADES, MAX_GRADE, gradeOf } from '../data/grades.js'
 import { boxCounts, dueCount, daysUntilNext, MAX_BOX } from '../engine/srs.js'
-import { getWeapon } from '../data/weapons.js'
 
 function downloadText(filename, text) {
   try {
@@ -212,7 +211,6 @@ export default function ParentScreen({ onBack }) {
   const d = state.daily
   const accuracy = d.attemptsToday ? Math.round((d.correctToday / d.attemptsToday) * 100) : 0
   const [confirmReset, setConfirmReset] = useState(false)
-  const [weaponToRemove, setWeaponToRemove] = useState(null)
 
   // 直近7日間の取り組み日数
   const activeDays = Object.keys(state.history).length + (d.attemptsToday > 0 ? 1 : 0)
@@ -362,55 +360,6 @@ export default function ParentScreen({ onBack }) {
                   {state.settings.bgm ? 'ON' : 'OFF'}
                 </button>
               </label>
-            </div>
-          </div>
-
-          {/* 武器の整理。子ども用の装備画面には置かず、保護者だけが変更できる。 */}
-          <div>
-            <h3 style={{ margin: '4px 0 10px' }}>そうびの かんり</h3>
-            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                持っている武器を整理できます。そうび中の武器を消すと、残っている武器に自動で切り替わります。
-              </p>
-              {!state.weapons?.length ? (
-                <div className="muted" style={{ fontWeight: 700 }}>いま持っている武器はありません。</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {state.weapons.map((id) => {
-                    const weapon = getWeapon(id)
-                    if (!weapon) return null
-                    const confirming = weaponToRemove === id
-                    return (
-                      <div key={id} className="row wrap" style={{ justifyContent: 'space-between', gap: 8 }}>
-                        <div style={{ fontWeight: 800 }}>
-                          {weapon.emoji} {weapon.name}{state.equipped === id ? '（そうび中）' : ''}
-                        </div>
-                        {confirming ? (
-                          <div className="row wrap" style={{ gap: 6 }}>
-                            <button
-                              className="btn btn--pink"
-                              style={{ minHeight: 44, padding: '7px 12px' }}
-                              onClick={() => {
-                                dispatch({ type: 'REMOVE_WEAPON', weaponId: id })
-                                setWeaponToRemove(null)
-                              }}
-                            >
-                              消す
-                            </button>
-                            <button className="btn btn--ghost" style={{ minHeight: 44, padding: '7px 12px' }} onClick={() => setWeaponToRemove(null)}>
-                              やめる
-                            </button>
-                          </div>
-                        ) : (
-                          <button className="btn btn--ghost" style={{ minHeight: 44, padding: '7px 12px' }} onClick={() => setWeaponToRemove(id)}>
-                            整理する
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
             </div>
           </div>
 

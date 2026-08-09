@@ -19,17 +19,13 @@ import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
 import { MAX_GRADE, MASTER_LEVEL } from '../data/grades.js'
 import { getWeapon, weaponScore, starterWeaponsFor } from '../data/weapons.js'
 import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engine/srs.js'
-import { snapshotQuestion } from '../engine/reviewKey.js'
 
-const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
+const BATTLE_DAILY_LIMIT = 3 // 息抜きバトルの1日の基本プレイ上限
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
 export const REVIEW_BATCH_MAX = 8
 
 // コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
-const CONTENT_VERSION = 10
-export const STAR_TRIAL_QUESTIONS = 6
-export const STAR_TRIAL_ROUNDS = 2
-export const STAR_TRIAL_PASS_CORRECT = 9
+const CONTENT_VERSION = 9
 
 // XP → 相棒レベル（ゆるやかな二次曲線）
 export function partnerLevel(xp) {
@@ -86,7 +82,6 @@ function freshDaily(date, grade = 0) {
     attemptsToday: 0,
     perDomainToday: {},
     ticketsEarnedToday: 0,
-    battleUnlocks: [], // 2教科・全教科完了で解放した追加戦
     okawariIndex: 0,
     extraIndex: 0
   }
@@ -120,17 +115,11 @@ function createInitialState() {
     streak: 0,
     lastActiveDate: null,
     conquered: 0,
-    starShards: 0, // バトル由来の収集通貨。成長XPとは分ける。
-    rewardProgress: { activityDays: [], eliteWins: 0, battleTutorialsSeen: 0 },
     skills: { 0: freshSkills() },
     srs: {}, // { domainId: { itemKey: {box, due, lapses} } } 間隔反復
-    // { domainId: { reviewKey: question } }。誤答した問題を同じ形で復習するための保存。
-    reviewQuestions: {},
     weapons: ['w01'], // 持っている武器のid（さいしょの1本）
     equipped: 'w01', // そうび中の武器id
     testPassed: {}, // { 学年: { rate, at } } 章末テストの合格記録
-    // { 学年: { rounds: [{correct,total,day,at}] } }。「ほしのしれん」の直近2回。
-    starTrials: {},
     lessonSeen: {}, // { '学年:教科': 回数 } 授業を見た回数
     domainAccuracy: {}, // { '学年:教科': {c, n} } 直近の正解率（おさらい授業の判定用）
     unlockedMonsters: [partner.id],
@@ -174,8 +163,7 @@ function normalizeSaved(saved) {
       ...saved,
       settings: { ...fresh.settings, ...(saved.settings || {}) },
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
-      srs: saved.srs || migrateMissed(saved.missed),
-      reviewQuestions: saved.reviewQuestions || {}
+      srs: saved.srs || migrateMissed(saved.missed)
     }
   } else if (saved && (saved.version === 1 || saved.version === 2)) {
     base = migrateOld(saved)
@@ -215,36 +203,14 @@ function normalizeSaved(saved) {
   if (!base.srs || typeof base.srs !== 'object') {
     base = { ...base, srs: migrateMissed(base.missed) }
   }
-  if (!base.reviewQuestions || typeof base.reviewQuestions !== 'object') {
-    base = { ...base, reviewQuestions: {} }
-  }
   if (base.missed) {
     // 旧形式は取り込み済みなので落とす（保存サイズを増やさない）
     const { missed, ...rest } = base
     base = rest
   }
   if (!base.testPassed) base = { ...base, testPassed: {} }
-  if (!base.starTrials || typeof base.starTrials !== 'object') base = { ...base, starTrials: {} }
   if (!base.lessonSeen) base = { ...base, lessonSeen: {} }
   if (!base.domainAccuracy) base = { ...base, domainAccuracy: {} }
-  if (typeof base.starShards !== 'number') base = { ...base, starShards: 0 }
-  if (!base.rewardProgress || !Array.isArray(base.rewardProgress.activityDays)) {
-    // 過去のセーブは武器・進捗を維持し、これからの学習日だけ新しい宝箱ペースで数える。
-    base = { ...base, rewardProgress: { activityDays: [], eliteWins: 0, battleTutorialsSeen: 0 } }
-  }
-  base = {
-    ...base,
-    rewardProgress: {
-      activityDays: base.rewardProgress.activityDays,
-      eliteWins: base.rewardProgress.eliteWins || 0,
-      battleTutorialsSeen: base.rewardProgress.battleTutorialsSeen || 0
-    }
-  }
-  base = {
-    ...base,
-    daily: { ...freshDaily(base.daily?.date || todayKey(), base.grade || 0), ...(base.daily || {}) },
-    battle: { ...freshBattle(base.battle?.date || todayKey()), ...(base.battle || {}), dailyLimit: BATTLE_DAILY_LIMIT }
-  }
   // すでに先の学年へ進んでいた子が、テスト制になって戻されないようにする
   //（これまでの解放は そのまま みとめる）
   if (base.gradeMax > 0) {
@@ -268,23 +234,6 @@ export function needsReviewLesson(state, domainId, grade = state.grade) {
 // この学年の章末テストに合格しているか
 export function isGradePassed(state, grade) {
   return !!state.testPassed?.[grade]?.passed
-}
-
-// 「ほしのしれん」の進行。1日6問、直近2回＝12問中9問でクリア。
-export function starTrialInfo(state, grade = state.grade) {
-  const rounds = state.starTrials?.[grade]?.rounds || []
-  const relevant = rounds.slice(-STAR_TRIAL_ROUNDS)
-  const correct = relevant.reduce((sum, r) => sum + (r.correct || 0), 0)
-  const total = relevant.reduce((sum, r) => sum + (r.total || 0), 0)
-  const last = relevant[relevant.length - 1]
-  return {
-    rounds: relevant,
-    correct,
-    total,
-    remainingRounds: Math.max(0, STAR_TRIAL_ROUNDS - relevant.length),
-    todayDone: last?.day === dayNumber(),
-    passed: total >= STAR_TRIAL_QUESTIONS * STAR_TRIAL_ROUNDS && correct >= STAR_TRIAL_PASS_CORRECT
-  }
 }
 
 function rolloverIfNeeded(state) {
@@ -367,7 +316,6 @@ function reducer(state, action) {
       //   期限の来た問題に正解 → 次に会う日を のばす（1→3→7→14→30日）
       //   最高boxに到達 → 「完全に自分のものになった」= conquered
       let srs = state.srs
-      let reviewQuestions = state.reviewQuestions || {}
       let conquered = state.conquered
       let xpGain = correct ? 2 : 0
       if (itemKey) {
@@ -380,15 +328,6 @@ function reducer(state, action) {
         } else {
           const { entry, mastered } = scheduleNext(prev, correct, day)
           srs = { ...srs, [domainId]: { ...byKey, [itemKey]: entry } }
-          if (!correct && action.question) {
-            const snapshot = snapshotQuestion(action.question, itemKey)
-            if (snapshot) {
-              reviewQuestions = {
-                ...reviewQuestions,
-                [domainId]: { ...reviewQuestions[domainId], [itemKey]: snapshot }
-              }
-            }
-          }
           if (correct && wasDue) {
             xpGain += 4 // まちがいを ちからに かえたボーナス
             if (mastered) conquered += 1
@@ -406,14 +345,13 @@ function reducer(state, action) {
       if (acc.n > 20) acc = { c: Math.round(acc.c / 2), n: Math.round(acc.n / 2) } // 直近を重く見る
 
       return {
-        ...state,
         domainAccuracy: { ...state.domainAccuracy, [accKey]: acc },
+        ...state,
         skills: { ...state.skills, [grade]: newGradeSkills },
         xp: state.xp + xpGain,
         streak,
         lastActiveDate,
         srs,
-        reviewQuestions,
         conquered,
         daily: {
           ...state.daily,
@@ -431,11 +369,6 @@ function reducer(state, action) {
 
       let daily = { ...state.daily, tasksClearedToday: state.daily.tasksClearedToday + 1 }
       let battle = state.battle
-      const activeDays = state.rewardProgress?.activityDays || []
-      const today = todayKey()
-      const rewardProgress = activeDays.includes(today)
-        ? state.rewardProgress
-        : { ...state.rewardProgress, activityDays: [...activeDays, today] }
       let unlockedMonsters = state.unlockedMonsters
       const celebration = {
         ticket: false,
@@ -449,44 +382,29 @@ function reducer(state, action) {
       if (kind === 'core') {
         const coreIndex = state.daily.coreIndex + 1
         daily = { ...daily, coreIndex, coreDone: coreIndex >= state.daily.coreTasks.length }
-        // 1日1戦は自由。2教科・5教科を終えると追加戦を1回ずつ解放する。
-        // 「正解数」ではなく教科を最後までやった行動に対して渡すので、連打の近道にならない。
-        if ([2, state.daily.coreTasks.length].includes(coreIndex) && !(daily.battleUnlocks || []).includes(coreIndex)) {
-          battle = { ...battle, tickets: battle.tickets + 1 }
-          daily = {
-            ...daily,
-            ticketsEarnedToday: daily.ticketsEarnedToday + 1,
-            battleUnlocks: [...(daily.battleUnlocks || []), coreIndex]
-          }
-          celebration.ticket = true
-          celebration.ticketMessage = coreIndex === 2
-            ? '2つの きょうかを がんばったから、ついかバトルが あそべるよ！'
-            : 'きょうの きょうかを ぜんぶ がんばったから、ついかバトルが あそべるよ！'
-        }
       } else if (kind === 'okawari') {
         daily = { ...daily, okawariIndex: state.daily.okawariIndex + 1 }
       } else if (kind === 'extra') {
-        // 追加問題は「あと1枚ほしい」が、そのまま学習の動機になる場所にする。
-        // 3問中2問以上を自力で解けたら1枚。考えて間違えたことは減点しない。
-        // ただし、出題直後の誤答を繰り返す連打だけは、手持ちから1枚減らす。
-        // 能力ではなく行動だけを調整するため、苦手でも安心して取り組める。
+        // チケットは「ちゃんと考えて解けたか」で決める。
+        // 適当に連打してチケットだけ取りに行くのを防ぐための仕組み。
+        //   正解率 70%以上 → チケット1まい
+        //   40%未満 or 明らかな連打 → チケットを1まい へらす（0未満にはしない）
+        //   その間 → チケットなし（ペナルティも なし）
+        const acc = typeof action.accuracy === 'number' ? action.accuracy : 1
+        const cheated = !!action.suspicious || acc < 0.4
         daily = { ...daily, extraIndex: state.daily.extraIndex + 1 }
-        const acc = typeof action.accuracy === 'number' ? action.accuracy : 0
-        if (action.suspicious) {
+        if (cheated) {
           const lost = Math.min(1, battle.tickets)
           battle = { ...battle, tickets: battle.tickets - lost }
           celebration.ticketPenalty = lost > 0 ? lost : 0
-          celebration.ticketReason = lost > 0
-            ? 'はやおしが つづいたから、チケットが 1まい へったよ'
-            : 'はやおしが つづいたから、こんかいは チケットなしだよ'
+          celebration.ticketReason = 'てきとうに こたえたので チケットは もらえないよ'
           celebration.xpGain = 1
-        } else if (acc >= 2 / 3) {
+        } else if (acc >= 0.7) {
+          daily = { ...daily, ticketsEarnedToday: state.daily.ticketsEarnedToday + 1 }
           battle = { ...battle, tickets: battle.tickets + 1 }
-          daily = { ...daily, ticketsEarnedToday: daily.ticketsEarnedToday + 1 }
           celebration.ticket = true
-          celebration.ticketMessage = '3もん中 2もん できた！ バトルチケットを ゲット！'
         } else {
-          celebration.ticketReason = 'あと 1もん できたら チケットだったよ！ また ちょうせんしよう'
+          celebration.ticketReason = `せいかい率 ${Math.round(acc * 100)}％。70％いじょうで チケットが もらえるよ`
         }
       }
 
@@ -516,7 +434,6 @@ function reducer(state, action) {
         xp: state.xp + celebration.xpGain,
         daily,
         battle,
-        rewardProgress,
         unlockedMonsters,
         pendingGradeUp: null,
         pendingCelebration: celebration
@@ -529,24 +446,10 @@ function reducer(state, action) {
     case 'CONSUME_BATTLE_PLAY': {
       const b = state.battle
       if (b.playsUsed < b.dailyLimit) {
-        return {
-          ...state,
-          battle: { ...b, playsUsed: b.playsUsed + 1 },
-          rewardProgress: {
-            ...state.rewardProgress,
-            battleTutorialsSeen: (state.rewardProgress?.battleTutorialsSeen || 0) + 1
-          }
-        }
+        return { ...state, battle: { ...b, playsUsed: b.playsUsed + 1 } }
       }
       if (b.tickets > 0) {
-        return {
-          ...state,
-          battle: { ...b, tickets: b.tickets - 1 },
-          rewardProgress: {
-            ...state.rewardProgress,
-            battleTutorialsSeen: (state.rewardProgress?.battleTutorialsSeen || 0) + 1
-          }
-        }
+        return { ...state, battle: { ...b, tickets: b.tickets - 1 } }
       }
       return state
     }
@@ -554,7 +457,7 @@ function reducer(state, action) {
     case 'BATTLE_WON': {
       const b = state.battle
       const caught = action.caughtId && !state.unlockedMonsters.includes(action.caughtId)
-      const shardGain = action.elite ? 12 : 6
+      const xpGain = action.elite ? 20 : 12 // つよい てき に勝つと ボーナス✨
 
       // 武器ドロップ。今のそうびより強ければ自動でそうびする
       //（小さい子が メニューを行き来しなくても 強くなれるように）
@@ -568,11 +471,7 @@ function reducer(state, action) {
 
       return {
         ...state,
-        starShards: state.starShards + shardGain,
-        rewardProgress: {
-          ...state.rewardProgress,
-          eliteWins: (state.rewardProgress?.eliteWins || 0) + (action.elite ? 1 : 0)
-        },
+        xp: state.xp + xpGain,
         weapons,
         equipped,
         battle: {
@@ -602,15 +501,6 @@ function reducer(state, action) {
       return { ...state, equipped: action.weaponId }
     }
 
-    // 保護者向け: 武器を整理する。そうび中のものを消したときは、
-    // 残っている先頭の武器へ自動で持ち替える（武器ゼロでも安全に戦える）。
-    case 'REMOVE_WEAPON': {
-      if (!state.weapons.includes(action.weaponId)) return state
-      const weapons = state.weapons.filter((id) => id !== action.weaponId)
-      const equipped = state.equipped === action.weaponId ? weapons[0] || null : state.equipped
-      return { ...state, weapons, equipped }
-    }
-
     // 章末テストの結果。合格したら次の学年を解放する（v4の解放条件）
     case 'CHAPTER_TEST_RESULT': {
       const g = action.grade
@@ -626,76 +516,7 @@ function reducer(state, action) {
         gradeMax = g + 1
         pendingGradeUp = g + 1
       }
-      // 章末テストの誤答も、必ずとっくんに入れる。
-      // 画面だけ「入ったよ」と言って実際には保存しない、という不一致を防ぐ。
-      let srs = state.srs
-      let reviewQuestions = state.reviewQuestions || {}
-      const today = dayNumber()
-      for (const result of action.results || []) {
-        if (result.correct || !result.domainId || !result.itemKey) continue
-        const byKey = srs[result.domainId] || {}
-        const { entry } = scheduleNext(byKey[result.itemKey], false, today)
-        srs = { ...srs, [result.domainId]: { ...byKey, [result.itemKey]: entry } }
-        const snapshot = snapshotQuestion(result.question, result.itemKey)
-        if (snapshot) {
-          reviewQuestions = {
-            ...reviewQuestions,
-            [result.domainId]: { ...reviewQuestions[result.domainId], [result.itemKey]: snapshot }
-          }
-        }
-      }
-      return { ...state, testPassed, gradeMax, pendingGradeUp, srs, reviewQuestions }
-    }
-
-    // ほしのしれん: 6問ずつを別日に行い、直近2回の合計で判定する。
-    case 'STAR_TRIAL_RESULT': {
-      const g = action.grade
-      const round = {
-        correct: action.correct || 0,
-        total: action.total || STAR_TRIAL_QUESTIONS,
-        day: dayNumber(),
-        at: Date.now()
-      }
-      const oldRounds = state.starTrials?.[g]?.rounds || []
-      const rounds = [...oldRounds, round].slice(-STAR_TRIAL_ROUNDS)
-      const correct = rounds.reduce((sum, r) => sum + r.correct, 0)
-      const total = rounds.reduce((sum, r) => sum + r.total, 0)
-      const passed = total >= STAR_TRIAL_QUESTIONS * STAR_TRIAL_ROUNDS && correct >= STAR_TRIAL_PASS_CORRECT
-      const starTrials = { ...state.starTrials, [g]: { rounds } }
-
-      let testPassed = state.testPassed
-      let gradeMax = state.gradeMax
-      let pendingGradeUp = state.pendingGradeUp
-      if (passed) {
-        const prev = state.testPassed[g]
-        const rate = correct / total
-        testPassed = {
-          ...state.testPassed,
-          [g]: { rate: Math.max(prev?.rate || 0, rate), passed: true, at: Date.now(), starTrial: true }
-        }
-        if (g >= state.gradeMax && state.gradeMax < MAX_GRADE) {
-          gradeMax = g + 1
-          pendingGradeUp = g + 1
-        }
-      }
-
-      // しれん中の誤答も、必ずとっくんに残す。
-      let srs = state.srs
-      let reviewQuestions = state.reviewQuestions || {}
-      for (const result of action.results || []) {
-        if (result.correct || !result.domainId || !result.itemKey) continue
-        const byKey = srs[result.domainId] || {}
-        const { entry } = scheduleNext(byKey[result.itemKey], false, round.day)
-        srs = { ...srs, [result.domainId]: { ...byKey, [result.itemKey]: entry } }
-        const snapshot = snapshotQuestion(result.question, result.itemKey)
-        if (snapshot) {
-          reviewQuestions = {
-            ...reviewQuestions,
-            [result.domainId]: { ...reviewQuestions[result.domainId], [result.itemKey]: snapshot }
-          }
-        }
-      }
-      return { ...state, starTrials, testPassed, gradeMax, pendingGradeUp, srs, reviewQuestions }
+      return { ...state, testPassed, gradeMax, pendingGradeUp }
     }
 
     // 授業を見た記録（何回目かで 見せる授業を変える）

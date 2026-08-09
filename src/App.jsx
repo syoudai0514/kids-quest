@@ -3,7 +3,7 @@
 // 背景の空の色は「いまいる惑星」で変わる（--bg-a / --bg-b）。
 // ============================================================
 
-import React, { useEffect, useLayoutEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useGame } from './state/GameContext.jsx'
 import { currentPlanet } from './data/planets.js'
 import { unlockTts, setTtsEnabled } from './engine/tts.js'
@@ -64,14 +64,6 @@ export default function App() {
   const go = (s) => setScreen(s)
 
   const planet = currentPlanet(state.totalClears)
-
-  // React が同じスクロール要素を再利用しても、画面遷移では必ず先頭から見せる。
-  useLayoutEffect(() => {
-    window.scrollTo(0, 0)
-    document.querySelectorAll('.scroll-col').forEach((el) => {
-      el.scrollTop = 0
-    })
-  }, [screen, activeTask])
 
   return (
     <div className="app-shell" style={{ '--bg-a': planet.bg[0], '--bg-b': planet.bg[1] }}>

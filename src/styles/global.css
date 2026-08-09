@@ -666,6 +666,31 @@ body {
   background: rgba(134, 239, 172, 0.16);
   border: 2px solid rgba(134, 239, 172, 0.5);
 }
+.battle-arena {
+  position: relative;
+  overflow: hidden;
+  min-height: min(670px, calc(100vh - 88px));
+  border-radius: 30px;
+  background:
+    radial-gradient(ellipse at 22% 84%, rgba(70, 210, 180, .22), transparent 31%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 179, 72, .20), transparent 27%),
+    linear-gradient(160deg, rgba(29, 35, 93, .76), rgba(15, 14, 52, .56));
+}
+.battle-fighter::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%; bottom: -5px;
+  width: 172px; height: 36px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(3, 6, 30, .78), rgba(3, 6, 30, 0) 70%);
+}
+.battle-fighter--enemy { margin-top: 6px; }
+.battle-fighter--partner { margin-bottom: 6px; }
+@keyframes monsterAttack { 0% { transform: translateX(0) scale(1); } 45% { transform: translateX(24px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
+@keyframes monsterHurt { 0%,100% { transform: translateX(0); filter: brightness(1); } 25% { transform: translateX(-13px); filter: brightness(1.8); } 55% { transform: translateX(10px); } }
+@keyframes monsterWin { 0%,100% { transform: translateY(0) rotate(-2deg) scale(1); } 50% { transform: translateY(-13px) rotate(2deg) scale(1.08); } }
 .ring-throw {
   position: absolute;
   left: 50%;

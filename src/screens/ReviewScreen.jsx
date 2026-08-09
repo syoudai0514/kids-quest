@@ -19,7 +19,6 @@ import { SEIKATSU_LABELS } from '../data/content/seikatsu.js'
 import { Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
-import { baseItemKey } from '../engine/reviewKey.js'
 
 // 長い問題文は 子どもが見て わかる長さに切る
 function short(text, n = 14) {
@@ -29,22 +28,21 @@ function short(text, n = 14) {
 
 // itemKey → 子ども向けの表示
 function labelOf(domainId, key) {
-  const baseKey = baseItemKey(key)
   if (domainId === 'yomu') {
-    if (baseKey.startsWith('j:')) return { big: baseKey.slice(2), sub: 'じゅくご' }
-    if (baseKey.startsWith('k:')) return { big: baseKey.slice(2), sub: 'かんじ' }
-    if (baseKey.startsWith('w:')) return { big: baseKey.slice(2), sub: 'ことば' }
+    if (key.startsWith('j:')) return { big: key.slice(2), sub: 'じゅくご' }
+    if (key.startsWith('k:')) return { big: key.slice(2), sub: 'かんじ' }
+    if (key.startsWith('w:')) return { big: key.slice(2), sub: 'ことば' }
   }
-  if (domainId === 'kaku') return { big: baseKey, sub: 'かく' }
-  if (domainId === 'suuji' && baseKey.startsWith('n:')) {
-    return { big: '🔢', sub: KIND_LABELS[baseKey.slice(2)] || 'さんすう' }
+  if (domainId === 'kaku') return { big: key, sub: 'かく' }
+  if (domainId === 'suuji' && key.startsWith('n:')) {
+    return { big: '🔢', sub: KIND_LABELS[key.slice(2)] || 'さんすう' }
   }
-  if (domainId === 'seikatsu' && baseKey.startsWith('s:')) {
-    return { big: '📅', sub: SEIKATSU_LABELS[baseKey.slice(2)] || 'せいかつ' }
+  if (domainId === 'seikatsu' && key.startsWith('s:')) {
+    return { big: '📅', sub: SEIKATSU_LABELS[key.slice(2)] || 'せいかつ' }
   }
-  if (domainId === 'rika' && baseKey.startsWith('r:')) return { big: '🔬', sub: short(baseKey.slice(2)) }
-  if (domainId === 'shakai' && baseKey.startsWith('c:')) return { big: '🗾', sub: short(baseKey.slice(2)) }
-  if (domainId === 'doutoku' && baseKey.startsWith('d:')) return { big: '💗', sub: short(baseKey.slice(2)) }
+  if (domainId === 'rika' && key.startsWith('r:')) return { big: '🔬', sub: short(key.slice(2)) }
+  if (domainId === 'shakai' && key.startsWith('c:')) return { big: '🗾', sub: short(key.slice(2)) }
+  if (domainId === 'doutoku' && key.startsWith('d:')) return { big: '💗', sub: short(key.slice(2)) }
   return { big: '❓', sub: '' }
 }
 

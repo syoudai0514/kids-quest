@@ -80,6 +80,7 @@ export default function BattleScreen({ onBack }) {
   const [log, setLog] = useState('')
   const [shake, setShake] = useState(null)
   const [dmgFloat, setDmgFloat] = useState(null) // {side, text}
+  const [pose, setPose] = useState({ partner: 'idle', enemy: 'idle' })
   const startedRef = useRef(false)
   const wasNewCatchRef = useRef(false)
   const dropRef = useRef(null) // このバトルで手に入れた そうび
@@ -122,9 +123,10 @@ export default function BattleScreen({ onBack }) {
   const enemyTurn = () => {
     const dmg = enemyDamage(enemyLv, isElite)
     setShake('partner')
+    setPose({ partner: 'hurt', enemy: 'attack' })
     sfx.hit()
     showDmg('partner', `-${dmg}`)
-    setTimeout(() => setShake(null), 350)
+    setTimeout(() => { setShake(null); setPose({ partner: 'idle', enemy: 'idle' }) }, 420)
     setPHp((hp) => {
       const next = Math.max(0, hp - dmg)
       if (next <= 0) {
@@ -147,13 +149,14 @@ export default function BattleScreen({ onBack }) {
     const { dmg, mult, crit } = rollDamage(move, enemyType, level, weapon)
     const eff = effectLabel(mult)
     setShake('enemy')
+    setPose({ partner: 'attack', enemy: 'hurt' })
     if (mult > 1 || crit) sfx.hitBig()
     else sfx.hit()
     showDmg('enemy', `-${dmg}${crit ? '💥' : mult > 1 ? '❗' : ''}`)
     const critTxt = crit ? ' かいしんの いちげき！' : ''
     setLog(`${stage.name}の ${move.name}！${eff ? ` ${eff}` : ''}${critTxt}`)
     speak(`${move.name}！${eff ? ` ${eff}` : ''}${critTxt}`)
-    setTimeout(() => setShake(null), 350)
+    setTimeout(() => { setShake(null); setPose({ partner: 'idle', enemy: 'idle' }) }, 420)
 
     setEHp((hp) => {
       const next = Math.max(0, hp - dmg)
@@ -201,6 +204,7 @@ export default function BattleScreen({ onBack }) {
     speak(`ほしのわを なげた！`)
     setTimeout(() => {
       dispatch({ type: 'BATTLE_WON', caughtId: enemy.id, elite: isElite, weaponId: drop?.id })
+      setPose({ partner: 'win', enemy: 'idle' })
       setMode('win')
       sfx.fanfare()
       speak(`やったー！ ${enemy.name}を つかまえた！ なかまが ふえたよ！` + dropLine)
@@ -338,9 +342,9 @@ export default function BattleScreen({ onBack }) {
         <div className="pill">のこり {playsLeft + state.battle.tickets}</div>
       </div>
 
-      <div className="center-col" style={{ justifyContent: 'space-between', paddingTop: 4 }}>
+      <div className="center-col battle-arena" style={{ justifyContent: 'space-between', paddingTop: 4 }}>
         {/* 敵 */}
-        <div style={{ alignSelf: 'flex-end', textAlign: 'center', marginRight: '5vw', position: 'relative' }}>
+          <div className="battle-fighter battle-fighter--enemy" style={{ alignSelf: 'flex-end', textAlign: 'center', marginRight: '5vw', position: 'relative' }}>
           <div className="row" style={{ justifyContent: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 900 }}>
               {isElite && '👑 '}
@@ -366,15 +370,15 @@ export default function BattleScreen({ onBack }) {
           >
             {dmgFloat?.side === 'enemy' && <div className="dmg-float">{dmgFloat.text}</div>}
             {mode === 'catch' && <div className="ring-throw" />}
-            <Monster monster={enemy} size={125} bounce={mode === 'intro'} />
+            <Monster monster={enemy} size={158} bounce={mode === 'intro'} pose={pose.enemy} />
           </div>
         </div>
 
         {/* 相棒 */}
-        <div style={{ alignSelf: 'flex-start', textAlign: 'center', marginLeft: '5vw', position: 'relative' }}>
+        <div className="battle-fighter battle-fighter--partner" style={{ alignSelf: 'flex-start', textAlign: 'center', marginLeft: '5vw', position: 'relative' }}>
           <div style={{ position: 'relative', animation: shake === 'partner' ? 'nudge 0.35s ease' : 'none' }}>
             {dmgFloat?.side === 'partner' && <div className="dmg-float">{dmgFloat.text}</div>}
-            <Monster monster={partner} colorsOverride={colors} size={135} bounce={mode === 'intro'} />
+            <Monster monster={partner} colorsOverride={colors} size={170} bounce={mode === 'intro'} pose={pose.partner} />
           </div>
           <div style={{ fontWeight: 900, margin: '2px 0' }}>
             {stage.name} <span className="type-chip">Lv.{level}</span>

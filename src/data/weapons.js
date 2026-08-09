@@ -127,62 +127,26 @@ function rollRarity(partnerLv, elite) {
   return 'common'
 }
 
-// 武器は勝利のたびにランダムで落とさない。幼い子には「いつ出るか分からない」より
-// 「ここまで続けたら宝箱」が分かる方が、学習の継続理由になりやすいため。
-// 最初の5本は活動日ごとに確定。以降は3活動日ごと → 週2本程度へゆるやかにする。
-export function weaponAwardsDue(activityDays) {
-  if (activityDays <= 0) return 0
-  if (activityDays <= 5) return activityDays
-  const throughThirty = 5 + Math.floor(Math.max(0, Math.min(activityDays, 30) - 8) / 3) + (activityDays >= 8 ? 1 : 0)
-  if (activityDays <= 30) return throughThirty
-  return throughThirty + Math.floor(((activityDays - 30) * 2) / 7)
-}
-
-function unlockedRarities({ activityDays, eliteWins = 0, chapterPassed = false, ownedIds = [] }) {
-  const owned = new Set(ownedIds)
-  const hasLegend = WEAPONS.some((w) => w.rarity === 'legend' && owned.has(w.id))
-  const rarities = ['common', 'rare']
-  if (activityDays >= 20 || chapterPassed) rarities.push('sr')
-  if ((activityDays >= 45 && eliteWins > 0) || (activityDays >= 60 && !hasLegend)) rarities.push('legend')
-  return rarities
-}
+export const DROP_CHANCE_WIN = 0.45
+export const DROP_CHANCE_ELITE = 0.8
 
 /**
- * 次の武器宝箱。未解放の上位レアには絶対に繰り上げない。
- * @returns {object|null} 今回の宝箱がなければ null
+ * バトル勝利時の武器ドロップを抽選する。
+ * まだ持っていない武器を優先し、全部持っていれば null。
+ * @returns {object|null} 武器オブジェクト
  */
-export function rollScheduledWeaponReward({ activityDays = 0, ownedIds = [], eliteWins = 0, chapterPassed = false }) {
-  const due = weaponAwardsDue(activityDays)
+export function rollWeaponDrop(partnerLv, elite, ownedIds = []) {
+  const chance = elite ? DROP_CHANCE_ELITE : DROP_CHANCE_WIN
+  if (Math.random() > chance) return null
   const owned = new Set(ownedIds)
-  // 60活動日までに伝説を持っていなければ、以前の高速配布で武器数が多いセーブでも
-  // 伝説の確定宝箱だけは止めない。
-  const isPityLegend = activityDays >= 60 && !WEAPONS.some((w) => w.rarity === 'legend' && owned.has(w.id))
-  if (ownedIds.length >= due && !isPityLegend) return null
-
-  // 1〜5日目は、開けるたびに必ず基本武器を1本。
-  const starters = WEAPONS.filter((w) => w.rarity === 'common' && !owned.has(w.id))
-  if (ownedIds.length < 5 && starters.length) return starters[0]
-
-  const allowed = unlockedRarities({ activityDays, eliteWins, chapterPassed, ownedIds })
-  const rarity = isPityLegend ? 'legend' : rollRarity(Math.max(1, Math.floor(activityDays / 2)), false)
-  const desired = allowed.includes(rarity) ? rarity : allowed[allowed.length - 1]
-  const fresh = WEAPONS.filter((w) => w.rarity === desired && !owned.has(w.id))
-  if (fresh.length) return pick(fresh)
-
-  // 同じか下のレアリティだけを探す。上位レアへのフォールバックは禁止。
-  const lowerOrSame = [...allowed].reverse()
-  for (const key of lowerOrSame) {
-    const options = WEAPONS.filter((w) => w.rarity === key && !owned.has(w.id))
-    if (options.length) return pick(options)
+  const startRarity = rollRarity(partnerLv, elite)
+  // 抽選したレアリティに 未入手が無ければ、他のレアリティも探す
+  const order = [startRarity, 'sr', 'rare', 'legend', 'common']
+  for (const r of order) {
+    const fresh = WEAPONS.filter((w) => w.rarity === r && !owned.has(w.id))
+    if (fresh.length) return pick(fresh)
   }
-  return null
-}
-
-export function nextWeaponAwardDay(activityDays, ownedCount) {
-  for (let day = Math.max(1, activityDays); day <= 365; day++) {
-    if (weaponAwardsDue(day) > ownedCount) return day
-  }
-  return null
+  return null // ぜんぶ あつめた！
 }
 
 // これまでの がんばりに応じた「引き継ぎ武器」。
