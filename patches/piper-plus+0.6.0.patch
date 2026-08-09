@@ -1,0 +1,95 @@
+diff --git a/node_modules/piper-plus/src/index.js b/node_modules/piper-plus/src/index.js
+index 885d291..76faba3 100644
+--- a/node_modules/piper-plus/src/index.js
++++ b/node_modules/piper-plus/src/index.js
+@@ -627,6 +627,36 @@ export class PiperPlus {
+       this._modelUrl = modelUrl;
+       this._session = await this._sessionManager.createSession(modelUrl);
+ 
++      // Some current Piper Plus models (including Tsukuyomi) expose speaker
++      // embedding inputs even when using the model's built-in voice. Remember
++      // the actual graph inputs so inference can always provide required feeds.
++      const inputNames = this._session.inputNames || [];
++      this._hasSpeakerEmbedding = inputNames.includes('speaker_embedding');
++      this._hasProsodyFeatures = inputNames.includes('prosody_features');
++      const speakerInputIndex = inputNames.indexOf('speaker_embedding');
++      const inputMetadata = this._session.inputMetadata;
++      const speakerMetadata = Array.isArray(inputMetadata)
++        ? inputMetadata[speakerInputIndex]
++        : inputMetadata?.speaker_embedding;
++      const speakerShape = speakerMetadata?.shape
++        || speakerMetadata?.dimensions
++        || speakerMetadata?.dims;
++      this._speakerEmbeddingSize = Number.isInteger(speakerShape?.[1]) && speakerShape[1] > 0
++        ? speakerShape[1]
++        : 256;
++      const speakerMaskInputIndex = inputNames.indexOf('speaker_embedding_mask');
++      const speakerMaskMetadata = Array.isArray(inputMetadata)
++        ? inputMetadata[speakerMaskInputIndex]
++        : inputMetadata?.speaker_embedding_mask;
++      const speakerMaskShape = speakerMaskMetadata?.shape
++        || speakerMaskMetadata?.dimensions
++        || speakerMaskMetadata?.dims;
++      this._speakerEmbeddingMaskShape = Array.isArray(speakerMaskShape)
++        && speakerMaskShape.length > 0
++        && speakerMaskShape.every((dimension) => Number.isInteger(dimension) && dimension > 0)
++        ? speakerMaskShape
++        : [1, 1];
++
+       progress({ stage: 'model', progress: 0.7, message: 'Model loaded.' });
+ 
+       // --- 3. Initialise phonemizer (Adapter pattern) --------------------------
+@@ -835,22 +865,45 @@ export class PiperPlus {
+       }
+     }
+ 
+-    // Attach speaker embedding for voice cloning
+-    if (speakerEmbedding && speakerEmbedding.length > 0) {
++    // Newer zero-shot exports make speaker_embedding a required graph input.
++    // A zero vector with mask=0 selects the model's built-in voice; mask=1 is
++    // reserved for an explicitly supplied cloned-voice embedding.
++    const sessionInputNames = new Set(this._session.inputNames || []);
++    const hasSpeakerEmbeddingMask = sessionInputNames.has('speaker_embedding_mask');
++    if (this._hasSpeakerEmbedding) {
++      const hasEmbedding = speakerEmbedding && speakerEmbedding.length > 0;
++      const embedding = hasEmbedding
++        ? speakerEmbedding
++        : new Float32Array(this._speakerEmbeddingSize || 256);
++      feeds.speaker_embedding = new ort.Tensor(
++        'float32',
++        embedding,
++        [1, embedding.length]
++      );
++      if (hasSpeakerEmbeddingMask) {
++        feeds.speaker_embedding_mask = new ort.Tensor(
++          'int64',
++          new BigInt64Array([hasEmbedding ? 1n : 0n]),
++          this._speakerEmbeddingMaskShape || [1, 1]
++        );
++      }
++    } else if (speakerEmbedding && speakerEmbedding.length > 0) {
+       feeds.speaker_embedding = new ort.Tensor(
+         'float32',
+         speakerEmbedding,
+         [1, speakerEmbedding.length]
+       );
+-      feeds.speaker_embedding_mask = new ort.Tensor(
+-        'int64',
+-        new BigInt64Array([1n]),
+-        [1]
+-      );
++      if (hasSpeakerEmbeddingMask) {
++        feeds.speaker_embedding_mask = new ort.Tensor(
++          'int64',
++          new BigInt64Array([1n]),
++          this._speakerEmbeddingMaskShape || [1, 1]
++        );
++      }
+     }
+ 
+     // Attach prosody features when the model supports them
+-    if (prosodyFeatures && this._config.prosody_id_map) {
++    if (prosodyFeatures && this._config.prosody_id_map && this._hasProsodyFeatures) {
+       const flat = [];
+       for (const [a1, a2, a3] of prosodyFeatures) {
+         flat.push(BigInt(a1), BigInt(a2), BigInt(a3));
