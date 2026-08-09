@@ -7,7 +7,12 @@
 // ============================================================
 
 import { unlockAudio } from './audioCtx.js'
-import { NARRATOR_MODEL_URL, loadCachedNarratorModel, ortWithCachedModel } from './narratorCache.js'
+import {
+  hasNarratorInstallMarker,
+  NARRATOR_MODEL_URL,
+  loadCachedNarratorModel,
+  ortWithCachedModel
+} from './narratorCache.js'
 import { DEFAULT_TTS_RATE } from '../config/ttsRates.js'
 
 let enabled = true
@@ -31,7 +36,7 @@ let narratorInferenceQueue = Promise.resolve()
 // --- 端末内のニューラル音声モデル ---
 let narrator = null
 let narratorPromise = null
-let narratorState = 'idle' // idle | loading | ready | error
+let narratorState = hasNarratorInstallMarker() ? 'idle' : 'not-downloaded' // not-downloaded | idle | loading | ready | error
 let narratorProgress = null
 let narratorError = null
 let narratorDetail = null
@@ -79,9 +84,23 @@ export function subscribeNarratorStatus(listener) {
 
 // 静的 import にするとアプリ起動時のJavaScriptが重くなるため、ナビ音声を
 // 使う時だけモデル管理・推論・日本語解析の各部品を読み込む。
-export async function prepareNarratorVoice() {
+export async function prepareNarratorVoice({ allowDownload = false } = {}) {
   if (narrator) return narrator
   if (narratorPromise) return narratorPromise
+
+  // 普段の問題読み上げからは、この先の dynamic import すら行わない。
+  // これにより、声を選択しただけでモデル本体や日本語WASMを取得しない。
+  if (!allowDownload && !hasNarratorInstallMarker()) {
+    narratorState = 'not-downloaded'
+    narratorStorage = 'not-downloaded'
+    narratorProgress = null
+    narratorError = null
+    narratorDetail = '「ダウンロード」を押すまで、つくよみちゃんのデータは取得しません'
+    notifyNarrator()
+    const error = new Error('つくよみちゃんは、まだ端末にダウンロードされていません')
+    error.code = 'NARRATOR_NOT_DOWNLOADED'
+    throw error
+  }
 
   narratorState = 'loading'
   narratorProgress = 0
@@ -106,7 +125,7 @@ export async function prepareNarratorVoice() {
         narratorDetail = status.detail
         narratorError = status.error || null
         notifyNarrator()
-      })
+      }, { allowDownload })
       // iPhoneではWASMワーカーを増やさない。GitHub Pagesは通常
       // crossOriginIsolatedではないが、明示して端末差による多重確保を防ぐ。
       if (isAppleTouchDevice() && ort.env?.wasm) {
@@ -366,7 +385,8 @@ async function playNarratorResult(result, id, loudness) {
 }
 
 async function speakWithNarrator(text, id, opts) {
-  const tts = await prepareNarratorVoice()
+  // 問題開始や画面移動からモデルを勝手に取得しない。保存済みの場合だけ起動する。
+  const tts = await prepareNarratorVoice({ allowDownload: false })
   // rate は端末音声と共通の3段階設定。Piperは lengthScale が大きいほど
   // ゆっくりになるため反比例させる。標準を聞き取りやすく遅めに置き、
   // ゆっくり／はやめは一聴して区別できる幅を持たせる。
