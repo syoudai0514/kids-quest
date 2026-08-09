@@ -8,6 +8,16 @@ export const TTS_RATE_PRESETS = Object.freeze([
 
 export const DEFAULT_TTS_RATE = 0.8
 
+// つくよみちゃんは軽量かな変換にすると、同じ設定値でも端末音声より
+// テンポが速く聞こえる。年長児が問題文を聞き取れる速度を基準に、
+// 「ふつう」を旧「ゆっくり」相当へ落とす。
+const NARRATOR_LENGTH_SCALE_BASE = 1.6
+
+export function narratorLengthScale(rate) {
+  const safeRate = Number.isFinite(rate) && rate > 0 ? rate : DEFAULT_TTS_RATE
+  return Math.max(0.9, Math.min(3, NARRATOR_LENGTH_SCALE_BASE / safeRate))
+}
+
 // 旧版は 0.84 / 0.96 / 1.08 で差が小さく、ふつうも早口だった。
 // 既に保存されている選択は、意味を保ったまま新しい3段階へ移す。
 export function migrateTtsRate(value) {

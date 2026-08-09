@@ -15,7 +15,7 @@ import {
   ortWithCachedModel,
   removeLegacyNarratorRuntimeCaches
 } from './narratorCache.js'
-import { DEFAULT_TTS_RATE } from '../config/ttsRates.js'
+import { DEFAULT_TTS_RATE, narratorLengthScale } from '../config/ttsRates.js'
 
 let enabled = true
 let rate = DEFAULT_TTS_RATE
@@ -394,9 +394,9 @@ async function speakWithNarrator(text, id, opts) {
   // 問題開始や画面移動からモデルを勝手に取得しない。保存済みの場合だけ起動する。
   const tts = await prepareNarratorVoice({ allowDownload: false })
   // rate は端末音声と共通の3段階設定。Piperは lengthScale が大きいほど
-  // ゆっくりになるため反比例させる。標準を聞き取りやすく遅めに置き、
-  // ゆっくり／はやめは一聴して区別できる幅を持たせる。
-  const lengthScale = Math.max(0.72, Math.min(1.75, 0.98 / (opts.rate ?? rate)))
+  // ゆっくりになる。軽量かな変換はテンポが速く聞こえるため、
+  // つくよみちゃんだけ子どもの聞き取りを基準にした変換を使う。
+  const lengthScale = narratorLengthScale(opts.rate ?? rate)
   const loudness = opts.volume ?? volume
   for (const sentence of splitForNarrator(text)) {
     if (id !== requestId || !enabled) return
