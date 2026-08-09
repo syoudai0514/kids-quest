@@ -20,7 +20,7 @@ import { difficultyParams } from '../engine/difficulty.js'
 import { speak, cancelSpeak } from '../engine/tts.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion } from '../engine/reviewKey.js'
 import { sfx } from '../engine/sfx.js'
-import { Starfield, ProgressDots, Burst } from '../components/common.jsx'
+import { AppHeader, Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import QuestionInteraction from '../components/QuestionInteraction.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
@@ -366,20 +366,13 @@ export default function ActivityPlayer({ task, onDone }) {
     <div className="screen screen-in">
       <Starfield count={16} />
 
-      <div className="topbar">
-        <button
-          className="btn btn--ghost"
-          style={{ minHeight: 60, padding: '10px 18px' }}
-          onClick={onDone}
-          aria-label="ホームへ"
-        >
-          🏠
-        </button>
-        <ProgressDots total={questionCount} index={qIndex} />
-        <div className="pill">
-          {isReviewTask ? '🎯 とっくん' : `${domain.emoji} ${domainName(domain, state.grade)}`}
-        </div>
-      </div>
+      <AppHeader
+        className="app-header--progress"
+        onBack={onDone}
+        backLabel=""
+        title={<ProgressDots total={questionCount} index={qIndex} />}
+        right={<div className="pill">{isReviewTask ? '🎯 とっくん' : `${domain.emoji} ${domainName(domain, state.grade)}`}</div>}
+      />
 
       <div className="center-col scroll-col">
         {/* 復習キューの問題には「克服チャンス」の目印 */}

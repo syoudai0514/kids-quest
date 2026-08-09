@@ -16,7 +16,7 @@ import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import { dueEntries, daysUntilNext, boxCounts, MAX_BOX } from '../engine/srs.js'
 import { KIND_LABELS } from '../data/content/numbers.js'
 import { SEIKATSU_LABELS } from '../data/content/seikatsu.js'
-import { Starfield } from '../components/common.jsx'
+import { AppHeader, Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 import { baseItemKey } from '../engine/reviewKey.js'
@@ -87,13 +87,7 @@ export default function ReviewScreen({ onBack, onStartTask }) {
   return (
     <div className="screen screen-in">
       <Starfield />
-      <div className="topbar">
-        <button className="btn btn--ghost" style={{ minHeight: 60 }} onClick={onBack}>
-          🏠 もどる
-        </button>
-        <div className="topbar__title">🎯 とっくん</div>
-        <div className="pill">⚡ {state.conquered}</div>
-      </div>
+      <AppHeader onBack={onBack} title="🎯 とっくん" right={<div className="pill">⚡ {state.conquered}</div>} />
 
       <div className="center-col scroll-col">
         {/* 「失敗から学んだ数」を主役に */}

@@ -24,6 +24,7 @@ import { serializeForExport, parseImport } from '../engine/storage.js'
 import { GRADES, MAX_GRADE, gradeOf } from '../data/grades.js'
 import { boxCounts, dueCount, daysUntilNext, MAX_BOX } from '../engine/srs.js'
 import { getWeapon } from '../data/weapons.js'
+import { AppHeader } from '../components/common.jsx'
 
 function downloadText(filename, text) {
   try {
@@ -280,12 +281,7 @@ export default function ParentScreen({ onBack }) {
 
   return (
     <div className="screen fade-in parent-screen">
-      <div className="topbar">
-        <button className="btn btn--ghost parent-back" style={{ minHeight: 56 }} onClick={onBack}>
-          ← もどる
-        </button>
-        <div className="topbar__title parent-title">👨‍👩‍👧 おうちのひとへ</div>
-      </div>
+      <AppHeader onBack={onBack} title="👨‍👩‍👧 おうちのひとへ" right={<span />} />
 
       <div className="scroll-y" style={{ flex: 1, padding: '4px 8px 28px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>

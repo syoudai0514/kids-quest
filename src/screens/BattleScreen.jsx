@@ -28,7 +28,7 @@ import {
   battleHpBonus
 } from '../engine/battle.js'
 import Monster from '../components/Monster.jsx'
-import { Starfield, Confetti } from '../components/common.jsx'
+import { AppHeader, Starfield, Confetti } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
@@ -242,13 +242,7 @@ export default function BattleScreen({ onBack }) {
     return (
       <div className="screen fade-in">
         <Starfield />
-        <div className="topbar">
-          <button className="btn btn--ghost" style={{ minHeight: 60 }} onClick={onBack}>
-            🏠 もどる
-          </button>
-          <div className="pill">⚔️ いきぬきバトル</div>
-          <div style={{ width: 60 }} />
-        </div>
+        <AppHeader onBack={onBack} title="⚔️ いきぬきバトル" right={<span />} />
         <div className="center-col">
           <div style={{ fontSize: 90 }}>😴</div>
           <div className="card" style={{ textAlign: 'center', width: 'min(560px,92vw)' }}>
@@ -344,13 +338,13 @@ export default function BattleScreen({ onBack }) {
   return (
     <div className="screen fade-in battle-screen">
       <Starfield count={14} />
-      <div className="topbar">
-        <button className="btn btn--ghost battle-back" onClick={onBack}>
-          🏠
-        </button>
-        <div className="pill">⚔️ バトル</div>
-        <div className="pill">のこり {playsLeft + state.battle.tickets}</div>
-      </div>
+      <AppHeader
+        className="battle-header"
+        onBack={onBack}
+        backLabel=""
+        title="⚔️ バトル"
+        right={<div className="pill">のこり {playsLeft + state.battle.tickets}</div>}
+      />
 
       <div className="center-col battle-arena" style={{ justifyContent: 'space-between', paddingTop: 4 }}>
         {/* 敵 */}

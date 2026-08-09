@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
-import { Starfield } from '../components/common.jsx'
+import { AppHeader, Starfield } from '../components/common.jsx'
 import { speak, cancelSpeak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
@@ -59,17 +59,13 @@ export default function LessonScreen({ lesson, domainId, grade, isReview, onDone
     <div className="screen screen-in">
       <Starfield count={14} />
 
-      <div className="topbar">
-        <div className="pill">
-          {dom?.emoji} {domainName(dom, grade)}
-        </div>
-        <div className="topbar__title" style={{ fontSize: 'clamp(15px,2.6vw,20px)' }}>
-          {isReview ? '🔁 おさらい じゅぎょう' : '📚 じゅぎょう'}
-        </div>
-        <button className="btn btn--ghost" style={{ minHeight: 52, padding: '8px 14px' }} onClick={finish}>
-          スキップ
-        </button>
-      </div>
+      <AppHeader
+        onBack={finish}
+        backIcon="⏭"
+        backLabel="スキップ"
+        title={isReview ? '🔁 おさらい じゅぎょう' : '📚 じゅぎょう'}
+        right={<div className="pill">{dom?.emoji} {domainName(dom, grade)}</div>}
+      />
 
       <div className="center-col scroll-col">
         {isReview && (

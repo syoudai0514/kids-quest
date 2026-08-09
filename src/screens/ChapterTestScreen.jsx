@@ -11,7 +11,7 @@ import { difficultyParams } from '../engine/difficulty.js'
 import { gradeOf, MAX_GRADE } from '../data/grades.js'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
-import { Starfield, Confetti, ProgressDots } from '../components/common.jsx'
+import { AppHeader, Starfield, Confetti, ProgressDots } from '../components/common.jsx'
 import { speak, cancelSpeak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 import { reviewKeyFor, snapshotQuestion } from '../engine/reviewKey.js'
@@ -190,11 +190,13 @@ export default function ChapterTestScreen({ onBack }) {
   return (
     <div className="screen screen-in">
       <Starfield count={12} />
-      <div className="topbar">
-        <div className="pill">🌟 ほしのしれん {trialNumber}かいめ</div>
-        <ProgressDots total={total} index={idx} />
-        <div className="pill">{dom?.emoji} {domainName(dom, grade)}</div>
-      </div>
+      <AppHeader
+        className="app-header--progress"
+        onBack={onBack}
+        backLabel=""
+        title={<ProgressDots total={total} index={idx} />}
+        right={<div className="pill">{dom?.emoji} {domainName(dom, grade)}</div>}
+      />
       <div className="center-col scroll-col">
         <div className="muted" style={{ fontSize: 'clamp(16px,3vw,24px)', fontWeight: 800, textAlign: 'center' }}>{q.instruction}</div>
         {q.type === 'trace' ? (

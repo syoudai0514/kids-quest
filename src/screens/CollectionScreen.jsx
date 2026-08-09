@@ -8,7 +8,7 @@ import React, { useState } from 'react'
 import { useGame } from '../state/GameContext.jsx'
 import { MONSTERS } from '../data/monsters.js'
 import Monster from '../components/Monster.jsx'
-import { Starfield } from '../components/common.jsx'
+import { AppHeader, Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
@@ -38,15 +38,11 @@ export default function CollectionScreen({ onBack }) {
   return (
     <div className="screen fade-in">
       <Starfield />
-      <div className="topbar">
-        <button className="btn btn--ghost" style={{ minHeight: 60 }} onClick={onBack}>
-          🏠 もどる
-        </button>
-        <div className="topbar__title">📒 なかま ずかん</div>
-        <div className="pill">
-          {unlocked.size} / {MONSTERS.length}
-        </div>
-      </div>
+      <AppHeader
+        onBack={onBack}
+        title="📒 なかま ずかん"
+        right={<div className="pill">{unlocked.size} / {MONSTERS.length}</div>}
+      />
 
       {/* ページ切替（100体ずつ） */}
       <div className="row" style={{ justifyContent: 'center', gap: 12, padding: '2px 0 8px' }}>

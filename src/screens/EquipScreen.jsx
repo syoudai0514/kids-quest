@@ -10,7 +10,7 @@ import React from 'react'
 import { useGame, equippedWeapon, partnerLevel } from '../state/GameContext.jsx'
 import { WEAPONS, RARITIES, getWeapon, nextWeaponAwardDay, weaponAwardsDue } from '../data/weapons.js'
 import { partnerMaxHp, battleAttackBonus, battleHpBonus } from '../engine/battle.js'
-import { Starfield } from '../components/common.jsx'
+import { AppHeader, Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
@@ -46,15 +46,11 @@ export default function EquipScreen({ onBack }) {
   return (
     <div className="screen fade-in">
       <Starfield />
-      <div className="topbar">
-        <button className="btn btn--ghost" style={{ minHeight: 60 }} onClick={onBack}>
-          🏠 もどる
-        </button>
-        <div className="topbar__title">⚔️ そうび</div>
-        <div className="pill">
-          {owned.size} / {WEAPONS.length}
-        </div>
-      </div>
+      <AppHeader
+        onBack={onBack}
+        title="⚔️ そうび"
+        right={<div className="pill">{owned.size} / {WEAPONS.length}</div>}
+      />
 
       <div className="scroll-y" style={{ flex: 1, padding: '6px 8px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>

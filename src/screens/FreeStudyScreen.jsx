@@ -14,7 +14,7 @@ import { domainsForGrade, domainName } from '../engine/activities.js'
 import { buildFreeTask } from '../engine/missions.js'
 import { dueKeys } from '../engine/srs.js'
 import { gradeOf } from '../data/grades.js'
-import { Starfield, useSpeakOnMount } from '../components/common.jsx'
+import { AppHeader, Starfield, useSpeakOnMount } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
@@ -34,15 +34,11 @@ export default function FreeStudyScreen({ onBack, onStartTask }) {
   return (
     <div className="screen fade-in">
       <Starfield />
-      <div className="topbar">
-        <button className="btn btn--ghost" style={{ minHeight: 60 }} onClick={onBack}>
-          🏠 もどる
-        </button>
-        <div className="topbar__title">📚 じゆうべんきょう</div>
-        <div className="pill">
-          {grade.emoji} {grade.short}
-        </div>
-      </div>
+      <AppHeader
+        onBack={onBack}
+        title="📚 じゆうべんきょう"
+        right={<div className="pill">{grade.emoji} {grade.short}</div>}
+      />
 
       <div className="scroll-y" style={{ flex: 1, padding: '6px 10px 24px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>

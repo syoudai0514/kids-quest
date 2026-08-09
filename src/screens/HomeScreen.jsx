@@ -129,38 +129,39 @@ export default function HomeScreen({ onStartTask, onGo }) {
     <div className="screen screen-in home-screen">
       <Starfield />
 
-      <div className="topbar home-topbar" style={{ flexWrap: 'wrap' }}>
-        <div className="row" style={{ gap: 8 }}>
-          <div className="pill">
-            {planet.emoji} {planet.name}
+      <header className="topbar home-topbar">
+        <div className="home-topbar__summary">
+          <div className="home-topbar__row">
+            <div className="pill home-pill--planet" title={planet.name}>
+              {planet.emoji} {planet.name}
+            </div>
+            <button
+              className="pill pill--tap home-pill--grade"
+              onClick={() => {
+                sfx.tap()
+                setShowGradePicker(true)
+              }}
+            >
+              {grade.emoji} {grade.short}
+            </button>
           </div>
-          <button
-            className="pill pill--tap"
-            onClick={() => {
-              sfx.tap()
-              setShowGradePicker(true)
-            }}
-          >
-            {grade.emoji} {grade.short}
-          </button>
+          <div className="home-topbar__row home-topbar__row--stats">
+            {state.streak > 1 && <div className="pill">🔥 {state.streak}にち</div>}
+            <div className="pill">✨ {state.xp}</div>
+            <div className="pill">✦ {state.starShards || 0}</div>
+          </div>
         </div>
-        <div className="row" style={{ gap: 8 }}>
-          {state.streak > 1 && <div className="pill">🔥 {state.streak}にち</div>}
-          <div className="pill">✨ {state.xp}</div>
-          <div className="pill">✦ {state.starShards || 0}</div>
-          <button
-            className="btn btn--ghost"
-            style={{ minHeight: 58, padding: '10px 16px' }}
-            onClick={() => {
-              sfx.tap()
-              onGo('parent')
-            }}
-            aria-label="おうちのひと"
-          >
-            👨‍👩‍👧
-          </button>
-        </div>
-      </div>
+        <button
+          className="btn btn--ghost home-parent-button"
+          onClick={() => {
+            sfx.tap()
+            onGo('parent')
+          }}
+          aria-label="おうちのひと"
+        >
+          👨‍👩‍👧
+        </button>
+      </header>
 
       <div className="center-col scroll-col">
         {/* 相棒 */}
