@@ -8,6 +8,24 @@ import { normalizeForSpeech } from '../src/engine/tts.js'
 const normalizedLessonText = normalizeForSpeech('こん虫の からだ。昆虫には 6本の あしがあります。')
 assert.equal(normalizedLessonText, 'こんちゅうのからだ。こんちゅうには6本のあしがあります。')
 
+// 教材で使う「かな＋漢字」表記を、複合語として一度に正しく読む。
+// 表示上の学習用表記は変えず、音声入力だけを補正する回帰テスト。
+const mixedLessonText = normalizeForSpeech(
+  'つ波。酸せい。二さんか炭そ。水よう液。しん食。かん臓。消防しょ。げ水しょり場。せいそう工場。よう(養)しょくぎょぎょう。前方後円ふん。県庁しょざい地。太平洋がわ。'
+)
+assert.equal(
+  mixedLessonText,
+  'つなみ。さんせい。にさんかたんそ。すいようえき。しんしょく。かんぞう。しょうぼうしょ。げすいしょりじょう。せいそうこうじょう。ようしょくぎょぎょう。ぜんぽうこうえんふん。けんちょうしょざいち。たいへいようがわ。'
+)
+
+const existingMixedLessonText = normalizeForSpeech(
+  'かん電池。けんび鏡。しょうか管。たい積。地そう。だんご虫。家ぞく。'
+)
+assert.equal(
+  existingMixedLessonText,
+  'かんでんち。けんびきょう。しょうかかん。たいせき。ちそう。だんごむし。かぞく。'
+)
+
 // 本番の辞書WASMを、Nodeでは同じバイナリを直接渡して初期化する。
 // 漢字まじりの出題文を辞書経路で音素にできることを確認する。
 const configUrl = 'https://huggingface.co/ayousanz/piper-plus-tsukuyomi-chan/resolve/36b59c825c36bd386b8960cf3f604382f52f2a87/config.json'

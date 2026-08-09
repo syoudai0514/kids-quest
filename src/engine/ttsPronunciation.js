@@ -14,6 +14,31 @@ const PRONUNCIATION_RULES = [
   // 表示用の「かな＋漢字」表記。空白の有無どちらも許容する。
   { pattern: /こん\s*虫/g, reading: 'こんちゅう' },
 
+  // 社会・理科の教材表記。学習前の漢字をひらがなに分けて表示するため、
+  // 日本語辞書へそのまま渡すと、複合語ではなく単語の連続として読まれる。
+  { pattern: /つ\s*波/g, reading: 'つなみ' },
+  { pattern: /酸\s*せい/g, reading: 'さんせい' },
+  { pattern: /二\s*さんか\s*炭そ/g, reading: 'にさんかたんそ' },
+  { pattern: /水\s*よう液/g, reading: 'すいようえき' },
+  { pattern: /しん\s*食/g, reading: 'しんしょく' },
+  { pattern: /かん\s*臓/g, reading: 'かんぞう' },
+  { pattern: /消防\s*しょ/g, reading: 'しょうぼうしょ' },
+  { pattern: /げ水\s*しょり場/g, reading: 'げすいしょりじょう' },
+  { pattern: /せいそう\s*工場/g, reading: 'せいそうこうじょう' },
+  { pattern: /よう\s*[（(]\s*養\s*[）)]\s*しょくぎょぎょう/g, reading: 'ようしょくぎょぎょう' },
+  { pattern: /前方後円\s*ふん/g, reading: 'ぜんぽうこうえんふん' },
+  { pattern: /県庁\s*しょざい地/g, reading: 'けんちょうしょざいち' },
+  { pattern: /太平洋\s*がわ/g, reading: 'たいへいようがわ' },
+
+  // 同じ分割事故が起きやすい既存の教材語も固定する。
+  { pattern: /かん\s*電池/g, reading: 'かんでんち' },
+  { pattern: /けんび\s*鏡/g, reading: 'けんびきょう' },
+  { pattern: /しょうか\s*管/g, reading: 'しょうかかん' },
+  { pattern: /たい\s*積/g, reading: 'たいせき' },
+  { pattern: /地\s*そう/g, reading: 'ちそう' },
+  { pattern: /だんご\s*虫/g, reading: 'だんごむし' },
+  { pattern: /家\s*ぞく/g, reading: 'かぞく' },
+
   // 理科・自然（子ども向け教材で頻出する複合語）
   { pattern: /昆虫/g, reading: 'こんちゅう' },
   { pattern: /水\s*じょうき/g, reading: 'すいじょうき' },
