@@ -193,7 +193,6 @@ export default function ChapterTestScreen({ onBack }) {
       <AppHeader
         className="app-header--progress"
         onBack={onBack}
-        backLabel="もどる"
         title={<ProgressDots total={total} index={idx} />}
         right={<div className="pill">{dom?.emoji} {domainName(dom, grade)}</div>}
       />
