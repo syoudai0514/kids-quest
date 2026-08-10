@@ -83,6 +83,9 @@ export default function ActivityPlayer({ task, onDone }) {
 
   const wrongCountRef = useRef(0)
   const firstAttemptRef = useRef(true)
+  const phaseRef = useRef(phase)
+  const traceHandledRef = useRef(false)
+  phaseRef.current = phase
   const comboRef = useRef(0)
   // 正誤コメントを最後まで聞いてから次問へ進めるための識別子。
   // 以前は固定の 1.25 秒後に遷移しており、長いナビ音声を途中で止めていた。
@@ -103,6 +106,7 @@ export default function ActivityPlayer({ task, onDone }) {
   const domain = DOMAIN_BY_ID[currentDomainId()]
 
   const makeQuestion = () => {
+    traceHandledRef.current = false
     feedbackSpeechRef.current += 1
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
     const domainId = currentDomainId()
@@ -262,17 +266,21 @@ export default function ActivityPlayer({ task, onDone }) {
 
   // 「かく」（なぞり書き）が終わったとき
   const handleTraceDone = (success) => {
-    if (phase === 'feedback') return
+    // iPhoneのタッチ終了や完了タイマーが重なっても、1問を二重採点しない。
+    if (phaseRef.current === 'feedback' || traceHandledRef.current) return
+    traceHandledRef.current = true
     const conquer = recordAnswer(success)
     if (conquer) {
       setFeedback({ good: true, word: 'ちからに なった！', gold: true })
       sfx.levelUp()
+      phaseRef.current = 'feedback'
       setPhase('feedback')
       advanceAfterFeedback('まちがいが ちからに なった！ ボーナス ゲット！')
       return
     }
     const word = pick(PRAISE)
     setFeedback({ good: true, word })
+    phaseRef.current = 'feedback'
     setPhase('feedback')
     advanceAfterFeedback(word)
   }
