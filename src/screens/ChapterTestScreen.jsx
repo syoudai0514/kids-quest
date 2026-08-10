@@ -148,7 +148,7 @@ export default function ChapterTestScreen({ onBack }) {
             <div style={{ fontSize: 'clamp(25px,5vw,38px)', fontWeight: 900 }}>きょうの しれんは おしまい！</div>
             <div className="muted" style={{ marginTop: 12, fontWeight: 800, lineHeight: 1.65 }}>まちがえた もんだいは「とっくん」で みなおせるよ。<br />つづきの しれんは あした やろう！</div>
           </div>
-          <button className="btn btn--primary btn--big" onClick={onBack}>🏠 ホームへ</button>
+          <button className="btn btn--primary btn--big" onClick={onBack}>🏠 もどる</button>
         </div>
       </div>
     )
@@ -179,7 +179,7 @@ export default function ChapterTestScreen({ onBack }) {
             {!passed && <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>まちがえた もんだいは「とっくん」に はいったよ。<br />おぼえてから、また ちょうせんしよう！</div>}
             {passed && grade < MAX_GRADE && <div className="pill" style={{ marginTop: 12, background: 'var(--good)', color: '#10231c', border: 'none' }}>🔓 {gradeOf(grade + 1).short} が あいた！</div>}
           </div>
-          <button className="btn btn--primary btn--big" onClick={onBack}>🏠 ホームへ</button>
+          <button className="btn btn--primary btn--big" onClick={onBack}>🏠 もどる</button>
         </div>
       </div>
     )
@@ -193,7 +193,7 @@ export default function ChapterTestScreen({ onBack }) {
       <AppHeader
         className="app-header--progress"
         onBack={onBack}
-        backLabel=""
+        backLabel="もどる"
         title={<ProgressDots total={total} index={idx} />}
         right={<div className="pill">{dom?.emoji} {domainName(dom, grade)}</div>}
       />
