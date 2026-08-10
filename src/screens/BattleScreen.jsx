@@ -341,7 +341,6 @@ export default function BattleScreen({ onBack }) {
       <AppHeader
         className="battle-header"
         onBack={onBack}
-        backLabel="もどる"
         title="⚔️ バトル"
         right={<div className="pill">のこり {playsLeft + state.battle.tickets}</div>}
       />
