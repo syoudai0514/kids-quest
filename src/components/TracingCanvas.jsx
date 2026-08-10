@@ -115,6 +115,8 @@ export default function TracingCanvas({ target, stage, onComplete }) {
   const hasInkRef = useRef(false)
   const doneRef = useRef(false)
   const demoRafRef = useRef(0)
+  const completionTimerRef = useRef(null)
+  const enoughTracedRef = useRef(false)
 
   const strokes = STROKE_ORDER[target] || null
 
@@ -167,6 +169,13 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     setCoverage(0)
   }
 
+  // 画面を離れたあとに、古い書き取りの完了タイマーが次の画面へ
+  // 影響しないようにする。
+  useEffect(() => () => {
+    if (completionTimerRef.current) clearTimeout(completionTimerRef.current)
+    cancelAnimationFrame(demoRafRef.current)
+  }, [])
+
   // お手本アニメ: 1画ずつ順番に描いてみせる（本物の書き順）
   const runDemo = (onEnd) => {
     const polys = polysRef.current
@@ -218,6 +227,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     setRetries(0)
     setStrokeIndex(0)
     setEnoughTraced(false)
+    enoughTracedRef.current = false
     setShowGuide(stage === 'trace')
     hasInkRef.current = false
     resetStrokeScoring()
@@ -300,7 +310,10 @@ export default function TracingCanvas({ target, stage, onComplete }) {
       if (t != null) progressRef.current = Math.max(progressRef.current, t)
       setCoverage(progressRef.current)
       // ちゃんと線に沿って半分以上なぞれたら「かけた！」を解禁
-      if (progressRef.current >= FINISH_MIN) setEnoughTraced(true)
+      if (progressRef.current >= FINISH_MIN) {
+        enoughTracedRef.current = true
+        setEnoughTraced(true)
+      }
     }
   }
 
@@ -312,7 +325,9 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     if (doneRef.current || phase !== 'write' || !hasInkRef.current) return
     hasInkRef.current = false
 
-    if (coverage >= STROKE_THRESHOLD) {
+    // setCoverage はタッチイベント直後にはまだ反映されないことがある。
+    // 採点は常に最新のRefを使い、最後の線だけ不合格になるのを防ぐ。
+    if (progressRef.current >= STROKE_THRESHOLD) {
       advanceStroke()
     } else {
       // おしい！ インクを消してもう一度（減点なし。回数だけ記録）
@@ -347,10 +362,18 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     setStars(n)
     setPhase('done')
     setStartDot(null)
-    sfx.correct()
     const praise = n === 3 ? 'ほし みっつ！ さすが！' : n === 2 ? 'じょうずに かけたね！' : 'かけたね！ そのちょうし！'
-    speak(`${target}。 ${praise}`)
-    setTimeout(() => onComplete(completedAllStrokes), 1300)
+    // 次へ進む処理を音声・効果音から分離する。iPhoneでAudioContextや
+    // 音声エンジンが一時的に失敗しても、書き取り全体が停止しないようにする。
+    completionTimerRef.current = setTimeout(() => {
+      try {
+        onComplete(completedAllStrokes)
+      } catch (error) {
+        console.error('書き取り結果の遷移に失敗しました', error)
+      }
+    }, 1300)
+    try { sfx.correct() } catch (error) { console.warn('書き取り効果音を再生できませんでした', error) }
+    try { speak(`${target}。 ${praise}`) } catch (error) { console.warn('書き取り音声を再生できませんでした', error) }
   }
 
   // やりなおす: いま書いた分を消して、この文字を1画目からきれいにやり直す
@@ -362,6 +385,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
     lastRef.current = null
     setStrokeIndex(0)
     setRetries(0)
+    enoughTracedRef.current = false
     setEnoughTraced(false)
     resetStrokeScoring()
     paintBoard(0, 0, showGuide) // 定着した画も消して、まっさらな状態にもどす
@@ -372,7 +396,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
   // 全画終わる前の「かけた！」→ 練習中として記録し先へ進む
   // ただし、なにも書いていないのに進めてしまうのを防ぐ（ちゃんとなぞった時だけ）
   const forceFinish = () => {
-    if (strokeIndex === 0 && !enoughTraced) {
+    if (strokeIndex === 0 && !enoughTracedRef.current) {
       sfx.wrongSoft()
       speak('まだ かいてないよ。ひかる ところから ゆびで なぞってみよう！')
       return
