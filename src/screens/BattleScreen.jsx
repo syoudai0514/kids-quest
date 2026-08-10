@@ -326,7 +326,7 @@ export default function BattleScreen({ onBack }) {
               </button>
             )}
             <button className="btn btn--ghost btn--big" onClick={onBack}>
-              🏠 ホームへ
+              🏠 もどる
             </button>
           </div>
         </div>
@@ -341,7 +341,7 @@ export default function BattleScreen({ onBack }) {
       <AppHeader
         className="battle-header"
         onBack={onBack}
-        backLabel=""
+        backLabel="もどる"
         title="⚔️ バトル"
         right={<div className="pill">のこり {playsLeft + state.battle.tickets}</div>}
       />
