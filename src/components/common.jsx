@@ -83,7 +83,7 @@ export function SpeakButton({ text, label = 'もういちど きく', className 
 
 // 左右の操作を固定し、中央のタイトルだけを残り幅で省略する共通ヘッダ。
 // 数値やタイトルが長くなっても、戻る操作・右端の情報が画面外へ逃げない。
-export function AppHeader({ onBack, title, right, backLabel = 'もどる', backIcon = '🏠', className = '' }) {
+export function AppHeader({ onBack, title, right, backLabel = '', backIcon = '🏠', className = '' }) {
   return (
     <header className={`topbar app-header ${className}`.trim()}>
       <button className="btn btn--ghost app-header__back" onClick={onBack} aria-label={backLabel || 'ホームへ'}>
