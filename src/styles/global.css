@@ -160,10 +160,12 @@ body {
   min-width: 0;
 }
 .app-header__back {
-  min-height: 56px;
-  padding: 8px 12px;
-  font-size: clamp(15px, 2.7vw, 20px);
+  min-width: 116px;
+  min-height: 64px;
+  padding: 10px 16px;
+  font-size: clamp(17px, 2.9vw, 22px);
   white-space: nowrap;
+  touch-action: manipulation;
 }
 .app-header__title {
   min-width: 0;
@@ -894,7 +896,7 @@ body {
 .battle-fighter--partner { margin-bottom: 6px; }
 @media (max-width: 600px) and (orientation: portrait) {
   .home-screen {
-    padding-top: max(44px, calc(env(safe-area-inset-top) + 8px));
+    padding-top: max(52px, calc(env(safe-area-inset-top) + 12px));
   }
   .home-screen .home-topbar {
     padding-top: 0;
@@ -902,10 +904,12 @@ body {
 }
 
 @media (orientation: portrait) {
-  .battle-screen { padding: 6px 8px max(8px, env(safe-area-inset-bottom)); }
+  .screen { padding-top: max(52px, calc(env(safe-area-inset-top) + 12px)); }
+  .battle-screen { padding-top: max(52px, calc(env(safe-area-inset-top) + 12px)); padding-left: 8px; padding-right: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
   .battle-screen .topbar { min-height: 50px; padding: 0 4px 4px; }
   .battle-screen .battle-back { min-height: 46px !important; min-width: 64px; padding: 8px 12px; }
   .battle-screen .topbar .pill { padding: 6px 10px; font-size: 15px; }
+  .app-header__back { min-width: 112px; min-height: 64px; padding: 10px 14px; }
   .battle-screen .battle-arena { gap: 2px; padding: 2px 5px 8px !important; justify-content: flex-start !important; }
   .battle-screen .battle-fighter--enemy { margin-top: 0; margin-right: 3vw !important; }
   .battle-screen .battle-fighter--partner { margin-bottom: 2px; margin-left: 3vw !important; }
