@@ -1,12 +1,11 @@
 name: Deploy to GitHub Pages
 
-# このブランチ（または main）に push されたら、ビルドして GitHub Pages に公開する。
+# main に push されたら、ビルドして GitHub Pages に公開する。
 # 公開後の URL: https://<ユーザー名>.github.io/kids-quest/
 on:
   push:
     branches:
       - main
-      - claude/kids-learning-mission-app-p9a2v6
   workflow_dispatch: {}
 
 # GitHub Pages へのデプロイに必要な権限
