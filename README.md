@@ -72,6 +72,13 @@ npm run build && npm run preview   # 本番ビルド確認
 `main` に push すると GitHub Actions が自動で GitHub Pages にデプロイします。
 タブレットでは Chrome の「ホーム画面に追加」で全画面・オフラインのアプリになります。
 
+### Lunaに任せる場合
+
+教材追加・画像差し替え・軽い見た目調整は、リポジトリ直下の
+[`AGENTS.md`](./AGENTS.md) に沿えば安全に進められます。Lunaは作業ブランチで
+検証まで行い、`main` への公開は行いません。音声・書き取り・保存・PWA設定は、
+安定性のためTerra/Sol向けの領域です。
+
 ---
 
 ## 設計（拡張しやすさ重視）
