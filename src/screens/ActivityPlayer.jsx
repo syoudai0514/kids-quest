@@ -193,16 +193,21 @@ export default function ActivityPlayer({ task, onDone }) {
       const suspicious = t.total >= 2 && t.fastWrong >= Math.ceil(t.total / 2)
       dispatch({ type: 'CLEAR_TASK', kind: task.kind, accuracy, suspicious })
       sfx.reward()
+      // 追加問題でチケット条件を満たした場合は、この後に報酬オーバーレイが
+      // チケット獲得文を読み上げる。ここでも同じ文を読むと、完了音声の途中で
+      // 報酬音声へ切り替わったように聞こえるため、報酬画面へ任せる。
+      const earnsBattleTicket =
+        task.kind === 'extra' && accuracy >= 2 / 3 && !suspicious
       const line =
         task.kind === 'review'
           ? 'とっくん クリア！ まちがいが どんどん ちからに かわっていくよ！'
-          : task.kind === 'extra'
-            ? accuracy >= 2 / 3 && !suspicious
-              ? 'ぜんぶ できた！ バトルチケットを ゲット！'
+        : task.kind === 'extra'
+            ? earnsBattleTicket
+              ? ''
               : 'ぜんぶ とけたね！ つぎも ゆっくり かんがえて いこう！'
             : 'タスク クリア！ よくがんばったね！'
       // クリア時の言葉も、画面を切り替える前に最後まで聞かせる。
-      void speak(line).finally(() => {
+      void (line ? speak(line) : Promise.resolve()).finally(() => {
         feedbackTimerRef.current = setTimeout(onDone, 500)
       })
     }
