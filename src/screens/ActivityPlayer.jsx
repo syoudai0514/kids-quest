@@ -377,7 +377,6 @@ export default function ActivityPlayer({ task, onDone }) {
       <AppHeader
         className="app-header--progress"
         onBack={onDone}
-        backLabel="もどる"
         title={<ProgressDots total={questionCount} index={qIndex} />}
         right={<div className="pill">{isReviewTask ? '🎯 とっくん' : `${domain.emoji} ${domainName(domain, state.grade)}`}</div>}
       />
