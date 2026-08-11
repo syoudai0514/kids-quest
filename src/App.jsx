@@ -19,6 +19,7 @@ import FreeStudyScreen from './screens/FreeStudyScreen.jsx'
 import ChapterTestScreen from './screens/ChapterTestScreen.jsx'
 import ParentScreen from './screens/ParentScreen.jsx'
 import ReviewScreen from './screens/ReviewScreen.jsx'
+import EnglishDictionaryScreen from './screens/EnglishDictionaryScreen.jsx'
 import CelebrationOverlay from './screens/CelebrationOverlay.jsx'
 
 export default function App() {
@@ -99,8 +100,9 @@ export default function App() {
           {screen === 'collection' && <CollectionScreen onBack={() => go('home')} />}
           {screen === 'equip' && <EquipScreen onBack={() => go('home')} />}
           {screen === 'freestudy' && (
-            <FreeStudyScreen onBack={() => go('home')} onStartTask={startTask} />
+            <FreeStudyScreen onBack={() => go('home')} onStartTask={startTask} onEnglishDictionary={() => go('english-dictionary')} />
           )}
+          {screen === 'english-dictionary' && <EnglishDictionaryScreen onBack={() => go('freestudy')} onStartTask={startTask} />}
           {screen === 'test' && <ChapterTestScreen onBack={() => go('home')} />}
           {screen === 'parent' && <ParentScreen onBack={() => go('home')} />}
 
