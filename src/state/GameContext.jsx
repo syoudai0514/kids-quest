@@ -26,7 +26,10 @@ import { recordUnitResult, promotionResult, unitLedger, unitReady } from '../eng
 import { migrateEnglishWordStats } from '../engine/englishMigration.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../engine/progressMigration.js'
 
-const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
+// 1日3戦は自由に遊べる。さらに、教科をやりきる・追加問題を正解すると
+// チケットで増えていく。「がんばるほど遊べる」を保ちつつ、以前より
+// 遊べる回数が減らないようにしている（連打でチケットを稼ぐ対策は別途）。
+const BATTLE_DAILY_LIMIT = 3
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
 export const REVIEW_BATCH_MAX = 8
 
@@ -829,6 +832,23 @@ function reduceProfile(state, action) {
     case 'FORCE_GRADE_MAX': {
       const gm = Math.max(state.gradeMax, Math.min(MAX_GRADE, action.gradeMax))
       return { ...state, gradeMax: gm }
+    }
+
+    // 保護者が解放しすぎた学年を戻す。
+    // 「まぐれ・大人に聞いた」で先へ進んでしまい、実力と学年が合わなく
+    // なったときに、今の力に合うところまで下げ直すための操作。
+    // 進捗（XP・図鑑・そうび・とっくん）は消さない。
+    case 'LOWER_GRADE_MAX': {
+      const gm = Math.max(0, Math.min(state.gradeMax, action.gradeMax))
+      if (gm === state.gradeMax) return state
+      const grade = Math.min(state.grade, gm)
+      return {
+        ...state,
+        gradeMax: gm,
+        grade,
+        // 学年が変わると教科構成も変わるので、その日のミッションを作り直す
+        daily: grade === state.grade ? state.daily : { ...state.daily, coreTasks: buildCoreMission(grade), coreIndex: 0, coreDone: false }
+      }
     }
 
     case 'SET_SETTING':

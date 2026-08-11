@@ -397,8 +397,11 @@ export default function ParentScreen({ onBack }) {
               <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, marginTop: 0 }}>
                 現在: {gradeOf(state.grade).short} ／ 解放済み: {gradeOf(state.gradeMax).short} まで
                 <br />
-                通常は各学年をマスターすると次が自動で解放されます。
-                保護者判断で先取り解放することもできます。
+                通常は各学年の基礎単元をすべて習得し、ほしのしれんに合格すると次が解放されます。
+                保護者判断で先取り解放できます。
+                <br />
+                まぐれや周りに聞いて進んでしまい、学年が実力と合わなくなったときは
+                「もどす」で今の力に合う学年まで下げられます（XP・図鑑・そうび・とっくんは消えません）。
               </p>
               <div className="row wrap">
                 {state.gradeMax < MAX_GRADE && (
@@ -407,6 +410,14 @@ export default function ParentScreen({ onBack }) {
                     onClick={() => dispatch({ type: 'FORCE_GRADE_MAX', gradeMax: state.gradeMax + 1 })}
                   >
                     ⏭ {gradeOf(state.gradeMax + 1).short} を先取り解放
+                  </button>
+                )}
+                {state.gradeMax > 0 && (
+                  <button
+                    className="btn btn--ghost"
+                    onClick={() => dispatch({ type: 'LOWER_GRADE_MAX', gradeMax: state.gradeMax - 1 })}
+                  >
+                    ⏪ {gradeOf(state.gradeMax - 1).short} までに もどす
                   </button>
                 )}
                 {GRADES.filter((g) => g.id <= state.gradeMax).map((g) => (
