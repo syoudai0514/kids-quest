@@ -36,24 +36,138 @@ const phraseRows = [
 ]
 export const ENGLISH_PHRASES = phraseRows.map(([english, japanese, scene, response], i) => ({ id: `ep${String(i + 1).padStart(3, '0')}`, english, japanese, scene, response, minGrade: i < 20 ? 0 : i < 38 ? 2 : 4, speak: english }))
 
-export const ENGLISH_CATEGORIES = { greeting: 'あいさつ', animal: 'どうぶつ', food: 'たべもの・のみもの', color: 'いろ', number: 'かず', body: 'からだ', family: 'かぞく', school: '学校・もちもの', home: '家・身のまわり', action: 'うごき', feeling: '気持ち', weather: '天気・季節', time: '曜日・時間', nature: 'しぜん', place: 'ばしょ', extra: 'そのほか' }
+export const ENGLISH_CATEGORIES = {
+  greeting: 'あいさつ', animal: 'どうぶつ', food: 'たべもの・のみもの', color: 'いろ', number: 'かず', body: 'からだ', family: 'かぞく', school: '学校・もちもの', home: '家・身のまわり', action: 'うごき', feeling: '気持ち', weather: '天気・季節', time: '曜日・時間', nature: 'しぜん', place: 'ばしょ', vehicle: 'のりもの', clothes: 'ふく・もちもの', shape: 'かたち', computer: 'コンピューター', extra: 'そのほか'
+}
 
 function shuffle(values) { const a = [...values]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
-function choices(answer, pool, key = 'english', count = 4) { return shuffle([answer, ...shuffle(pool.filter((x) => x.id !== answer.id)).slice(0, count - 1)]).map((x) => ({ id: x.id, label: x[key], emoji: x.emoji })) }
-function eligible(params) { const items = ENGLISH_WORDS.filter((w) => w.minGrade <= (params.grade ?? 0)); return items.length >= 4 ? items : ENGLISH_WORDS.slice(0, 8) }
-function wordByKey(key) { return ENGLISH_WORDS.find((w) => w.id === String(key || '').replace('en:', '')) }
+const clean = (value) => String(value || '').trim().toLocaleLowerCase()
+const baseKey = (key) => String(key || '').split('#')[0].replace(/^en[wp]?:/, '')
+const localDayNumber = (date = new Date()) => Math.floor(new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() / 86400000)
+function eligibleWords(params) { const items = ENGLISH_WORDS.filter((w) => w.minGrade <= (params.grade ?? 0)); return items.length >= 4 ? items : ENGLISH_WORDS.slice(0, 8) }
+function eligiblePhrases(params) { return ENGLISH_PHRASES.filter((p) => p.minGrade <= (params.grade ?? 0)) }
+function itemFromKey(key) {
+  const id = baseKey(key)
+  return ENGLISH_WORDS.find((w) => w.id === id) || ENGLISH_PHRASES.find((p) => p.id === id) || null
+}
+
+// 同じ表示を選ばせる問題は、子どもが意味を思い出さずに当てられる。
+// 正解も誤答も、表示する文字・絵文字が必ず一意になるようここで保証する。
+function makeChoices(answer, pool, { label = 'english', emoji = false, count = 4 } = {}) {
+  const used = new Set([clean(answer[label])])
+  if (emoji) used.add(`emoji:${answer.emoji}`)
+  const candidates = shuffle(pool.filter((item) => item.id !== answer.id)).filter((item) => {
+    const text = clean(item[label])
+    const emojiKey = `emoji:${item.emoji}`
+    if (!text || used.has(text) || (emoji && used.has(emojiKey))) return false
+    used.add(text)
+    if (emoji) used.add(emojiKey)
+    return true
+  }).slice(0, count - 1)
+  return shuffle([answer, ...candidates]).map((item) => ({ id: item.id, label: emoji ? '' : item[label], emoji: emoji ? item.emoji : undefined }))
+}
+
+function selectByStudyOrder(items, stats, seen, today) {
+  const usable = items.filter((item) => !seen.has(item.id))
+  const pool = usable.length ? usable : items
+  const stat = (item) => stats?.[item.id] || {}
+  const due = pool.filter((item) => (stat(item).stage || 0) > 0 && (stat(item).nextDue ?? Infinity) <= today)
+  const wrong = pool.filter((item) => !due.includes(item) && (stat(item).wrong || 0) > 0)
+  const unseen = pool.filter((item) => !due.includes(item) && !wrong.includes(item) && !(stat(item).correct || 0) && !(stat(item).wrong || 0))
+  const learned = pool.filter((item) => !due.includes(item) && !wrong.includes(item) && !unseen.includes(item))
+  const first = due.length ? due : wrong.length ? wrong : unseen.length ? unseen : learned
+  return shuffle(first)[0] || items[0]
+}
+
+export function chooseEnglishStudyItem(params = {}) {
+  const grade = params.grade ?? 0
+  const seen = new Set((params.seenItemKeys || []).map(baseKey))
+  const forced = itemFromKey(params.reviewKey || params.focusWordId)
+  if (forced && forced.minGrade <= grade) return forced
+  const words = eligibleWords(params)
+  const phrases = eligiblePhrases(params)
+  const canUsePhrases = grade >= 3 && phrases.length > 0 && params.englishAudioAvailable !== false
+  const all = canUsePhrases && Math.random() < (grade >= 5 ? 0.42 : 0.28) ? phrases : words
+  const stats = all === phrases ? params.englishPhraseStats : params.englishWordStats
+  return selectByStudyOrder(all, stats, seen, params.today ?? localDayNumber())
+}
+
+function wordBase(word) {
+  return { domain: 'english', itemKey: `enw:${word.id}`, answerWord: { text: word.english }, practiceEnglish: word.speak, explain: `${word.english} は「${word.japanese}」だよ` }
+}
+
+function listeningQuestion(word, pool, params) {
+  return { ...wordBase(word), type: 'choice', form: 'listen-picture', visual: { kind: 'bigtext', text: '🔊 Listen!' }, instruction: 'きいて、ただしい えを えらぼう', speak: 'えいごを きいて、ただしい えを えらぼう。', promptEnglishAudio: word.speak, autoPlayPrompt: true, choices: makeChoices(word, pool, { emoji: true, count: params.choiceCount || 4 }), answerId: word.id }
+}
+function pictureQuestion(word, pool, params) {
+  return { ...wordBase(word), type: 'choice', form: 'picture-word', visual: { kind: 'emoji', emoji: word.emoji }, instruction: 'えに あう えいごを えらぼう', speak: 'この えは、えいごで なんて いう？', choices: makeChoices(word, pool, { label: 'english', count: params.choiceCount || 4 }), answerId: word.id }
+}
+function meaningQuestion(word, pool, params) {
+  return { ...wordBase(word), type: 'choice', form: 'word-meaning', visual: { kind: 'word', text: word.english }, instruction: 'いみを えらぼう', speak: 'えいごの いみを えらぼう。', choices: makeChoices(word, pool, { label: 'japanese', count: params.choiceCount || 4 }), answerId: word.id }
+}
+function japaneseQuestion(word, pool, params) {
+  return { ...wordBase(word), type: 'choice', form: 'japanese-word', visual: { kind: 'bigtext', text: word.japanese }, instruction: 'えいごを えらぼう', speak: `${word.japanese} は どの えいご？`, choices: makeChoices(word, pool, { label: 'english', count: params.choiceCount || 4 }), answerId: word.id }
+}
+function spellingQuestion(word) {
+  const letters = [...word.english.replace(/[^a-z]/gi, '')]
+  const index = Math.max(0, Math.floor(letters.length / 2))
+  const answer = letters[index].toLowerCase()
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
+  const options = shuffle([answer, ...shuffle(alphabet.filter((letter) => letter !== answer)).slice(0, 3)])
+  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${letters.slice(0, index).join('')} _ ${letters.slice(index + 1).join('')}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
+}
+function alphabetQuestion(word) {
+  const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const base = order[Math.floor(Math.random() * 22)]
+  const index = order.indexOf(base)
+  const answer = order[index + 1]
+  const options = shuffle([answer, ...shuffle(order.filter((letter) => letter !== answer)).slice(0, 3)])
+  return { ...wordBase(word), type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${base} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, explain: `${base} の つぎは ${answer} だよ` }
+}
+function phraseQuestion(phrase, params) {
+  const pool = eligiblePhrases(params)
+  const response = { id: phrase.id, response: phrase.response }
+  const choices = makeChoices(response, pool.map((item) => ({ id: item.id, response: item.response })), { label: 'response', count: params.choiceCount || 4 })
+  return { domain: 'english', type: 'choice', form: 'conversation', itemKey: `enp:${phrase.id}`, visual: { kind: 'word', text: phrase.english }, instruction: 'ぴったりの へんじを えらぼう', speak: 'ぴったりの へんじを えらぼう。', promptEnglishAudio: phrase.english, autoPlayPrompt: true, practiceEnglish: phrase.response, choices, answerId: phrase.id, answerWord: { text: phrase.response }, explain: `${phrase.english} には「${phrase.response}」と こたえられるよ` }
+}
+function orderQuestion(phrase) {
+  const tokens = phrase.response.replace(/[.!?]/g, '').split(/\s+/).filter(Boolean)
+  if (tokens.length < 2) return null
+  const items = shuffle(tokens.map((label, index) => ({ id: `w${index}`, label })))
+  const correctOrder = tokens.map((_, index) => `w${index}`)
+  return { domain: 'english', type: 'order', form: 'word-order', itemKey: `enp:${phrase.id}`, visual: { kind: 'bigtext', text: phrase.japanese }, instruction: 'えいごの じゅんばんに ならべよう', orderInstruction: 'ひだりから じゅんに タッチしてね', speak: 'えいごの じゅんばんに ならべよう。', items, correctOrder, answerId: correctOrder.join('|'), answerWord: { text: phrase.response }, practiceEnglish: phrase.response, explain: `${phrase.japanese} は「${phrase.response}」だよ` }
+}
 
 export function generateEnglishQuestion(params = {}, reviewKey) {
- const grade = params.grade ?? 0; const pool = eligible(params); const saved = wordByKey(reviewKey); const word = saved && saved.minGrade <= grade ? saved : pool[Math.floor(Math.random() * pool.length)]
- const mode = params.englishAudioAvailable === false ? (grade <= 1 ? 1 : 2 + Math.floor(Math.random() * 2)) : grade <= 1 ? Math.floor(Math.random() * 2) : grade <= 3 ? Math.floor(Math.random() * 4) : Math.floor(Math.random() * 5)
- const base = { domain: 'english', itemKey: `en:${word.id}`, answerWord: { text: word.english }, englishSpeak: word.speak, explain: `${word.english} は「${word.japanese}」だよ` }
- if (mode === 0) return { ...base, type: 'choice', visual: { kind: 'bigtext', text: '🔊 Listen!' }, instruction: 'きいて、ただしい えを えらぼう', speak: 'えいごを きいて、ただしい えを えらぼう。', choices: choices(word, pool, 'japanese', params.choiceCount || 4).map((c) => ({ ...c, label: c.emoji })), answerId: word.id, englishFirst: true }
- if (mode === 1) return { ...base, type: 'choice', visual: { kind: 'emoji', emoji: word.emoji }, instruction: 'えに あう えいごを えらぼう', speak: 'この えは、えいごで なんて いう？', choices: choices(word, pool, 'english', params.choiceCount || 4), answerId: word.id }
- if (mode === 2) return { ...base, type: 'choice', visual: { kind: 'word', text: word.english }, instruction: 'いみを えらぼう', speak: `${word.english} は どんな いみ？`, choices: choices(word, pool, 'japanese', params.choiceCount || 4), answerId: word.id }
- if (mode === 3) return { ...base, type: 'choice', visual: { kind: 'emoji', emoji: word.emoji }, instruction: `「${word.japanese}」は どれ？`, speak: `${word.japanese} は どの えいご？`, choices: choices(word, pool, 'english', params.choiceCount || 4), answerId: word.id }
- const phrase = ENGLISH_PHRASES.filter((p) => p.minGrade <= grade)[Math.floor(Math.random() * ENGLISH_PHRASES.filter((p) => p.minGrade <= grade).length)]
- const replies = [{ id: 'yes', label: phrase.response }, ...shuffle([{ id: 'no1', label: 'Goodbye.' }, { id: 'no2', label: 'I am a cat.' }, { id: 'no3', label: 'Blue.' }]).slice(0, Math.max(2, (params.choiceCount || 4) - 1))]
- return { domain: 'english', type: 'choice', itemKey: `en:${word.id}`, visual: { kind: 'word', text: phrase.english }, instruction: 'ぴったりの へんじを えらぼう', speak: 'えいごを きいて、ぴったりの へんじを えらぼう。', englishSpeak: phrase.english, choices: shuffle(replies), answerId: 'yes', answerWord: { text: phrase.response }, explain: `${phrase.english} には「${phrase.response}」と こたえられるよ` }
+  const grade = params.grade ?? 0
+  const requestedForm = params.forceForm
+  const forcedItemPool = requestedForm
+    ? (requestedForm === 'word-order'
+      ? eligiblePhrases(params).filter((phrase) => phrase.response.replace(/[.!?]/g, '').trim().split(/\s+/).length >= 2)
+      : requestedForm === 'conversation' ? eligiblePhrases(params) : eligibleWords(params))
+    : null
+  const forcedStats = requestedForm === 'conversation' || requestedForm === 'word-order' ? params.englishPhraseStats : params.englishWordStats
+  const item = forcedItemPool
+    ? selectByStudyOrder(forcedItemPool, forcedStats, new Set((params.seenItemKeys || []).map(baseKey)), params.today ?? localDayNumber())
+    : chooseEnglishStudyItem({ ...params, reviewKey })
+  const word = ENGLISH_WORDS.find((entry) => entry.id === item.id)
+  if (!word) {
+    const phrase = item
+    if (requestedForm === 'word-order' || (!requestedForm && grade >= 5 && Math.random() < 0.45)) return orderQuestion(phrase) || phraseQuestion(phrase, params)
+    return phraseQuestion(phrase, params)
+  }
+  const pool = eligibleWords(params)
+  const modes = params.englishAudioAvailable === false
+    ? grade <= 0 ? ['picture', 'alphabet'] : grade <= 2 ? ['picture', 'meaning', 'spelling'] : ['picture', 'meaning', 'japanese', 'spelling']
+    : grade <= 0 ? ['listen', 'picture', 'alphabet'] : grade <= 2 ? ['listen', 'picture', 'meaning', 'spelling'] : grade <= 4 ? ['listen', 'picture', 'meaning', 'japanese'] : ['listen', 'meaning', 'japanese', 'spelling']
+  const forceMode = { 'listen-picture': 'listen', 'picture-word': 'picture', 'word-meaning': 'meaning', 'japanese-word': 'japanese', spelling: 'spelling', alphabet: 'alphabet' }[requestedForm]
+  const mode = forceMode || modes[Math.floor(Math.random() * modes.length)]
+  if (mode === 'listen') return listeningQuestion(word, pool, params)
+  if (mode === 'picture') return pictureQuestion(word, pool, params)
+  if (mode === 'meaning') return meaningQuestion(word, pool, params)
+  if (mode === 'japanese') return japaneseQuestion(word, pool, params)
+  if (mode === 'alphabet') return alphabetQuestion(word)
+  return spellingQuestion(word)
 }
 
 export function englishStatus(stat) { const stage = stat?.stage || 0; return stage >= 4 ? 'おぼえた！' : stage >= 3 ? 'もうすぐ おぼえる' : stage >= 1 ? 'れんしゅう中' : 'はじめて' }

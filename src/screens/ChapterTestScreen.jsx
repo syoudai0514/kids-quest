@@ -12,7 +12,7 @@ import { gradeOf, MAX_GRADE } from '../data/grades.js'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
 import { AppHeader, Starfield, Confetti, ProgressDots } from '../components/common.jsx'
-import { speak, cancelSpeak } from '../engine/tts.js'
+import { speak, cancelSpeak, hasEnglishVoice, speakEnglish } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 import { reviewKeyFor, snapshotQuestion } from '../engine/reviewKey.js'
 
@@ -35,7 +35,7 @@ function makeTrialQuestions(state, grade) {
   // 年長は選択できる教科が4つなので、1つだけ2問にして5問にする。
   for (let i = 0; i < STAR_TRIAL_QUESTIONS - 1; i++) {
     const d = order[i % order.length]
-    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade }
+    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade, englishAudioAvailable: d.id === 'english' ? hasEnglishVoice() : true }
     let question = null
     for (let tries = 0; tries < 8 && !question; tries++) {
       const candidate = d.generateQuestion(params, null)
@@ -54,7 +54,7 @@ function makeTrialQuestions(state, grade) {
   // 書く問題を作れないコンテンツでも、必ず6問になるよう選択式で補完する。
   while (list.length < STAR_TRIAL_QUESTIONS && choiceDomains.length) {
     const d = choiceDomains[list.length % choiceDomains.length]
-    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade }
+    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade, englishAudioAvailable: d.id === 'english' ? hasEnglishVoice() : true }
     const question = d.generateQuestion(params, null)
     if (question?.type === 'choice' && question.choices?.length) list.push({ ...question, _domainId: d.id })
   }
@@ -85,7 +85,13 @@ export default function ChapterTestScreen({ onBack }) {
 
   useEffect(() => {
     if (!q || done || trialInfo.todayDone || q.type === 'trace') return undefined
-    const id = setTimeout(() => speak(q.speak), 400)
+    const id = setTimeout(() => {
+      if (q._domainId === 'english' && q.autoPlayPrompt && q.promptEnglishAudio) {
+        void speak('よく きいてね').then(() => speakEnglish(q.promptEnglishAudio))
+      } else {
+        speak(q.speak)
+      }
+    }, 400)
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx])

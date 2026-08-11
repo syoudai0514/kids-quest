@@ -64,3 +64,24 @@ export function todayKey(d = new Date()) {
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
+
+// コンテンツ更新は教材の表示だけを差し替える。開始済みの当日ミッションを
+// 作り直すと、子どもが進めた順番・ごほうびへの期待を失わせてしまうため、
+// 日次データには触れない。この純粋関数は保存移行の自動検証にも使う。
+export function migrateContentVersion(saved, contentVersion) {
+  return { ...saved, contentVersion }
+}
+
+/** 子どもごとの保存本体から、プロフィールの入れ物だけを除く。 */
+export function profileSnapshot(state) {
+  const { profiles: _profiles, activeProfileId: _activeProfileId, ...snapshot } = state || {}
+  return snapshot
+}
+
+/** 現在の子どものセーブだけを更新する。ほかの子どもの状態は参照も変更もしない。 */
+export function saveProfileSnapshot(profiles, profileId, name, state) {
+  return {
+    ...(profiles || {}),
+    [profileId]: { name, state: profileSnapshot(state) }
+  }
+}

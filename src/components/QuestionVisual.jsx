@@ -12,7 +12,7 @@
 // ============================================================
 
 import React from 'react'
-import { speak } from '../engine/tts.js'
+import { speak, speakEnglish } from '../engine/tts.js'
 
 export function CountGrid({ emoji, n, mini = false }) {
   return (
@@ -133,8 +133,13 @@ export default function QuestionVisual({ question }) {
     )
   }
 
+  const replay = () => {
+    if (question.autoPlayPrompt && question.promptEnglishAudio) {
+      void speak('もういちど、よく きいてね').then(() => speakEnglish(question.promptEnglishAudio))
+    } else speak(question.speak)
+  }
   return (
-    <button className="qcard" onClick={() => speak(question.speak)} aria-label="もういちどきく">
+    <button className="qcard" onClick={replay} aria-label="もういちどきく">
       {inner}
     </button>
   )

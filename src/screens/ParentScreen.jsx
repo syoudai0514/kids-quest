@@ -223,6 +223,7 @@ export default function ParentScreen({ onBack }) {
   const accuracy = d.attemptsToday ? Math.round((d.correctToday / d.attemptsToday) * 100) : 0
   const [confirmReset, setConfirmReset] = useState(false)
   const [weaponToRemove, setWeaponToRemove] = useState(null)
+  const [newProfileName, setNewProfileName] = useState('')
 
   // 直近7日間の取り組み日数
   const activeDays = Object.keys(state.history).length + (d.attemptsToday > 0 ? 1 : 0)
@@ -285,6 +286,28 @@ export default function ParentScreen({ onBack }) {
 
       <div className="scroll-y" style={{ flex: 1, padding: '4px 8px 28px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* 兄弟姉妹は別の完全なセーブを持つ。切替時に学年・図鑑・連続記録が混ざらない。 */}
+          <div>
+            <h3 style={{ margin: '4px 0 10px' }}>👧🧒 子どもプロフィール</h3>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                学年、モンスター、コイン、連続記録、教科ごとの履歴は子どもごとに別に保存されます。
+              </p>
+              <div className="row wrap" style={{ gap: 8 }}>
+                {Object.entries(state.profiles || {}).map(([id, profile]) => (
+                  <button key={id} className={'btn ' + (id === state.activeProfileId ? 'btn--primary' : 'btn--ghost')} style={{ minHeight: 48, padding: '8px 14px' }} onClick={() => dispatch({ type: 'SWITCH_PROFILE', profileId: id })}>
+                    {id === state.activeProfileId ? '✓ ' : ''}{profile.name}
+                  </button>
+                ))}
+              </div>
+              <div className="row wrap" style={{ gap: 8 }}>
+                <input value={newProfileName} onChange={(e) => setNewProfileName(e.target.value)} placeholder="新しい子どもの なまえ" aria-label="新しい子どものなまえ" style={{ minHeight: 46, flex: '1 1 180px', borderRadius: 12, padding: '0 12px', fontSize: 16 }} />
+                <button className="btn btn--sun" style={{ minHeight: 48, padding: '8px 14px' }} onClick={() => { dispatch({ type: 'CREATE_PROFILE', name: newProfileName }); setNewProfileName('') }}>
+                  ＋ ついか
+                </button>
+              </div>
+            </div>
+          </div>
           {/* 今日のサマリー */}
           <div>
             <h3 style={{ margin: '4px 0 10px' }}>きょうの がんばり</h3>

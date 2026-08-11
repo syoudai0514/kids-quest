@@ -93,7 +93,7 @@ export function OrderPicker({ question, onSubmit, disabled, showHint }) {
         })}
         {!showHint && Array.from({ length: question.items.length - order.length }, (_, i) => <span className="order-slot order-slot--empty" key={`empty-${i}`}>{order.length + i + 1}. ？</span>)}
       </div>
-      <p className="muted" style={{ margin: 0, fontWeight: 800 }}>ちいさい じゅんに タッチしてね</p>
+      <p className="muted" style={{ margin: 0, fontWeight: 800 }}>{question.orderInstruction || 'ちいさい じゅんに タッチしてね'}</p>
       <div className="order-items">
         {question.items.map((item) => (
           <button key={item.id} className={'choice order-item' + (order.includes(item.id) ? ' choice--picked' : '')} onClick={() => add(item.id)} disabled={disabled || order.includes(item.id)}>

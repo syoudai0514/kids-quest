@@ -10,7 +10,7 @@
 // ============================================================
 
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
-import { loadState, saveState, todayKey } from '../engine/storage.js'
+import { loadState, saveState, todayKey, migrateContentVersion, profileSnapshot, saveProfileSnapshot } from '../engine/storage.js'
 import { makeSkill, applyResult } from '../engine/difficulty.js'
 import { buildCoreMission } from '../engine/missions.js'
 import { DOMAINS, domainsForGrade } from '../engine/activities.js'
@@ -21,13 +21,14 @@ import { getWeapon, weaponScore, starterWeaponsFor } from '../data/weapons.js'
 import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engine/srs.js'
 import { DEFAULT_TTS_RATE, migrateTtsRate } from '../config/ttsRates.js'
 import { snapshotQuestion } from '../engine/reviewKey.js'
+import { advanceEnglishProgress, emptyEnglishProgress } from '../engine/englishProgress.js'
 
 const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
 export const REVIEW_BATCH_MAX = 8
 
-// コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
-const CONTENT_VERSION = 11
+// コンテンツの大きな更新で上げる。進捗と開始済みの当日ミッションは保つ。
+const CONTENT_VERSION = 12
 export const STAR_TRIAL_QUESTIONS = 6
 export const STAR_TRIAL_ROUNDS = 2
 export const STAR_TRIAL_PASS_CORRECT = 9
@@ -127,6 +128,7 @@ function createInitialState() {
     srs: {}, // { domainId: { itemKey: {box, due, lapses} } } 間隔反復
     // 英語は「別の日に思い出せた」ことを可視化する。録音そのものでは上げない。
     englishWordStats: {},
+    englishPhraseStats: {},
     // { domainId: { reviewKey: question } }。誤答した問題を同じ形で復習するための保存。
     reviewQuestions: {},
     weapons: ['w01'], // 持っている武器のid（さいしょの1本）
@@ -189,7 +191,7 @@ function migrateOld(saved) {
 
 // 保存データ（読み込み or インポート）を、いまのバージョンの形に整える。
 // v3 はそのまま引き継ぎ、旧 v1/v2 は移行、未知は新規から作る。
-function normalizeSaved(saved) {
+function normalizeProfileSaved(saved) {
   let base
   if (saved && saved.version === 3) {
     const fresh = createInitialState()
@@ -199,7 +201,7 @@ function normalizeSaved(saved) {
       settings: settingsForCurrentVersion(saved.settings),
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
       srs: saved.srs || migrateMissed(saved.missed),
-      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}
+      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}, englishPhraseStats: saved.englishPhraseStats || {}
     }
   } else if (saved && (saved.version === 1 || saved.version === 2)) {
     base = migrateOld(saved)
@@ -207,9 +209,9 @@ function normalizeSaved(saved) {
     base = createInitialState()
   }
   base = rolloverIfNeeded(base)
-  if (base.contentVersion !== CONTENT_VERSION) {
-    base = { ...base, contentVersion: CONTENT_VERSION, daily: freshDaily(todayKey(), base.grade || 0) }
-  }
+  // コンテンツ更新でも、今日すでに始めたミッションは絶対に作り直さない。
+  // 進行中の教科・報酬への期待を守り、翌日のロールオーバーで自然に新構成になる。
+  if (base.contentVersion !== CONTENT_VERSION) base = migrateContentVersion(base, CONTENT_VERSION)
 
   // 武器システム導入前のセーブには、これまでのがんばりに見合う武器を手わたす
   //（新機能のせいで「急に敵が強くなった」と感じさせないため）
@@ -243,6 +245,7 @@ function normalizeSaved(saved) {
     base = { ...base, reviewQuestions: {} }
   }
   if (!base.englishWordStats || typeof base.englishWordStats !== 'object') base = { ...base, englishWordStats: {} }
+  if (!base.englishPhraseStats || typeof base.englishPhraseStats !== 'object') base = { ...base, englishPhraseStats: {} }
   if (base.missed) {
     // 旧形式は取り込み済みなので落とす（保存サイズを増やさない）
     const { missed, ...rest } = base
@@ -280,6 +283,25 @@ function normalizeSaved(saved) {
     base = { ...base, testPassed: tp }
   }
   return base
+}
+
+// v12: 既存の単一セーブを最初の子どもプロフィールとして包む。
+// 各プロフィールは完全なゲーム状態を持つので、学年・図鑑・コイン・連続記録・
+// 英語復習・当日ミッションが兄弟姉妹間で混ざらない。
+export function normalizeSaved(saved) {
+  const envelope = saved?.profiles && typeof saved.profiles === 'object' ? saved : null
+  const activeProfileId = envelope?.activeProfileId && envelope.profiles[envelope.activeProfileId]
+    ? envelope.activeProfileId
+    : 'child-1'
+  const activeSaved = envelope ? envelope.profiles[activeProfileId]?.state : saved
+  const base = normalizeProfileSaved(activeSaved)
+  const profiles = { ...(envelope?.profiles || {}) }
+  const oldProfile = profiles[activeProfileId]
+  profiles[activeProfileId] = {
+    name: oldProfile?.name || 'ぼうけんしゃ 1',
+    state: profileSnapshot(base)
+  }
+  return { ...base, activeProfileId, profiles }
 }
 
 // その教科は「おさらい授業」を出したほうがよいか（直近の正解率が低い）
@@ -340,7 +362,7 @@ function addDomainTally(perDomain, domainId, correct) {
   }
 }
 
-function reducer(state, action) {
+function reduceProfile(state, action) {
   switch (action.type) {
     case 'ROLLOVER':
       return rolloverIfNeeded(state)
@@ -423,21 +445,17 @@ function reducer(state, action) {
 
       // 英語単語は 1→3→7→14日。日をまたがない連打では段階を進めない。
       let englishWordStats = state.englishWordStats || {}
+      let englishPhraseStats = state.englishPhraseStats || {}
       if (domainId === 'english' && itemKey) {
-        const key = String(itemKey).replace('en:', '').split('#')[0]
-        const prevStat = englishWordStats[key] || { correct: 0, wrong: 0, streak: 0, stage: 0, lastDay: null, nextDue: dayNumber(), speakingCount: 0 }
+        const rawKey = String(itemKey).split('#')[0]
+        const isPhrase = rawKey.startsWith('enp:')
+        const key = rawKey.replace(/^en[wp]?:/, '')
+        const stats = isPhrase ? englishPhraseStats : englishWordStats
+        const prevStat = stats[key] || emptyEnglishProgress(dayNumber())
         const todayDay = dayNumber()
-        let next = { ...prevStat, lastAnsweredAt: Date.now() }
-        if (correct) {
-          const canAdvance = prevStat.lastDay !== todayDay && (prevStat.stage === 0 || (prevStat.nextDue ?? todayDay) <= todayDay)
-          const stage = canAdvance ? Math.min(4, prevStat.stage + 1) : prevStat.stage
-          const intervals = [0, 1, 3, 7, 14]
-          next = { ...next, correct: prevStat.correct + 1, streak: prevStat.streak + 1, stage, lastDay: todayDay, nextDue: todayDay + intervals[stage], masteredAt: stage >= 4 ? (prevStat.masteredAt || Date.now()) : null }
-        } else {
-          const stage = Math.max(0, prevStat.stage - 1)
-          next = { ...next, wrong: prevStat.wrong + 1, streak: 0, stage, nextDue: todayDay + 1 }
-        }
-        englishWordStats = { ...englishWordStats, [key]: next }
+        const next = advanceEnglishProgress(prevStat, correct, todayDay)
+        if (isPhrase) englishPhraseStats = { ...englishPhraseStats, [key]: next }
+        else englishWordStats = { ...englishWordStats, [key]: next }
       }
 
       // v4: 学年の解放は「章末テストの合格」で行うので、ここでは解放しない
@@ -458,6 +476,7 @@ function reducer(state, action) {
         lastActiveDate,
         srs,
         englishWordStats,
+        englishPhraseStats,
         reviewQuestions,
         conquered,
         daily: {
@@ -470,10 +489,14 @@ function reducer(state, action) {
     }
 
     case 'ENGLISH_SPEAKING_DONE': {
-      const key = action.wordId
+      const rawKey = String(action.itemKey || '').split('#')[0]
+      const isPhrase = rawKey.startsWith('enp:')
+      const key = rawKey.replace(/^en[wp]?:/, '')
       if (!key) return state
-      const prev = state.englishWordStats?.[key] || { correct: 0, wrong: 0, streak: 0, stage: 0, lastDay: null, nextDue: dayNumber() }
-      return { ...state, englishWordStats: { ...state.englishWordStats, [key]: { ...prev, speakingCount: (prev.speakingCount || 0) + 1 } } }
+      const stats = isPhrase ? state.englishPhraseStats : state.englishWordStats
+      const prev = stats?.[key] || emptyEnglishProgress(dayNumber())
+      const next = { ...stats, [key]: { ...prev, speakingCount: (prev.speakingCount || 0) + 1 } }
+      return isPhrase ? { ...state, englishPhraseStats: next } : { ...state, englishWordStats: next }
     }
 
     // タスク（数問のまとまり）をクリア → ごほうび進行
@@ -786,6 +809,42 @@ function reducer(state, action) {
     default:
       return state
   }
+}
+
+function reducer(state, action) {
+  if (action.type === 'IMPORT_STATE') return normalizeSaved(action.data)
+  if (action.type === 'RESET_ALL') return normalizeSaved(createInitialState())
+  if (action.type === 'CREATE_PROFILE') {
+    const id = `child-${Date.now().toString(36)}`
+    const fresh = createInitialState()
+    const profiles = {
+      ...saveProfileSnapshot(state.profiles, state.activeProfileId || 'child-1', state.profiles?.[state.activeProfileId]?.name || 'ぼうけんしゃ 1', state),
+      [id]: { name: String(action.name || '').trim() || `ぼうけんしゃ ${Object.keys(state.profiles || {}).length + 1}`, state: profileSnapshot(fresh) }
+    }
+    return { ...fresh, activeProfileId: id, profiles }
+  }
+  if (action.type === 'SWITCH_PROFILE') {
+    const target = state.profiles?.[action.profileId]
+    if (!target?.state || action.profileId === state.activeProfileId) return state
+    const next = normalizeProfileSaved(target.state)
+    const profiles = {
+      ...state.profiles,
+      [state.activeProfileId]: { ...state.profiles[state.activeProfileId], state: profileSnapshot(state) },
+      [action.profileId]: { ...target, state: profileSnapshot(next) }
+    }
+    return { ...next, activeProfileId: action.profileId, profiles }
+  }
+  if (action.type === 'RENAME_PROFILE') {
+    const id = action.profileId || state.activeProfileId
+    const old = state.profiles?.[id]
+    const name = String(action.name || '').trim()
+    if (!old || !name) return state
+    return { ...state, profiles: { ...state.profiles, [id]: { ...old, name } } }
+  }
+  const next = reduceProfile(state, action)
+  const activeProfileId = state.activeProfileId || 'child-1'
+  const profiles = saveProfileSnapshot(state.profiles, activeProfileId, state.profiles?.[activeProfileId]?.name || 'ぼうけんしゃ 1', next)
+  return { ...next, activeProfileId, profiles }
 }
 
 const GameContext = createContext(null)

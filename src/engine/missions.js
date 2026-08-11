@@ -34,12 +34,12 @@ function pickDomainId(i, grade = 0, today = dayNumber()) {
 }
 
 // コアミッションは その学年の教科を ひととおり まわす
-export function buildCoreMission(grade = 0) {
+export function buildCoreMission(grade = 0, today = dayNumber()) {
   const doms = domainsForGrade(grade)
   const count = Math.max(CORE_TASK_COUNT, Math.min(doms.length, 6))
   const tasks = []
   for (let i = 0; i < count; i++) {
-    tasks.push(makeTask(pickDomainId(i, grade), 'core'))
+    tasks.push(makeTask(pickDomainId(i, grade, today), 'core'))
   }
   return tasks
 }

@@ -102,6 +102,8 @@ export default function ActivityPlayer({ task, onDone }) {
   const shownAtRef = useRef(Date.now())
   const reinforcementQueueRef = useRef([])
   const reinforcementAttemptsRef = useRef({})
+  // 英語は同じ4問で同じ単語・会話を繰り返さない（誤答後の補強だけは例外）。
+  const shownEnglishItemsRef = useRef([])
 
   const currentDomainId = () =>
     isReviewTask ? task.plan[Math.min(qIndex, task.plan.length - 1)].domainId : task.domainId
@@ -117,7 +119,12 @@ export default function ActivityPlayer({ task, onDone }) {
     const params = {
       ...difficultyParams(skillOf(stateRef.current, domainId)),
       grade: stateRef.current.grade,
-      englishAudioAvailable: domainId === 'english' ? hasEnglishVoice() : true
+      englishAudioAvailable: domainId === 'english' ? hasEnglishVoice() : true,
+      englishWordStats: stateRef.current.englishWordStats,
+      englishPhraseStats: stateRef.current.englishPhraseStats,
+      today: dayNumber(),
+      questionIndex: qIndex,
+      seenItemKeys: domainId === 'english' ? shownEnglishItemsRef.current : undefined
     }
     setSupportHint(params.hint >= 2)
 
@@ -138,10 +145,15 @@ export default function ActivityPlayer({ task, onDone }) {
         review = due[Math.floor(Math.random() * Math.min(due.length, 5))]
       }
     }
-    const saved = savedReviewQuestion(stateRef.current, domainId, review)
+    // 英語の旧スナップショットには「問題と選択肢が同じ絵」の形式が残り得る。
+    // 進捗キーは生かし、表示だけは常に安全な新しい問題形式で再生成する。
+    const saved = domainId === 'english' ? null : savedReviewQuestion(stateRef.current, domainId, review)
     const generated = saved || dom.generateQuestion(params, review)
     // 旧セーブの「種類だけ」の復習キーも、そのまま復習として扱えるようにする。
     const q = review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated
+    if (domainId === 'english' && !review && q.itemKey) {
+      shownEnglishItemsRef.current = [...shownEnglishItemsRef.current, q.itemKey]
+    }
     setQuestion(q)
     setPhase('answering')
     setChosenId(null)
@@ -152,9 +164,10 @@ export default function ActivityPlayer({ task, onDone }) {
     firstAttemptRef.current = true
     shownAtRef.current = Date.now()
     return setTimeout(() => {
-      if (domainId === 'english' && q.englishSpeak) {
-        // 英語のお手本は、まず日本語で意図を伝えてから再生する。
-        void speak('よく きいてね').then(() => speakEnglish(q.englishSpeak))
+      if (domainId === 'english' && q.autoPlayPrompt && q.promptEnglishAudio) {
+        // 回答前に鳴らす英語は「聞く／会話の問いかけ」だけ。
+        // 絵→英語や日本語→英語で正解を先読みさせない。
+        void speak('よく きいてね').then(() => speakEnglish(q.promptEnglishAudio))
       } else speak(q.speak)
     }, 300)
   }
@@ -235,6 +248,15 @@ export default function ActivityPlayer({ task, onDone }) {
     })
   }
 
+  const finishSpeakingPractice = () => {
+    if (phaseRef.current !== 'practice') return
+    const word = pick(PRAISE)
+    setFeedback({ good: true, word })
+    phaseRef.current = 'feedback'
+    setPhase('feedback')
+    advanceAfterFeedback(word)
+  }
+
   // この問題が復習キューにある（＝克服チャンス）か
   const isConquerTarget = () =>
     !!reviewKeyFor(question) &&
@@ -299,15 +321,21 @@ export default function ActivityPlayer({ task, onDone }) {
   }
 
   const handleAnswerId = (answerId) => {
-    if (phase === 'feedback') return
+    if (phase !== 'answering') return
     const correct = answerId === question.answerId
     const conquer = recordAnswer(correct)
 
     if (correct) {
       setChosenId(answerId)
-      setPhase('feedback')
+      const needsSpeaking = isEnglish && question.practiceEnglish && qIndex === 0
+      setPhase(needsSpeaking ? 'practice' : 'feedback')
+      phaseRef.current = needsSpeaking ? 'practice' : 'feedback'
       comboRef.current += 1
       const combo = comboRef.current
+      if (needsSpeaking) {
+        sfx.correct()
+        return true
+      }
       if (conquer) {
         // まちがえたことのある問題を克服！ 金の演出＋ボーナス
         sfx.levelUp()
@@ -418,14 +446,22 @@ export default function ActivityPlayer({ task, onDone }) {
         ) : (
           <>
             <QuestionVisual question={question} />
-            {domainIdRef.current === 'english' && question.englishSpeak && <EnglishSpeakingPractice text={question.englishSpeak} onDone={() => dispatch({ type: 'ENGLISH_SPEAKING_DONE', wordId: String(question.itemKey || '').replace('en:', '').split('#')[0] })} />}
+            {isEnglish && phase === 'practice' && question.practiceEnglish && (
+              <EnglishSpeakingPractice
+                text={question.practiceEnglish}
+                onDone={() => {
+                  dispatch({ type: 'ENGLISH_SPEAKING_DONE', itemKey: String(question.itemKey || '').split('#')[0] })
+                  finishSpeakingPractice()
+                }}
+              />
+            )}
             {isChoice ? (
               <div className={grid}>
                 {question.choices.map((choice) => (
                   <button
                     key={choice.id}
                     className={choiceClass(choice)}
-                    disabled={phase === 'feedback' && choice.id !== chosenId}
+                    disabled={phase !== 'answering' && choice.id !== chosenId}
                     onClick={() => handleChoose(choice)}
                   >
                     {choice.emoji && <span className="choice__emoji">{choice.emoji}</span>}
@@ -438,7 +474,7 @@ export default function ActivityPlayer({ task, onDone }) {
               <QuestionInteraction
                 question={question}
                 onSubmit={handleAnswerId}
-                disabled={phase === 'feedback'}
+                disabled={phase !== 'answering'}
                 showHint={showAnswerHint && phase === 'answering'}
               />
             )}
