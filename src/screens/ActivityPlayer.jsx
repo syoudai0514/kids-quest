@@ -210,8 +210,8 @@ export default function ActivityPlayer({ task, onDone }) {
     shownAtRef.current = Date.now()
     return setTimeout(() => {
       if (domainId === 'english' && q.autoPlayPrompt && q.promptEnglishAudio) {
-        // 回答前に鳴らす英語は「聞く／会話の問いかけ」だけ。
-        // 絵→英語や日本語→英語で正解を先読みさせない。
+        // 音声問題に加え、英単語そのものを画面に出す問題では、文字と音を
+        // 直後に結び付ける。絵→英語や日本語→英語の正解先読みには使わない。
         void speak('よく きいてね').then(() => speakEnglish(q.promptEnglishAudio))
       } else speak(q.speak)
     }, 300)
@@ -373,7 +373,9 @@ export default function ActivityPlayer({ task, onDone }) {
 
     if (correct) {
       setChosenId(answerId)
-      const needsSpeaking = isEnglish && question.practiceEnglish && qIndex === 0
+      // 発音は年齢や問題番号で止めない。毎回出すが、スキップできるので
+      // 年長から高学年まで本人の気分で取り組める。
+      const needsSpeaking = isEnglish && question.practiceEnglish
       setPhase(needsSpeaking ? 'practice' : 'feedback')
       phaseRef.current = needsSpeaking ? 'practice' : 'feedback'
       comboRef.current += 1
@@ -499,7 +501,17 @@ export default function ActivityPlayer({ task, onDone }) {
                   dispatch({ type: 'ENGLISH_SPEAKING_DONE', itemKey: String(question.itemKey || '').split('#')[0] })
                   finishSpeakingPractice()
                 }}
+                onSkip={finishSpeakingPractice}
               />
+            )}
+            {isEnglish && question.promptEnglishAudio && (
+              <button
+                className="btn btn--ghost english-audio-replay"
+                type="button"
+                onClick={() => { void speakEnglish(question.promptEnglishAudio) }}
+              >
+                🔊 英語を もういちど きく
+              </button>
             )}
             {isChoice ? (
               <div className={grid}>

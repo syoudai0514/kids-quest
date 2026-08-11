@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { speakEnglish } from '../engine/tts.js'
 
 // 録音はこの画面だけの一時Blob。送信・永続化・自動採点はしない。
-export default function EnglishSpeakingPractice({ text, onDone }) {
+export default function EnglishSpeakingPractice({ text, onDone, onSkip }) {
   const recorder = useRef(null); const stream = useRef(null); const url = useRef(null); const timer = useRef(null); const player = useRef(null); const mounted = useRef(true); const completed = useRef(false)
   const [state, setState] = useState('idle'); const [audioUrl, setAudioUrl] = useState(null); const [note, setNote] = useState('おてほんを きいて、まねして いってみよう！')
   const stopTracks = () => { stream.current?.getTracks().forEach((t) => t.stop()); stream.current = null }
@@ -23,7 +23,7 @@ export default function EnglishSpeakingPractice({ text, onDone }) {
 
   return (
     <section className={'english-speaking-practice' + (state === 'recording' ? ' english-speaking-practice--recording' : '')} aria-label="まねして いってみよう">
-      <strong className="english-speaking-practice__title">🗣️ まねして いってみよう</strong>
+      <strong className="english-speaking-practice__title">🗣️ 発音チャレンジ（やらなくても OK）</strong>
       <div className="english-speaking-actions">
         <button className="btn btn--ghost english-speaking-action" onClick={() => speakEnglish(text)} type="button">🔊 おてほん</button>
         <button className="btn btn--primary english-speaking-action" onClick={state === 'recording' ? stop : start} type="button">
@@ -31,6 +31,7 @@ export default function EnglishSpeakingPractice({ text, onDone }) {
         </button>
         <button className="btn btn--ghost english-speaking-action" onClick={playOwnVoice} disabled={!audioUrl} type="button">▶️ じぶんのこえ</button>
         <button className="btn btn--sun english-speaking-action" onClick={finish} type="button">✅ まねできた！</button>
+        <button className="btn btn--ghost english-speaking-action" onClick={onSkip} type="button">⏭️ つぎへ</button>
       </div>
       <small className="english-speaking-practice__note">{note}</small>
     </section>

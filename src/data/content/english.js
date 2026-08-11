@@ -14,7 +14,9 @@ const rawWords = [
   ['action','run','はしる','🏃',0],['action','walk','あるく','🚶',0],['action','jump','ジャンプする','🦘',0],['action','swim','およぐ','🏊',1],['action','eat','たべる','😋',0],['action','drink','のむ','🥤',0],['action','sleep','ねる','😴',0],['action','read','よむ','📖',1],['action','write','かく','✍️',1],['action','play','あそぶ','🧸',0],['action','open','あける','🔓',1],['action','close','しめる','🔒',1],
   ['feeling','happy','うれしい','😊',0],['feeling','sad','かなしい','😢',0],['feeling','angry','おこっている','😠',1],['feeling','tired','つかれた','😴',1],['feeling','hungry','おなかがすいた','🍽️',1],['feeling','scared','こわい','😨',1],['feeling','good','げんき／よい','👍',0],['feeling','fine','げんきだよ','😄',1],
   ['weather','sunny','はれ','☀️',0],['weather','rainy','あめ','🌧️',0],['weather','cloudy','くもり','☁️',0],['weather','snowy','ゆき','❄️',1],['weather','hot','あつい','🥵',1],['weather','cold','さむい','🥶',1],['weather','spring','はる','🌸',1],['weather','summer','なつ','🌻',1],['weather','autumn','あき','🍁',1],['weather','winter','ふゆ','⛄',1],
-  ['time','Monday','げつようび','🌙',2],['time','Tuesday','かようび','🔥',2],['time','Wednesday','すいようび','💧',2],['time','Thursday','もくようび','🌳',2],['time','Friday','きんようび','✨',2],['time','Saturday','どようび','🪐',2],['time','Sunday','にちようび','☀️',2],['time','morning','あさ','🌅',1],['time','night','よる','🌙',1],['time','today','きょう','📅',1],
+  // 曜日を月・火・水などの絵で表すと、moon / fire 等の英単語と誤結合する。
+  // 曜日は共通のカレンダー表示にし、文字と発音で学ぶ（絵問題の対象外）。
+  ['time','Monday','げつようび','📅',2],['time','Tuesday','かようび','📅',2],['time','Wednesday','すいようび','📅',2],['time','Thursday','もくようび','📅',2],['time','Friday','きんようび','📅',2],['time','Saturday','どようび','📅',2],['time','Sunday','にちようび','📅',2],['time','morning','あさ','🌅',1],['time','night','よる','🌙',1],['time','today','きょう','📅',1],
   ['nature','sun','たいよう','☀️',0],['nature','moon','つき','🌙',0],['nature','star','ほし','⭐',0],['nature','tree','き','🌳',0],['nature','flower','はな（お花）','🌸',0],['nature','mountain','やま','⛰️',1],['nature','sea','うみ','🌊',1],['nature','sky','そら','🌤️',1],['nature','rainbow','にじ','🌈',1],['nature','fire','ひ','🔥',1],
   ['place','park','こうえん','🏞️',1],['place','station','えき','🚉',2],['place','shop','おみせ','🏪',1],['place','hospital','びょういん','🏥',2],['place','zoo','どうぶつえん','🦁',1],['place','library','としょかん','📚',2],['place','bathroom','おてあらい','🚻',1],['place','kitchen','だいどころ','🍳',1],
   ['vehicle','car','くるま','🚗',0],['vehicle','bus','バス','🚌',0],['vehicle','train','でんしゃ','🚃',1],['vehicle','airplane','ひこうき','✈️',1],['vehicle','boat','ふね','🚢',1],['vehicle','bicycle','じてんしゃ','🚲',1],['vehicle','ambulance','きゅうきゅうしゃ','🚑',3],['vehicle','fire truck','しょうぼうしゃ','🚒',3],
@@ -95,6 +97,18 @@ export function chooseEnglishStudyItem(params = {}) {
 function wordBase(word) {
   return { domain: 'english', itemKey: `enw:${word.id}`, answerWord: { text: word.english }, practiceEnglish: word.speak, explain: `${word.english} は「${word.japanese}」だよ` }
 }
+
+// 絵文字は便利な反面、🌙=moon / Monday のように別の単語を誤って結び付ける。
+// 「聞く」「絵から英語」を出すのは、教材全体でその絵が一つの意味だけを表す語に
+// 限定する。曜日は記号ではなく文字の問題で学ぶ。
+function hasUnambiguousPicture(word) {
+  return word.category !== 'time' && ENGLISH_WORDS.filter((entry) => entry.emoji === word.emoji).length === 1
+}
+
+function pictureSafeWords(params) {
+  return eligibleWords(params).filter(hasUnambiguousPicture)
+}
+
 function displayEnglish(word) {
   const same = ENGLISH_WORDS.filter((entry) => entry.english === word.english)
   return same.length > 1 ? `${word.english}（${ENGLISH_CATEGORIES[word.category]}）` : word.english
@@ -107,7 +121,8 @@ function pictureQuestion(word, pool, params) {
   return { ...wordBase(word), type: 'choice', form: 'picture-word', visual: { kind: 'emoji', emoji: word.emoji }, instruction: 'えに あう えいごを えらぼう', speak: 'この えは、えいごで なんて いう？', choices: makeChoices(word, pool, { label: 'english', count: params.choiceCount || 4 }), answerId: word.id }
 }
 function meaningQuestion(word, pool, params) {
-  return { ...wordBase(word), type: 'choice', form: 'word-meaning', visual: { kind: 'word', text: displayEnglish(word) }, instruction: 'いみを えらぼう', speak: 'えいごの いみを えらぼう。', choices: makeChoices(word, pool, { label: 'japanese', count: params.choiceCount || 4 }), answerId: word.id }
+  // 英単語そのものが問題文なので、音は正解を余計に教えるヒントにはならない。
+  return { ...wordBase(word), type: 'choice', form: 'word-meaning', visual: { kind: 'word', text: displayEnglish(word) }, instruction: 'いみを えらぼう', speak: 'えいごの いみを えらぼう。', promptEnglishAudio: word.speak, autoPlayPrompt: true, choices: makeChoices(word, pool, { label: 'japanese', count: params.choiceCount || 4 }), answerId: word.id }
 }
 function japaneseQuestion(word, pool, params) {
   return { ...wordBase(word), type: 'choice', form: 'japanese-word', visual: { kind: 'bigtext', text: word.japanese }, instruction: 'えいごを えらぼう', speak: `${word.japanese} は どの えいご？`, choices: makeChoices(word, pool, { label: 'english', count: params.choiceCount || 4 }), answerId: word.id }
@@ -118,7 +133,7 @@ function spellingQuestion(word) {
   const answer = word.english[index].toLowerCase()
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const options = shuffle([answer, ...shuffle(alphabet.filter((letter) => letter !== answer)).slice(0, 3)])
-  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
+  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', promptEnglishAudio: word.speak, autoPlayPrompt: true, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
 }
 function alphabetQuestion(params = {}) {
   const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -169,7 +184,9 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
     requestedForm = grade >= 5 ? 'word-order' : 'picture-word'
   }
   const forcedItemPool = requestedForm
-    ? (requestedForm === 'word-order'
+    ? (requestedForm === 'listen-picture' || requestedForm === 'picture-word'
+      ? pictureSafeWords(params)
+      : requestedForm === 'word-order'
       ? eligiblePhrases(params).filter((phrase) => phrase.english.replace(/[.!?]/g, '').trim().split(/\s+/).length >= 2)
       : requestedForm === 'conversation' ? eligiblePhrases(params) : eligibleWords(params))
     : null
@@ -183,12 +200,15 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
     if (requestedForm === 'word-order' || (!requestedForm && grade >= 5 && Math.random() < 0.45)) return orderQuestion(phrase) || phraseQuestion(phrase, params)
     return phraseQuestion(phrase, params)
   }
-  const pool = eligibleWords(params)
   const modes = params.englishAudioAvailable === false
     ? grade <= 0 ? ['picture', 'alphabet'] : grade <= 2 ? ['picture', 'meaning', 'spelling'] : ['picture', 'meaning', 'japanese', 'spelling']
     : grade <= 0 ? ['listen', 'picture', 'alphabet'] : grade <= 2 ? ['listen', 'picture', 'meaning', 'spelling'] : grade <= 4 ? ['listen', 'picture', 'meaning', 'japanese'] : ['listen', 'meaning', 'japanese', 'spelling']
   const forceMode = { 'listen-picture': 'listen', 'picture-word': 'picture', 'word-meaning': 'meaning', 'japanese-word': 'japanese', spelling: 'spelling', alphabet: 'alphabet' }[requestedForm]
-  const mode = forceMode || modes[Math.floor(Math.random() * modes.length)]
+  let mode = forceMode || modes[Math.floor(Math.random() * modes.length)]
+  // とっくん・試練のように形式計画を持たない出題経路でも、あいまいな絵を
+  // 使わせない。英単語を見て意味を選ぶ形式へ安全に切り替える。
+  if ((mode === 'listen' || mode === 'picture') && !hasUnambiguousPicture(word)) mode = 'meaning'
+  const pool = mode === 'listen' || mode === 'picture' ? pictureSafeWords(params) : eligibleWords(params)
   if (mode === 'listen') return listeningQuestion(word, pool, params)
   if (mode === 'picture') return pictureQuestion(word, pool, params)
   if (mode === 'meaning') return meaningQuestion(word, pool, params)

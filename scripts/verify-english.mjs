@@ -12,6 +12,7 @@ const expectedForms = {
   3: ['listen-picture', 'picture-word', 'word-meaning', 'japanese-word', 'conversation'],
   5: ['listen-picture', 'word-meaning', 'japanese-word', 'spelling', 'conversation', 'word-order']
 }
+const englishPromptForms = new Set(['listen-picture', 'conversation', 'word-meaning', 'spelling'])
 
 must(ENGLISH_WORDS.length >= 200, `単語数が不足: ${ENGLISH_WORDS.length}`)
 must(ENGLISH_PHRASES.length >= 50, `会話表現数が不足: ${ENGLISH_PHRASES.length}`)
@@ -41,8 +42,11 @@ function verifyQuestion(q, grade, audioAvailable) {
     must(q.answerId === q.correctOrder.join('|'), `小${grade}: 語順問題の正解が不正`)
     must(new Set(q.items.map((item) => item.id)).size === q.items.length, `小${grade}: 語順トークン重複`)
   } else fail(`小${grade}: 未対応の問題形式 ${q.type}`)
-  if (!['listen-picture', 'conversation'].includes(q.form)) {
+  if (!englishPromptForms.has(q.form)) {
     must(!q.autoPlayPrompt && !q.promptEnglishAudio, `小${grade}: 回答前に正解音声が流れる (${q.form})`)
+  }
+  if (['word-meaning', 'spelling'].includes(q.form)) {
+    must(q.autoPlayPrompt && q.promptEnglishAudio === q.answerWord?.text, `小${grade}: 文字問題で英語の音が再生されない (${q.form})`)
   }
   if (!audioAvailable) must(!['listen-picture', 'conversation'].includes(q.form), `小${grade}: 音声なしでリスニングが生成された`)
   if (q.form === 'alphabet') {
@@ -50,6 +54,31 @@ function verifyQuestion(q, grade, audioAvailable) {
     must(!q.practiceEnglish, 'アルファベット問題に無関係な発音練習がある')
   }
   if (q.form === 'spelling' && /\s/.test(q.answerWord?.text || '')) must(/\s/.test(q.visual?.text || ''), '複数語スペルの空白が消えた')
+}
+
+// 絵だけで意味が一つに決まらない語は、聞く／絵から英語の教材に混ぜない。
+// 例: 🌙=moon と Monday。曜日や重複絵文字は、文字と音で学ぶ。
+const pictureSafe = (word) => word.category !== 'time' && ENGLISH_WORDS.filter((other) => other.emoji === word.emoji).length === 1
+for (const weekday of ENGLISH_WORDS.filter((word) => word.category === 'time' && /day$/i.test(word.english))) {
+  must(weekday.emoji === '📅', `${weekday.english}: 曜日を別の英単語と結び付ける絵で表示している`)
+}
+for (const word of ENGLISH_WORDS) {
+  if (!pictureSafe(word)) continue
+  must(word.emoji, `${word.english}: 絵がないのに絵問題の対象になっている`)
+}
+for (const form of ['listen-picture', 'picture-word']) {
+  for (let i = 0; i < 500; i++) {
+    const q = generateEnglishQuestion({ grade: 6, englishAudioAvailable: true, forceForm: form })
+    const answer = ENGLISH_WORDS.find((word) => `enw:${word.id}` === q.itemKey)
+    must(answer && pictureSafe(answer), `${form}: あいまいな絵を教材にした (${answer?.english || q.itemKey})`)
+    must(answer.english !== 'Monday', `${form}: 月の絵を Monday と結び付ける問題が生成された`)
+  }
+}
+for (let i = 0; i < 1000; i++) {
+  const q = generateEnglishQuestion({ grade: 6, englishAudioAvailable: true })
+  if (!['listen-picture', 'picture-word'].includes(q.form)) continue
+  const answer = ENGLISH_WORDS.find((word) => `enw:${word.id}` === q.itemKey)
+  must(answer && pictureSafe(answer), `${q.form}: 通常出題であいまいな絵を教材にした (${answer?.english || q.itemKey})`)
 }
 
 for (let grade = 0; grade <= 6; grade++) {
