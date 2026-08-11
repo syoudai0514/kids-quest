@@ -10,13 +10,14 @@
     "preview": "vite preview",
     "postinstall": "patch-package",
     "test:tts-cache": "node scripts/verify-narrator-cache.mjs",
+    "test:learning-integrity": "node scripts/verify-learning-integrity.mjs",
     "test:tts-dictionary": "node scripts/verify-dictionary-phonemizer.mjs",
     "test:tts-dictionary-full": "node scripts/verify-piper-dictionary-synthesis.mjs",
     "test:tts-patch": "node scripts/verify-piper-speaker-feed.mjs",
     "test:tts-full": "node scripts/verify-piper-dictionary-synthesis.mjs",
     "test:content": "node scripts/verify-content.mjs",
     "test:english": "node scripts/verify-english.mjs",
-    "check": "npm run test:content && npm run test:english && npm run test:tts-cache && npm run build"
+    "check": "npm run test:content && npm run test:english && npm run test:learning-integrity && npm run test:tts-cache && npm run build"
   },
   "dependencies": {
     "onnxruntime-web": "^1.24.3",
