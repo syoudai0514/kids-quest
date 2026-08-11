@@ -10,6 +10,7 @@
 // ============================================================
 
 import { domainsForGrade } from './activities.js'
+import { dayNumber } from './srs.js'
 
 export const QUESTIONS_PER_TASK = 4 // 1タスクの問題数（1〜2分目安）
 export const CORE_TASK_COUNT = 5 // コアのタスク数（約15分）
@@ -26,10 +27,10 @@ function makeTask(domainId, kind) {
 }
 
 // その学年の教科を順番に割り当てる（こくご→かきとり→さんすう→…と自動ローテ）
-function pickDomainId(i, grade = 0) {
+function pickDomainId(i, grade = 0, today = dayNumber()) {
   const doms = domainsForGrade(grade)
   if (!doms.length) return 'yomu'
-  return doms[i % doms.length].id
+  return doms[(i + today) % doms.length].id
 }
 
 // コアミッションは その学年の教科を ひととおり まわす
