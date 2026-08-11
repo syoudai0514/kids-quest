@@ -65,6 +65,18 @@ const BANK = {
   ]
 }
 
+// 進級台帳の単元を、実際の設問バンクへ直接付与する。
+const UNIT_KEYS = {
+  3: ['map-symbols','map-symbols','map-symbols','map-symbols','safety','safety','shops','old-tools','old-tools','public-safety','public-safety'],
+  4: ['prefectures','prefectures','prefectures','prefectures','prefectures','waste-water','waste-water','waste-water','disasters','disasters','maps'],
+  5: ['land','land','land','land','agriculture','agriculture','fishing','industry','industry','information','forests'],
+  6: ['history','history','history','history','politics','politics','constitution','international','international','international','society']
+}
+for (const [grade, items] of Object.entries(BANK)) {
+  items.forEach((item, index) => { item.unitId = `social:${grade}:${UNIT_KEYS[grade][index] || `topic-${index + 1}`}` })
+}
+export const SHAKAI_UNIT_IDS_BY_GRADE = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, [...new Set(items.map((item) => item.unitId))]]))
+
 function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -91,9 +103,7 @@ function pickFresh(pool) {
 
 function poolForGrade(grade) {
   const g = Math.max(3, Math.min(6, grade))
-  const pool = [...BANK[g]]
-  if (BANK[g - 1]) pool.push(...BANK[g - 1].slice(0, 4))
-  return pool
+  return [...BANK[g]]
 }
 
 const ALL = Object.values(BANK).flat()
@@ -103,6 +113,8 @@ function build(item, cc) {
   const opts = shuffle([item.a, ...shuffle(item.d).slice(0, Math.max(2, cc - 1))])
   return {
     domain: 'shakai',
+    unitId: item.unitId,
+    skillId: item.unitId,
     type: 'choice',
     itemKey: `c:${item.q}`,
     visual: { kind: 'bigtext', text: '🗾' },
@@ -120,6 +132,11 @@ export function generateShakaiQuestion(params, reviewKey = null) {
   if (reviewKey && reviewKey.startsWith('c:')) {
     const it = BY_Q[reviewKey.slice(2)]
     if (it) return build(it, cc)
+  }
+  if (params.unitId) {
+    const pool = ALL.filter((item) => item.unitId === params.unitId)
+    if (pool.length) return build(pickFresh(pool), cc)
+    return null
   }
   return build(pickFresh(poolForGrade(params.grade || 3)), cc)
 }
