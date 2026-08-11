@@ -70,6 +70,19 @@ const BANK = {
   ]
 }
 
+// 問題を足したときに単元外へ落ちないよう、設問ごとの単元を教材データ側に持つ。
+// 同じ概念を確認する2問程度を1単元として、偶然の一問正解では終わらせない。
+const UNIT_KEYS = {
+  3: ['insects','insects','insects','insects','plants','plants','light-shadow','light-shadow','magnet','magnet','sound','rubber-wind'],
+  4: ['air-water','air-water','electricity','electricity','moon-stars','moon-stars','heat','heat','water-states','water-states','water-states','living-things'],
+  5: ['germination-growth','germination-growth','medaka','pendulum','electromagnet','electromagnet','running-water','running-water','weather','weather','flowers','flowers'],
+  6: ['combustion','combustion','combustion','plant-sunlight','plant-sunlight','body','body','body','lever','lever','solutions','earth']
+}
+for (const [grade, items] of Object.entries(BANK)) {
+  items.forEach((item, index) => { item.unitId = `science:${grade}:${UNIT_KEYS[grade][index] || `topic-${index + 1}`}` })
+}
+export const RIKA_UNIT_IDS_BY_GRADE = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, [...new Set(items.map((item) => item.unitId))]]))
+
 function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -94,12 +107,11 @@ function pickFresh(pool) {
   return chosen
 }
 
-// 小3〜6。その学年＋下の学年からも少し出す（復習になる）
+// 小3〜6。前学年の内容はSRS復習で扱う。通常出題に混ぜると、その学年の
+// 単元台帳に無い設問が進級記録へ混ざるため、ここは現学年だけにする。
 function poolForGrade(grade) {
   const g = Math.max(3, Math.min(6, grade))
-  const pool = [...BANK[g]]
-  if (BANK[g - 1]) pool.push(...BANK[g - 1].slice(0, 4))
-  return pool
+  return [...BANK[g]]
 }
 
 const ALL = Object.values(BANK).flat()
@@ -109,6 +121,8 @@ function build(item, cc) {
   const opts = shuffle([item.a, ...shuffle(item.d).slice(0, Math.max(2, cc - 1))])
   return {
     domain: 'rika',
+    unitId: item.unitId,
+    skillId: item.unitId,
     type: 'choice',
     itemKey: `r:${item.q}`,
     visual: { kind: 'bigtext', text: '🔬' },
@@ -126,6 +140,11 @@ export function generateRikaQuestion(params, reviewKey = null) {
   if (reviewKey && reviewKey.startsWith('r:')) {
     const it = BY_Q[reviewKey.slice(2)]
     if (it) return build(it, cc)
+  }
+  if (params.unitId) {
+    const pool = ALL.filter((item) => item.unitId === params.unitId)
+    if (pool.length) return build(pickFresh(pool), cc)
+    return null
   }
   return build(pickFresh(poolForGrade(params.grade || 3)), cc)
 }
