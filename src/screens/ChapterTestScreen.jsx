@@ -146,6 +146,24 @@ export default function ChapterTestScreen({ onBack }) {
             {!passed && <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>{result.scorePassed && result.missingUnits.length ? <>しれんの もんだいは できたよ！<br />あと {result.missingUnits.length}この たんげんを、べつの日にも とっくんしよう。</> : <>まちがえた もんだいは「とっくん」に はいったよ。<br />おぼえてから、また ちょうせんしよう！</>}</div>}
             {passed && grade < MAX_GRADE && <div className="pill" style={{ marginTop: 12, background: 'var(--good)', color: '#10231c', border: 'none' }}>🔓 {gradeOf(grade + 1).short} が あいた！</div>}
           </div>
+          {resultsRef.current.some((r) => !r.correct && r.question) && (
+            <div className="card" style={{ width: 'min(560px,94vw)', textAlign: 'left' }}>
+              <div style={{ fontWeight: 900, marginBottom: 10, fontSize: 'clamp(16px,3vw,20px)' }}>📖 ふりかえり</div>
+              {resultsRef.current.filter((r) => !r.correct && r.question).map((r, i) => (
+                <div key={i} style={{ marginBottom: i < resultsRef.current.length - 1 ? 14 : 0 }}>
+                  <div style={{ fontWeight: 800, fontSize: 14 }}>{r.question.instruction}</div>
+                  {r.question.domain === 'english' && r.question.answerWord?.text && (
+                    <div className="explain-card__spelling" style={{ fontSize: 'clamp(18px,4vw,26px)', margin: '4px 0' }}>
+                      {r.question.answerWord.text}
+                    </div>
+                  )}
+                  {r.question.explain && (
+                    <div className="muted" style={{ fontSize: 13, lineHeight: 1.5 }}>{r.question.explain}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <button className="btn btn--primary btn--big" onClick={onBack}>🏠 もどる</button>
         </div>
       </div>

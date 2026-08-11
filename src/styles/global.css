@@ -434,6 +434,47 @@ body {
   animation: twinkle 1s ease-in-out infinite;
 }
 
+/* ----- 誤答時の解説カード（間違えたときに学べるように、音声だけでなく
+   画面にも残す。英語はスペルを大きく、他教科は説明文を出す） ----- */
+.explain-card {
+  width: min(560px, 92vw);
+  margin-top: 10px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: rgba(255, 209, 102, 0.16);
+  border: 3px solid var(--accent-2);
+  text-align: center;
+  animation: pop 0.25s ease;
+}
+.explain-card__spelling {
+  font-family: 'Courier New', monospace;
+  font-size: clamp(26px, 6vw, 42px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--accent-2);
+  margin-bottom: 4px;
+}
+.explain-card__text {
+  font-size: clamp(15px, 3vw, 20px);
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--text);
+}
+.explain-card__column {
+  font-family: 'Courier New', monospace;
+  font-size: clamp(20px, 4.4vw, 30px);
+  font-weight: 900;
+  line-height: 1.35;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 12px;
+  padding: 8px 14px;
+  margin: 8px auto;
+  display: inline-block;
+  text-align: right;
+  white-space: pre;
+}
+
 /* ----- 手を動かす問題（テンキー・時計・ならべかえ・グループ分け） ----- */
 .interaction-wrap {
   width: min(720px, 94vw);
@@ -850,6 +891,24 @@ body {
   font-size: clamp(30px, 6.5vw, 60px);
   font-weight: 900;
   text-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+}
+/* 誤答から正解できたときの、控えめな復習キャプション（誤答時の解説カード
+   ほど目立たせない＝強調は誤答時のほうに寄せる） */
+.feedback__explain {
+  max-width: min(480px, 88vw);
+  font-size: clamp(13px, 2.4vw, 16px);
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.5;
+}
+.feedback__explain-spelling {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: clamp(18px, 3.6vw, 26px);
+  font-weight: 900;
+  color: var(--accent);
+  margin-bottom: 2px;
 }
 @keyframes pop {
   0% { transform: scale(0.4); opacity: 0; }

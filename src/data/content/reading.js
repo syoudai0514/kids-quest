@@ -320,6 +320,13 @@ function pickDistinct(pool, n, exclude) {
   return out
 }
 
+const THEME_LABEL = {
+  space: 'うちゅうの なかま',
+  dino: 'きょうりゅうの なかま',
+  animal: 'どうぶつの なかま',
+  life: 'せいかつの なかま'
+}
+
 function wordQuestion(answer, params) {
   const { level, choiceCount, allowKatakana, allowHard, grade } = params
   const pool = poolForLevel(level, allowKatakana, allowHard, grade)
@@ -339,7 +346,7 @@ function wordQuestion(answer, params) {
       answerId: answer.text,
       choices: options.map((w) => ({ id: w.text, emoji: w.emoji })),
       answerWord: answer,
-      explain: `こたえは これ。${answer.text}だよ`
+      explain: `こたえは これ。「${answer.text}」の えだよ。${THEME_LABEL[answer.theme] || 'ことば'}だね`
     }
   }
   return {
@@ -352,7 +359,7 @@ function wordQuestion(answer, params) {
     answerId: answer.text,
     choices: options.map((w) => ({ id: w.text, label: w.text, speak: w.text })),
     answerWord: answer,
-    explain: `これは 「${answer.text}」。 ${answer.text}だよ`
+    explain: `これは「${answer.text}」。${THEME_LABEL[answer.theme] || 'ことば'}だよ。さいしょの もじは「${answer.text[0]}」`
   }
 }
 

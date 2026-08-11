@@ -9,7 +9,7 @@
 // ============================================================
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useGame, partnerLevel, PARTNER_COLORS, equippedWeapon } from '../state/GameContext.jsx'
+import { useGame, partnerLevel, PARTNER_COLORS, equippedWeapon, ticketCount } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, getWildMonsters, MONSTERS } from '../data/monsters.js'
 import { rollScheduledWeaponReward, RARITIES } from '../data/weapons.js'
 import {
@@ -45,7 +45,7 @@ export default function BattleScreen({ onBack }) {
       : stage.colors
 
   const playsLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
-  const canPlay = playsLeft > 0 || state.battle.tickets > 0
+  const canPlay = playsLeft > 0 || ticketCount(state.battle) > 0
 
   const ELITE_CHANCE = 0.15 // 強敵は「ときどき」。通常戦の成功体験を中心にする。
 
@@ -342,7 +342,7 @@ export default function BattleScreen({ onBack }) {
         className="battle-header"
         onBack={onBack}
         title="⚔️ バトル"
-        right={<div className="pill">のこり {playsLeft + state.battle.tickets}</div>}
+        right={<div className="pill">のこり {playsLeft + ticketCount(state.battle)}</div>}
       />
 
       <div className="center-col battle-arena" style={{ justifyContent: 'space-between', paddingTop: 4 }}>

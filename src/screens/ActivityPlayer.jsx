@@ -83,6 +83,7 @@ export default function ActivityPlayer({ task, onDone }) {
   const [chosenId, setChosenId] = useState(null)
   const [wrongIds, setWrongIds] = useState([])
   const [showAnswerHint, setShowAnswerHint] = useState(false)
+  const [explainReveal, setExplainReveal] = useState(null)
   const [feedback, setFeedback] = useState(null)
   const [supportHint, setSupportHint] = useState(false)
   const [reinforcementCount, setReinforcementCount] = useState(0)
@@ -224,6 +225,7 @@ export default function ActivityPlayer({ task, onDone }) {
     setChosenId(null)
     setWrongIds([])
     setShowAnswerHint(false)
+    setExplainReveal(null)
     setFeedback(null)
     wrongCountRef.current = 0
     firstAttemptRef.current = true
@@ -397,17 +399,23 @@ export default function ActivityPlayer({ task, onDone }) {
       phaseRef.current = 'feedback'
       comboRef.current += 1
       const combo = comboRef.current
+      // 一度でも間違えてから正解できた問題は、復習の意味で解説も添える
+      // （テンポを保つため、一発正解のときは出さない）。
+      const learnedExplain =
+        wrongIds.length > 0 && question.explain
+          ? { text: question.explain, spelling: isEnglish ? question.answerWord?.text : null }
+          : null
       if (conquer) {
         // まちがえたことのある問題を克服！ 金の演出＋ボーナス
         sfx.levelUp()
-        setFeedback({ good: true, word: 'ちからに なった！', gold: true })
+        setFeedback({ good: true, word: 'ちからに なった！', gold: true, explain: learnedExplain })
         advanceAfterFeedback('まちがいが ちからに なった！ ボーナス ゲット！', {
           english: isEnglish ? question.answerWord?.text : ''
         })
       } else {
         sfx.correct()
         const word = combo >= 2 ? `${combo}れんぞく！` : pick(PRAISE)
-        setFeedback({ good: true, word })
+        setFeedback({ good: true, word, explain: learnedExplain })
         advanceAfterFeedback(combo >= 2 ? `${combo}れんぞく せいかい！ すごい！` : word, {
           english: isEnglish ? question.answerWord?.text : ''
         })
@@ -422,9 +430,17 @@ export default function ActivityPlayer({ task, onDone }) {
 
       if (wrongCountRef.current >= 2) {
         setShowAnswerHint(true)
+        // 苦手支援の2ミス目: 正解を光らせるだけでなく、解説を画面にも残す
+        // （音声だけだと、特に英語のスペルは聞いただけでは学べない）。
+        setExplainReveal({
+          text: question.explain || '',
+          spelling: isEnglish ? question.answerWord?.text : null,
+          column: question.explainColumn || null
+        })
         if (isEnglish) {
-          // explain は英語と日本語が混在する教材文なので、日本語ナビへ渡さない。
-          // 答えの英語だけをネイティブ音声で聞かせ、その後は日本語で案内する。
+          // explain は英語と日本語が混在する教材文なので、音声（日本語ナビ）へは
+          // 渡さない。答えの英語はネイティブ音声で読む。意味・解説は画面の
+          // 解説カード（explainReveal）に文字で出すので、そちらで伝える。
           void speakEnglishThenJapanese(question.answerWord?.text, 'こたえを きいて、ひかってる ところを おしてみよう', { rate: 0.88 })
         } else speak(`${question.explain || ''}。 ひかってる ところを おしてみよう`, { rate: 0.88 })
       } else {
@@ -456,6 +472,7 @@ export default function ActivityPlayer({ task, onDone }) {
     const ans = question.choices?.find((c) => c.id === question.answerId)
     const ansText = question.answerWord?.text || ans?.label || ''
     setFeedback({ good: false, word: 'いっしょに おぼえよう' })
+    setExplainReveal({ text: question.explain || '', spelling: isEnglish ? ansText : null, column: question.explainColumn || null })
     advanceAfterFeedback(
       isEnglish
         ? 'だいじょうぶ。こたえを きいて、おぼえよう。つぎは できるよ！'
@@ -559,6 +576,15 @@ export default function ActivityPlayer({ task, onDone }) {
                 showHint={showAnswerHint && phase === 'answering'}
               />
             )}
+            {explainReveal && (explainReveal.spelling || explainReveal.text || explainReveal.column) && (
+              <div className="explain-card">
+                {explainReveal.spelling && (
+                  <div className="explain-card__spelling">{explainReveal.spelling}</div>
+                )}
+                {explainReveal.column && <pre className="explain-card__column">{explainReveal.column}</pre>}
+                {explainReveal.text && <div className="explain-card__text">{explainReveal.text}</div>}
+              </div>
+            )}
             {phase === 'answering' && (
               <button
                 className="btn btn--ghost dontknow-btn"
@@ -584,6 +610,12 @@ export default function ActivityPlayer({ task, onDone }) {
           >
             {feedback.word}
           </div>
+          {feedback.explain && (
+            <div className="feedback__explain">
+              {feedback.explain.spelling && <span className="feedback__explain-spelling">{feedback.explain.spelling}</span>}
+              {feedback.explain.text}
+            </div>
+          )}
         </div>
       )}
     </div>

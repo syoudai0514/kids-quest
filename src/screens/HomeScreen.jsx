@@ -14,7 +14,8 @@ import {
   masteryProgress,
   missedCount,
   equippedWeapon,
-  starTrialInfo
+  starTrialInfo,
+  ticketCount
 } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
@@ -75,7 +76,8 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const okawariLeft = OKAWARI_MAX - daily.okawariIndex
 
   const battlePlaysLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
-  const canBattle = battlePlaysLeft > 0 || state.battle.tickets > 0
+  const battleTickets = ticketCount(state.battle)
+  const canBattle = battlePlaysLeft > 0 || battleTickets > 0
 
   const [bubble, setBubble] = useState(null)
   const [showGradePicker, setShowGradePicker] = useState(false)
@@ -278,9 +280,9 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__emoji">⚔️</span>
             <span className="menu-tile__label">バトル</span>
             <span className="menu-tile__sub">
-              {canBattle ? `あと ${battlePlaysLeft + state.battle.tickets}かい` : 'ついかもんだいで ふやせる！'}
+              {canBattle ? `あと ${battlePlaysLeft + battleTickets}かい` : 'ついかもんだいで ふやせる！'}
             </span>
-            {state.battle.tickets > 0 && <span className="notice-badge">🎟{state.battle.tickets}</span>}
+            {battleTickets > 0 && <span className="notice-badge">🎟{battleTickets}</span>}
           </button>
 
           <button

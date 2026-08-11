@@ -78,6 +78,15 @@ function emojiRow(emoji, n) {
   return emoji.repeat(n)
 }
 
+// 計算問題の解説カード用に、位をそろえた筆算をモノスペーステキストで組み立てる。
+// 話しことば（explain）とは別の explainColumn として持たせ、画面にだけ出す
+// （記号だらけの罫線をそのまま読み上げさせないため）。
+function columnBlock(a, b, op, result) {
+  const width = Math.max(String(a).length, String(b).length, String(result).length)
+  const pad = (n) => String(n).padStart(width, ' ')
+  return `  ${pad(a)}\n${op} ${pad(b)}\n${'－'.repeat(width + 2)}\n  ${pad(result)}`
+}
+
 // ---- 出題タイプごとのビルダー ----
 const BUILDERS = {
   // 年長〜
@@ -236,7 +245,8 @@ const BUILDERS = {
       instruction: `${a} ＋ ${b} ＝ ？`,
       speak: `${a} たす ${b} は いくつ？`,
       answer: a + b, cc: p.cc, spread: 3, say: `こたえは ${a + b}`,
-      explain: `${a}に ${10 - a}を たして 10。のこりは ${b - (10 - a)}。だから ${a + b}`
+      explain: `${a}に ${10 - a}を たして 10。のこりは ${b - (10 - a)}。だから ${a + b}`,
+      explainColumn: columnBlock(a, b, '＋', a + b)
     })
   },
   subBorrow(p) {
@@ -247,7 +257,8 @@ const BUILDERS = {
       instruction: `${a} − ${b} ＝ ？`,
       speak: `${a} ひく ${b} は いくつ？`,
       answer: a - b, cc: p.cc, spread: 3, say: `こたえは ${a - b}`,
-      explain: `10から ${b}を ひいて、のこりと あわせると ${a - b}`
+      explain: `10から ${b}を ひいて、のこりと あわせると ${a - b}`,
+      explainColumn: columnBlock(a, b, '－', a - b)
     })
   },
   compareNum(p) {
@@ -279,22 +290,37 @@ const BUILDERS = {
   // 小2〜
   add2digit(p) {
     const a = rng(12, 78), b = rng(11, 99 - a)
+    const aOnes = a % 10, aTens = Math.floor(a / 10)
+    const bOnes = b % 10, bTens = Math.floor(b / 10)
+    const onesSum = aOnes + bOnes
+    const carry = onesSum >= 10 ? 1 : 0
+    const explain = carry
+      ? `一のくらい: ${aOnes}+${bOnes}=${onesSum}。${onesSum - 10}を書いて1くり上げ。十のくらい: ${aTens}+${bTens}+1=${aTens + bTens + 1}。こたえは ${a + b}`
+      : `一のくらい: ${aOnes}+${bOnes}=${onesSum}。十のくらい: ${aTens}+${bTens}=${aTens + bTens}。こたえは ${a + b}`
     return numQ('add2digit', {
       visual: { kind: 'bigtext', text: `${a} ＋ ${b} ＝ ❓` },
       instruction: `${a} ＋ ${b} ＝ ？`,
       speak: `${a} たす ${b} は いくつ？`,
       answer: a + b, cc: p.cc, spread: 10, say: `こたえは ${a + b}`,
-      explain: `一のくらいから けいさんしよう。こたえは ${a + b}`
+      explain,
+      explainColumn: columnBlock(a, b, '＋', a + b)
     })
   },
   sub2digit(p) {
     const a = rng(30, 99), b = rng(11, a - 5)
+    const aOnes = a % 10, aTens = Math.floor(a / 10)
+    const bOnes = b % 10, bTens = Math.floor(b / 10)
+    const borrow = aOnes < bOnes
+    const explain = borrow
+      ? `一のくらい: ${aOnes}から${bOnes}は ひけないので、十のくらいから 10かりる。${aOnes}+10-${bOnes}=${aOnes + 10 - bOnes}。十のくらい: ${aTens}-1-${bTens}=${aTens - 1 - bTens}。こたえは ${a - b}`
+      : `一のくらい: ${aOnes}-${bOnes}=${aOnes - bOnes}。十のくらい: ${aTens}-${bTens}=${aTens - bTens}。こたえは ${a - b}`
     return numQ('sub2digit', {
       visual: { kind: 'bigtext', text: `${a} − ${b} ＝ ❓` },
       instruction: `${a} − ${b} ＝ ？`,
       speak: `${a} ひく ${b} は いくつ？`,
       answer: a - b, cc: p.cc, spread: 10, say: `こたえは ${a - b}`,
-      explain: `一のくらいから けいさんしよう。こたえは ${a - b}`
+      explain,
+      explainColumn: columnBlock(a, b, '－', a - b)
     })
   },
   kuku(p) {
@@ -338,22 +364,37 @@ const BUILDERS = {
   },
   add3digit(p) {
     const a = rng(120, 780), b = rng(110, 999 - a)
+    const aOnes = a % 10, aTens = Math.floor(a / 10) % 10, aHundreds = Math.floor(a / 100)
+    const bOnes = b % 10, bTens = Math.floor(b / 10) % 10, bHundreds = Math.floor(b / 100)
+    const onesSum = aOnes + bOnes
+    const carry1 = onesSum >= 10 ? 1 : 0
+    const tensSum = aTens + bTens + carry1
+    const carry2 = tensSum >= 10 ? 1 : 0
+    const explain = `一のくらい: ${aOnes}+${bOnes}=${onesSum}${carry1 ? '（1くり上げ）' : ''}。十のくらい: ${aTens}+${bTens}${carry1 ? '+1' : ''}=${tensSum}${carry2 ? '（1くり上げ）' : ''}。百のくらい: ${aHundreds}+${bHundreds}${carry2 ? '+1' : ''}=${aHundreds + bHundreds + carry2}。こたえは ${a + b}`
     return numQ('add3digit', {
       visual: { kind: 'bigtext', text: `${a} ＋ ${b} ＝ ❓` },
       instruction: `${a} ＋ ${b} ＝ ？`,
       speak: `${a} たす ${b} は いくつ？`,
       answer: a + b, cc: p.cc, spread: 100, say: `こたえは ${a + b}`,
-      explain: `くらいごとに けいさんしよう。こたえは ${a + b}`
+      explain,
+      explainColumn: columnBlock(a, b, '＋', a + b)
     })
   },
   mul2x1(p) {
     const a = rng(12, 49), b = rng(2, 6)
+    const aOnes = a % 10, aTens = Math.floor(a / 10)
+    const onesProduct = aOnes * b
+    const carry = Math.floor(onesProduct / 10)
+    const explain = carry
+      ? `一のくらい: ${aOnes}×${b}=${onesProduct}。${onesProduct % 10}を書いて${carry}くり上げ。十のくらい: ${aTens}×${b}+${carry}=${aTens * b + carry}。こたえは ${a * b}`
+      : `一のくらい: ${aOnes}×${b}=${onesProduct}。十のくらい: ${aTens}×${b}=${aTens * b}。こたえは ${a * b}`
     return numQ('mul2x1', {
       visual: { kind: 'bigtext', text: `${a} × ${b} ＝ ❓` },
       instruction: `${a} × ${b} ＝ ？`,
       speak: `${a} かける ${b} は いくつ？`,
       answer: a * b, cc: p.cc, spread: b * 3, say: `こたえは ${a * b}`,
-      explain: `${Math.floor(a / 10) * 10}かける${b}と ${a % 10}かける${b}に わけて けいさん。こたえは ${a * b}`
+      explain,
+      explainColumn: columnBlock(a, b, '×', a * b)
     })
   },
   fracCompareSame(p) {
@@ -397,7 +438,8 @@ const BUILDERS = {
       answerId: mk(ans),
       choices: stringChoices(mk(ans), dummies, p.cc),
       answerWord: { text: mk(ans) },
-      explain: `てんの いちを そろえて けいさんしよう。こたえは ${mk(ans)}`
+      explain: `てんの いちを そろえて けいさんしよう。${Math.round(a * 10)}+${Math.round(b * 10)}=${Math.round(a * 10) + Math.round(b * 10)}を けいさんして、てんを もどすと ${mk(ans)}`,
+      explainColumn: columnBlock(a.toFixed(1), b.toFixed(1), '＋', mk(ans))
     }
   },
   bigNumbers(p) {
@@ -428,7 +470,8 @@ const BUILDERS = {
       answerId: mk(ans),
       choices: stringChoices(mk(ans), dummies, p.cc),
       answerWord: { text: mk(ans) },
-      explain: `${Math.round(a * 10)}かける${b}を けいさんして、てんを ひとつ もどそう。こたえは ${mk(ans)}`
+      explain: `${Math.round(a * 10)}かける${b}を けいさんして、てんを ひとつ もどそう。こたえは ${mk(ans)}`,
+      explainColumn: columnBlock(a, b, '×', mk(ans))
     }
   },
   fracAddDiff(p) {
