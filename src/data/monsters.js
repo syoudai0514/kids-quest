@@ -113,9 +113,9 @@ function generateMonsters(count) {
     }
     used.add(name)
     const id = 'g' + String(i).padStart(3, '0')
-    // 最初の32体は、旅の序盤で会える固有イラスト版。ID・名前・属性は
+    // 最初の42体は、旅の序盤で会える固有イラスト版。ID・名前・属性は
     // 以前のデータを維持するため、既存の図鑑・捕獲セーブもそのまま使える。
-    const heroAsset = i < 32 ? `/monsters/early/${id}.webp` : undefined
+    const heroAsset = i < 42 ? `/monsters/early/${id}.webp` : undefined
     out.push({
       id,
       name,
