@@ -509,6 +509,102 @@ body {
   transform: translateY(5px);
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
 }
+
+/* ----- えいご: スピーキングと選択肢を同じ画面に収める -----
+   共通の conquer-tag は演出用に揺れるため、録音操作には使わない。
+   2×2の固定グリッドにして、4つの操作を常に同じ位置に置く。 */
+.english-speaking-practice {
+  width: min(720px, 94vw);
+  flex: 0 0 auto;
+  padding: 8px 10px 7px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.07);
+  text-align: center;
+}
+.english-speaking-practice--recording {
+  border-color: var(--accent-3);
+  background: rgba(255, 143, 177, 0.12);
+}
+.english-speaking-practice__title {
+  display: block;
+  font-size: clamp(15px, 3vw, 21px);
+  line-height: 1.15;
+}
+.english-speaking-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: min(560px, 100%);
+  margin: 7px auto 0;
+}
+.english-speaking-action {
+  min-width: 0;
+  min-height: clamp(54px, 8vh, 70px);
+  padding: 7px 5px;
+  border-radius: 17px;
+  font-size: clamp(15px, 3.6vw, 22px);
+  line-height: 1.12;
+  gap: 4px;
+  white-space: nowrap;
+}
+.english-speaking-practice__note {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-dim);
+  font-size: clamp(11px, 2.5vw, 14px);
+  line-height: 1.15;
+}
+.choice-grid--english {
+  gap: 8px;
+}
+.activity-screen--english .center-col {
+  justify-content: flex-start;
+  gap: clamp(6px, 1.2vh, 11px);
+  padding-top: 2px;
+}
+.activity-screen--english .activity-instruction {
+  font-size: clamp(14px, 3.5vw, 20px) !important;
+  line-height: 1.15;
+}
+.activity-screen--english .qcard {
+  width: min(560px, 94vw);
+  min-width: 0;
+  min-height: clamp(70px, 12vh, 105px);
+  padding: 6px 12px;
+}
+.activity-screen--english .q-emoji {
+  font-size: clamp(50px, 12vw, 92px);
+}
+.activity-screen--english .q-word,
+.activity-screen--english .q-bigtext {
+  font-size: clamp(30px, 6.5vw, 54px);
+}
+.activity-screen--english .choice {
+  min-height: clamp(72px, 12vh, 112px);
+  padding: 5px 4px;
+  border-radius: 18px;
+  gap: 3px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28);
+}
+.activity-screen--english .choice__emoji {
+  font-size: clamp(38px, 9vw, 68px);
+}
+.activity-screen--english .choice__label {
+  max-width: 100%;
+  font-size: clamp(15px, 3.5vw, 23px);
+  line-height: 1.1;
+  overflow-wrap: normal;
+}
+.activity-screen--english .dontknow-btn {
+  min-height: 42px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px !important;
+}
+.activity-screen--english .conquer-tag {
+  animation: none;
+}
 @keyframes nudge {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-8px); }

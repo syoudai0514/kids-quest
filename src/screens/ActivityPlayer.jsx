@@ -378,13 +378,14 @@ export default function ActivityPlayer({ task, onDone }) {
 
   const isTrace = question.type === 'trace'
   const isChoice = !question.type || question.type === 'choice'
+  const isEnglish = domainIdRef.current === 'english'
   const grid =
     question.choices && question.choices.length === 3
-      ? 'choice-grid choice-grid--3'
-      : 'choice-grid'
+      ? `choice-grid choice-grid--3${isEnglish ? ' choice-grid--english' : ''}`
+      : `choice-grid${isEnglish ? ' choice-grid--english' : ''}`
 
   return (
-    <div className="screen screen-in">
+    <div className={'screen screen-in activity-screen' + (isEnglish ? ' activity-screen--english' : '')}>
       <Starfield count={16} />
 
       <AppHeader
@@ -403,7 +404,7 @@ export default function ActivityPlayer({ task, onDone }) {
           <div className="conquer-tag">💡 きょうは ヒントを つかいながら ゆっくり いこう</div>
         )}
 
-        <div className="muted" style={{ fontSize: 'clamp(16px,3vw,24px)', fontWeight: 800 }}>
+        <div className="muted activity-instruction" style={{ fontSize: 'clamp(16px,3vw,24px)', fontWeight: 800 }}>
           {question.instruction}
         </div>
 

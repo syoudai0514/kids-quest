@@ -14,5 +14,23 @@ export default function EnglishSpeakingPractice({ text, onDone }) {
       r.start(); setState('recording'); setNote('🔴 ろくおん中… 5びょうで とまるよ'); timer.current = setTimeout(stop, 5000)
     } catch (_) { setNote('マイクを つかわなくても だいじょうぶ。おてほんを まねして いってみよう！') }
   }
-  return <div className="conquer-tag" style={{ marginTop: 10 }}><strong>🗣️ まねして いってみよう</strong><div className="row wrap" style={{ justifyContent: 'center', gap: 8, marginTop: 8 }}><button className="btn btn--ghost" onClick={() => speakEnglish(text)}>🔊 おてほん</button><button className="btn btn--primary" onClick={state === 'recording' ? stop : start}>{state === 'recording' ? '⏹ とめる' : '🎙️ ろくおん'}</button>{audioUrl && <button className="btn btn--ghost" onClick={() => new Audio(audioUrl).play()}>▶️ じぶんのこえ</button>}<button className="btn btn--sun" onClick={onDone}>まねできた！</button></div><small>{note}</small></div>
+  const playOwnVoice = () => {
+    if (!audioUrl) return
+    void new Audio(audioUrl).play().catch(() => {})
+  }
+
+  return (
+    <section className={'english-speaking-practice' + (state === 'recording' ? ' english-speaking-practice--recording' : '')} aria-label="まねして いってみよう">
+      <strong className="english-speaking-practice__title">🗣️ まねして いってみよう</strong>
+      <div className="english-speaking-actions">
+        <button className="btn btn--ghost english-speaking-action" onClick={() => speakEnglish(text)} type="button">🔊 おてほん</button>
+        <button className="btn btn--primary english-speaking-action" onClick={state === 'recording' ? stop : start} type="button">
+          {state === 'recording' ? '⏹ とめる' : '🎙️ ろくおん'}
+        </button>
+        <button className="btn btn--ghost english-speaking-action" onClick={playOwnVoice} disabled={!audioUrl} type="button">▶️ じぶんのこえ</button>
+        <button className="btn btn--sun english-speaking-action" onClick={onDone} type="button">✅ まねできた！</button>
+      </div>
+      <small className="english-speaking-practice__note">{note}</small>
+    </section>
+  )
 }
