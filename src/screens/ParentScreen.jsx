@@ -25,6 +25,7 @@ import { GRADES, MAX_GRADE, gradeOf } from '../data/grades.js'
 import { boxCounts, dueCount, daysUntilNext, MAX_BOX } from '../engine/srs.js'
 import { getWeapon } from '../data/weapons.js'
 import { AppHeader } from '../components/common.jsx'
+import { trialUnlocked, unitLabel } from '../engine/learningUnits.js'
 
 function downloadText(filename, text) {
   try {
@@ -224,6 +225,7 @@ export default function ParentScreen({ onBack }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [weaponToRemove, setWeaponToRemove] = useState(null)
   const [newProfileName, setNewProfileName] = useState('')
+  const remainingUnits = trialUnlocked(state, state.grade).missing
 
   // 直近7日間の取り組み日数
   const activeDays = Object.keys(state.history).length + (d.attemptsToday > 0 ? 1 : 0)
@@ -326,6 +328,14 @@ export default function ParentScreen({ onBack }) {
                 value={state.conquered}
                 sub="復習(とっくん)で克服した累計"
               />
+            </div>
+          </div>
+
+          {/* 分野ごとの傾向 */}
+          <div>
+            <h3 style={{ margin: '4px 0 10px' }}>🌱 しれんまでに のこる単元</h3>
+            <div className="card">
+              {remainingUnits.length ? <div className="muted" style={{ lineHeight: 1.7 }}>{remainingUnits.length}こ：{remainingUnits.map(unitLabel).join('、')}</div> : <div style={{ fontWeight: 900 }}>全部の必須単元を、別の日にも確認できました。</div>}
             </div>
           </div>
 

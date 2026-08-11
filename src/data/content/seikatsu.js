@@ -195,7 +195,7 @@ const BUILDERS = {
   },
   // 行事の月
   monthEvent(p) {
-    const m = rng(1, 12)
+    const m = pick(Object.keys(MONTH_EVENT).map(Number))
     const ans = `${m}がつ`
     return sq('monthEvent', {
       visual: { kind: 'bigtext', text: MONTH_EVENT[m] },

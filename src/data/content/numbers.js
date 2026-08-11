@@ -113,7 +113,7 @@ const BUILDERS = {
     let b = rng(2, Math.min(4 + p.level * 2, 12))
     if (a === b) b = b >= 12 ? b - 1 : b + 1
     return {
-      domain: 'suuji', type: 'choice', itemKey: 'n:compareCards', visual: null,
+      domain: 'suuji', type: 'choice', itemKey: 'n:compareCards', visual: { kind: 'bigtext', text: 'どちらが おおい？' },
       instruction: 'おおい ほうを タッチ！',
       speak: 'かずが おおいのは どっちかな？',
       answerId: a > b ? 'a' : 'b',
@@ -257,7 +257,7 @@ const BUILDERS = {
     if (a === b) b = (b % max) + 1
     const big = Math.max(a, b)
     return {
-      domain: 'suuji', type: 'choice', itemKey: 'n:compareNum', visual: null,
+      domain: 'suuji', type: 'choice', itemKey: 'n:compareNum', visual: { kind: 'bigtext', text: '大きい数を くらべよう' },
       instruction: 'おおきい かずを タッチ！',
       speak: `${a}と ${b}、おおきいのは どっち？`,
       answerId: String(big),
@@ -363,7 +363,7 @@ const BUILDERS = {
     if (a === b) b = (b % (d - 1)) + 1
     const big = Math.max(a, b)
     return {
-      domain: 'suuji', type: 'choice', itemKey: 'n:fracCompareSame', visual: null,
+      domain: 'suuji', type: 'choice', itemKey: 'n:fracCompareSame', visual: { kind: 'bigtext', text: '分数を くらべよう' },
       instruction: 'おおきい ほうを タッチ！',
       speak: `${d}ぶんの${a} と ${d}ぶんの${b}、おおきいのは どっち？`,
       answerId: `${big}/${d}`,
@@ -405,7 +405,7 @@ const BUILDERS = {
     const big = Math.max(a, b === a ? b + 1000 : b)
     const other = big === a ? (b === a ? b + 1000 : b) : a
     return {
-      domain: 'suuji', type: 'choice', itemKey: 'n:bigNumbers', visual: null,
+      domain: 'suuji', type: 'choice', itemKey: 'n:bigNumbers', visual: { kind: 'bigtext', text: '大きい数を よもう' },
       instruction: 'おおきい かずを タッチ！',
       speak: 'おおきい かずを えらんでね',
       answerId: String(big),
@@ -546,7 +546,7 @@ const BUILDERS = {
     const askEven = Math.random() < 0.5
     const target = askEven ? even : odd
     return {
-      domain: 'suuji', type: 'choice', itemKey: 'n:evenOdd', visual: null,
+      domain: 'suuji', type: 'choice', itemKey: 'n:evenOdd', visual: { kind: 'bigtext', text: '2こずつに 分けよう' },
       instruction: askEven ? 'ぐうすうを タッチ！' : 'きすうを タッチ！',
       speak: askEven
         ? 'ふたつに わけきれる かず、ぐうすうは どっち？'
@@ -738,7 +738,7 @@ const BUILDERS = {
     const bigFirst = a / b > c / d
     const ans = bigFirst ? `${a}/${b}` : `${c}/${d}`
     return {
-      domain: 'suuji', type: 'choice', itemKey: 'n:fracCompareDiff', visual: null,
+      domain: 'suuji', type: 'choice', itemKey: 'n:fracCompareDiff', visual: { kind: 'bigtext', text: '分数を くらべよう' },
       instruction: 'おおきい ほうを タッチ！',
       speak: `${b}ぶんの${a}と ${d}ぶんの${c}、おおきいのは どっち？`,
       answerId: ans,

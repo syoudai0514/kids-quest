@@ -4,8 +4,8 @@
 import { domainsForGrade } from '../src/engine/activities.js'
 import { generateNumbersQuestion, NUMBERS_KINDS } from '../src/data/content/numbers.js'
 import { generateSeikatsuQuestion, SEIKATSU_KINDS } from '../src/data/content/seikatsu.js'
-import { generateRikaQuestion, RIKA_QUESTIONS } from '../src/data/content/rika.js'
-import { generateShakaiQuestion, SHAKAI_QUESTIONS } from '../src/data/content/shakai.js'
+import { generateRikaQuestion, RIKA_QUESTIONS, RIKA_UNIT_EXPECTATIONS } from '../src/data/content/rika.js'
+import { generateShakaiQuestion, SHAKAI_QUESTIONS, SHAKAI_UNIT_EXPECTATIONS } from '../src/data/content/shakai.js'
 
 const errors = []
 const SAMPLE_COUNT = 24
@@ -20,6 +20,7 @@ function verifyQuestion(question, grade, domain, choiceCount) {
   requireValue(typeof question?.type === 'string' && question.type, `${label}: type がない`)
   requireValue(typeof question?.itemKey === 'string' && question.itemKey, `${label}: itemKey がない`)
   requireValue(typeof question?.instruction === 'string' && question.instruction, `${label}: 問題文がない`)
+  if (question?.type === 'choice') requireValue(question?.visual?.kind && !String(question.visual.text ?? '').includes('undefined') && !String(question.visual.text ?? '').includes('NaN'), `${label}: visual が空または壊れている`)
   if (question?.type === 'choice') {
     requireValue(typeof question?.explain === 'string' && question.explain, `${label}: 解説がない`)
     const choices = question.choices ?? []
@@ -31,6 +32,7 @@ function verifyQuestion(question, grade, domain, choiceCount) {
     requireValue(ids.every((id) => String(id).trim()), `${label}: 空の選択肢がある`)
     requireValue(ids.includes(question.answerId), `${label}: 正解が選択肢にない`)
   }
+  requireValue(!JSON.stringify(question).includes('undefined') && !JSON.stringify(question).includes('NaN'), `${label}: undefined/NaN を含む`)
 }
 
 for (let grade = 0; grade <= 6; grade++) {
@@ -65,6 +67,8 @@ const scienceDomain = { id: 'rika' }
 for (const q of RIKA_QUESTIONS) verifyQuestion(generateRikaQuestion({ grade: 6, level: 12, choiceCount: 4 }, `r:${q}`), 6, scienceDomain, 4)
 const socialDomain = { id: 'shakai' }
 for (const q of SHAKAI_QUESTIONS) verifyQuestion(generateShakaiQuestion({ grade: 6, level: 12, choiceCount: 4 }, `c:${q}`), 6, socialDomain, 4)
+for (const [grade, expected] of Object.entries(RIKA_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateRikaQuestion({ grade: Number(grade), choiceCount: 4 }, `r:${question}`).unitId === unitId, `理科単元IDが不正: ${question}`)
+for (const [grade, expected] of Object.entries(SHAKAI_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateShakaiQuestion({ grade: Number(grade), choiceCount: 4 }, `c:${question}`).unitId === unitId, `社会単元IDが不正: ${question}`)
 
 // 月末・うるう日の実在日付を決定論的に確認する。
 const RealDate = Date

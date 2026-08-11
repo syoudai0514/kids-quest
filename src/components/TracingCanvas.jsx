@@ -104,7 +104,7 @@ function drawStroke(ctx, poly, { color, width, lengthRatio = 1 }) {
   ctx.restore()
 }
 
-export default function TracingCanvas({ target, stage, onComplete }) {
+export default function TracingCanvas({ target, stage, onComplete, allowGuide = true }) {
   const bgRef = useRef(null)
   const fgRef = useRef(null)
   const polysRef = useRef([]) // 全画の折れ線（px 前計算済み）
@@ -471,7 +471,7 @@ export default function TracingCanvas({ target, stage, onComplete }) {
         <button className="btn btn--ghost" onClick={clearDrawing} disabled={phase !== 'write'}>
           🧽 やりなおす
         </button>
-        {stage === 'free' && (
+        {stage === 'free' && allowGuide && (
           <button
             className="btn btn--ghost"
             onClick={() => {

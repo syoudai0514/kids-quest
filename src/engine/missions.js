@@ -27,27 +27,25 @@ function makeTask(domainId, kind) {
 }
 
 // 国語・算数を中心にしつつ、他教科にも定期的に触れる。道徳は週2回程度。
-function pickDomainId(i, grade = 0, today = dayNumber()) {
-  const doms = domainsForGrade(grade)
-  if (!doms.length) return 'yomu'
-  const available = new Set(doms.map((d) => d.id))
-  const base = grade >= 3
-    ? ['yomu', 'suuji', 'kaku', 'rika', 'shakai', 'doutoku', 'english']
-    : ['yomu', 'suuji', 'kaku', 'seikatsu', 'doutoku', 'english']
-  const rotation = base.filter((id) => available.has(id))
-  return rotation[(i + today) % rotation.length]
+function weeklyDomains(grade, today) {
+  const available = new Set(domainsForGrade(grade).map((d) => d.id))
+  const elective = (grade >= 3 ? ['kaku', 'rika', 'shakai', 'english'] : ['kaku', 'seikatsu', 'english']).filter((id) => available.has(id))
+  const day = ((today % 7) + 7) % 7
+  // 国語・算数は毎日。道徳は週2日だけ。残りは日替わりで必要教科を回す。
+  const ids = ['yomu', 'suuji'].filter((id) => available.has(id))
+  const moralDay = day === 1 || day === 5
+  if (moralDay && available.has('doutoku')) ids.push('doutoku')
+  for (let i = 0; ids.length < 5 && elective.length; i++) {
+    const id = elective[(day * 2 + i) % elective.length]
+    if (!ids.includes(id)) ids.push(id)
+  }
+  return ids.slice(0, 5)
 }
 
 // コアミッションは その学年の教科を ひととおり まわす
 export function buildCoreMission(grade = 0, today = dayNumber()) {
-  const doms = domainsForGrade(grade)
-  const count = Math.max(CORE_TASK_COUNT, Math.min(doms.length, 6))
   const tasks = []
-  // 1日に同じ教科は重ねず、週内の開始位置をずらす。国語・算数は1タスクを
-  // 5問、道徳は2問にして、学習量を重み付けする（英語の既存ローテは維持）。
-  for (let i = 0, offset = 0; tasks.length < count && offset < doms.length * 2; offset++) {
-    const domainId = pickDomainId(i + offset, grade, today)
-    if (tasks.some((task) => task.domainId === domainId)) continue
+  for (const domainId of weeklyDomains(grade, today)) {
     const task = makeTask(domainId, 'core')
     if (domainId === 'yomu' || domainId === 'suuji') task.questionCount = 5
     if (domainId === 'doutoku') task.questionCount = 2
@@ -57,12 +55,13 @@ export function buildCoreMission(grade = 0, today = dayNumber()) {
 }
 
 export function buildOkawariTask(index = 0, grade = 0) {
-  return makeTask(pickDomainId(index, grade), 'okawari')
+  return makeTask(weeklyDomains(grade, dayNumber() + index)[index % weeklyDomains(grade, dayNumber() + index).length], 'okawari')
 }
 
 // 追加問題（解放チケット用）。少し短めにしてテンポを保つ。
 export function buildExtraTask(index = 0, grade = 0) {
-  const t = makeTask(pickDomainId(index, grade), 'extra')
+  const ids = weeklyDomains(grade, dayNumber() + index)
+  const t = makeTask(ids[index % ids.length], 'extra')
   t.questionCount = 3
   return t
 }

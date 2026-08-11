@@ -22,9 +22,11 @@ const KATA_HARD = ['サ', 'タ', 'ナ', 'ヌ', 'ネ', 'ヒ', 'ホ', 'マ', 'ミ'
 const KANJI_G1 = KANJI_BY_GRADE[1].map((e) => e.k) // 小1の収録漢字を一元参照
 const KANJI_G2 = KANJI_BY_GRADE[2].map((e) => e.k) // 小2全字
 const KANJI_G3 = KANJI_BY_GRADE[3].map((e) => e.k) // 小3全字
-const KANJI_G4 = [...'愛案位囲印英塩億加果覚完官願希季喜旗器求救給挙鏡']
-const KANJI_G5 = [...'圧移因営応桜恩可価過快解格確刊幹慣基寄規技義逆久']
-const KANJI_G6 = [...'異域宇映延沿灰拡革割株干巻看簡危机貴疑吸胸筋系敬']
+// 小2〜小6も kanjiByGrade を唯一の収録元にする。完全配当ではなく、
+// このアプリに収録している漢字の練習であることを画面とREADMEで明示する。
+const KANJI_G4 = KANJI_BY_GRADE[4].map((e) => e.k)
+const KANJI_G5 = KANJI_BY_GRADE[5].map((e) => e.k)
+const KANJI_G6 = KANJI_BY_GRADE[6].map((e) => e.k)
 
 // 書き順データがある文字だけに絞る（安全策）
 const safe = (arr) => [...new Set(arr)].filter(hasStrokeData)
@@ -54,6 +56,20 @@ const ALL = safe([
   ...KANJI_G1, ...KANJI_G2, ...KANJI_G3, ...KANJI_G4, ...KANJI_G5, ...KANJI_G6
 ])
 
+function groups(chars, prefix) {
+  const safeChars = safe(chars)
+  const out = []
+  for (let i = 0; i < safeChars.length; i += 15) out.push({ id: `${prefix}-${Math.floor(i / 15) + 1}`, chars: safeChars.slice(i, i + 15) })
+  return out
+}
+
+// 単元達成を2文字で通過させないため、10〜20文字の小グループで管理する。
+export const WRITING_GROUPS_BY_GRADE = {
+  0: [...groups([...HIRA_EASY, ...HIRA_MID, ...HIRA_HARD], 'hiragana'), ...groups([...KATA_EASY, ...KATA_HARD], 'katakana')],
+  1: [...groups([...HIRA_EASY, ...HIRA_MID, ...HIRA_HARD], 'hiragana'), ...groups([...KATA_EASY, ...KATA_HARD], 'katakana'), ...groups(KANJI_G1, 'kanji')],
+  2: groups(KANJI_G2, 'kanji'), 3: groups(KANJI_G3, 'kanji'), 4: groups(KANJI_G4, 'kanji'), 5: groups(KANJI_G5, 'kanji'), 6: groups(KANJI_G6, 'kanji')
+}
+
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
@@ -62,7 +78,7 @@ function makeQuestion(target, stage) {
   return {
     domain: 'kaku',
     type: 'trace',
-    itemKey: target,
+    itemKey: `k:${target}`,
     target,
     stage,
     instruction: stage === 'trace' ? `「${target}」を なぞろう` : `「${target}」を かいてみよう`,
@@ -76,8 +92,9 @@ function makeQuestion(target, stage) {
 
 export function generateWritingQuestion(params, reviewChar = null) {
   // 復習: 前につまずいた文字は、お手本つきでもう一度
-  if (reviewChar && ALL.includes(reviewChar)) {
-    return makeQuestion(reviewChar, 'trace')
+  const requested = String(reviewChar || '').replace(/^k:/, '')
+  if (requested && ALL.includes(requested)) {
+    return makeQuestion(requested, 'trace')
   }
 
   const grade = Math.max(0, Math.min(6, params.grade || 0))

@@ -98,7 +98,7 @@ for (const [grade, forms] of Object.entries(expectedForms)) {
 
 // タスク開始時に4問の形式を確定し、学年別の必須経験を保証する。
 const expectedPlans = {
-  0: ['listen-picture', 'listen-picture', 'picture-word', 'alphabet'],
+  0: ['listen-picture', 'picture-word', 'word-meaning', 'alphabet'],
   1: ['listen-picture', 'picture-word', 'word-meaning', 'spelling'],
   3: ['listen-picture', 'picture-word', 'conversation', 'word-meaning'],
   5: ['listen-picture', 'word-meaning', 'word-order', 'spelling']
@@ -166,16 +166,23 @@ const progressDay2 = advanceEnglishProgress(progressSameDay, true, today + 1, 3)
 must(progressDay1.stage === 1 && progressDay1.nextDue === today + 1, '1日後の英語復習を計算できない')
 must(progressSameDay.stage === 1, '同じ日に英語の習得段階が複数回進んだ')
 must(progressDay2.stage === 2 && progressDay2.nextDue === today + 4, '3日後の英語復習を計算できない')
+let p = progressDay2
+for (const day of [today + 4, today + 11]) p = advanceEnglishProgress(p, true, day)
+must(p.stage === 4 && !p.masteredAt, '14日後の確認前に英語が習得扱いになった')
+p = advanceEnglishProgress(p, true, today + 25)
+must(p.stage === 5 && p.masteredAt, '14日後確認後に英語が習得扱いにならない')
 
-// 7教科の小3〜小6は、毎日6教科・7日で全教科が一度は出る。
+// 小3〜小6も、国語・算数を毎日、道徳は週2回、他教科を週内で回す。
 for (let grade = 3; grade <= 6; grade++) {
   const union = new Set()
+  let moral = 0
   for (let day = 40000; day < 40007; day++) {
     const ids = buildCoreMission(grade, day).map((task) => task.domainId)
-    must(ids.length === 6 && new Set(ids).size === 6, `小${grade}: 日替わり6教科にならない`)
+    must(ids.length === 5 && new Set(ids).size === 5 && ids.includes('yomu') && ids.includes('suuji'), `小${grade}: 重み付き5教科にならない`)
+    moral += ids.filter((id) => id === 'doutoku').length
     ids.forEach((id) => union.add(id))
   }
-  must(union.size === 7 && union.has('english'), `小${grade}: 英語を含む7教科ローテーションにならない`)
+  must(union.size === 7 && union.has('english') && moral === 2, `小${grade}: 英語を含む週次ローテーションにならない`)
 }
 
 // 古い保存を開いても、今日のミッション・学年・進捗を消さない。

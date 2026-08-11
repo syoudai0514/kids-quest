@@ -36,8 +36,8 @@ export const ENGLISH_WORDS = rawWords.map(([category, english, japanese, emoji, 
 
 const phraseRows = [
  ['Hello.','こんにちは。','あいさつ','Hi!'],['Good morning.','おはよう。','あいさつ','Good morning!'],['Good night.','おやすみ。','あいさつ','Good night!'],['How are you?','げんき？','あいさつ','I am fine.'],['I am fine.','げんきだよ。','あいさつ','That is good!'],['Thank you.','ありがとう。','あいさつ','You are welcome.'],['You are welcome.','どういたしまして。','あいさつ','Thank you.'],['Nice to meet you.','はじめまして。','あいさつ','Nice to meet you, too.'],['What is your name?','なまえは なに？','自己紹介','My name is Kai.'],['My name is Kai.','わたしの なまえは カイです。','自己紹介','Nice to meet you.'],
- ['I like apples.','わたしは りんごが すき。','好きなもの','Me too!'],['I like dogs.','わたしは いぬが すき。','好きなもの','Me too!'],['Do you like cats?','ねこは すき？','好きなもの','Yes, I do.'],['Yes, I do.','うん、すき。','返事','Great!'],['No, I do not.','いいえ、すきじゃない。','返事','Okay.'],['This is a cat.','これは ねこです。','もの紹介','It is cute.'],['It is cute.','それは かわいいね。','もの紹介','Thank you.'],['I have a dog.','わたしは いぬを かっている。','家族・ペット','Nice!'],['Let us play.','あそぼう。','あそび','Okay!'],['Let us go.','いこう。','移動','Okay!'],
- ['What color is it?','それは なにいろ？','色','It is red.'],['It is red.','それは あかです。','色','Red is nice.'],['How many?','いくつ？','数','Three.'],['It is three.','3つです。','数','Great!'],['What time is it?','なんじ？','時刻','It is seven.'],['It is seven.','7じです。','時刻','Thank you.'],['Today is Monday.','きょうは げつようび。','曜日','Yes.'],['It is sunny.','はれです。','天気','Let us play outside.'],['It is rainy.','あめです。','天気','Take an umbrella.'],['I am happy.','わたしは うれしい。','気持ち','Me too!'],
+ ['I like apples.','わたしは りんごが すき。','好きなもの','Me too!'],['I like dogs.','わたしは いぬが すき。','好きなもの','Me too!'],['Do you like cats?','ねこは すき？','好きなもの','Yes, I do.'],['Yes, I do.','うん、すき。','返事','Great!'],['No, I do not.','いいえ、すきじゃない。','返事','Okay.'],['This is a cat.','これは ねこです。','もの紹介','It is cute.'],['It is cute.','それは かわいいね。','もの紹介','Thank you.'],['I have a dog.','わたしは いぬを かっている。','家族・ペット','Nice!'],["Let's play.",'あそぼう。','あそび','Okay!'],["Let's go.",'いこう。','移動','Okay!'],
+ ['What color is it?','それは なにいろ？','色','It is red.'],['It is red.','それは あかです。','色','Red is nice.'],['How many?','いくつ？','数','Three.'],['Three.','3つです。','数','Great!'],['What time is it?','なんじ？','時刻',"It's seven o'clock."],["It's seven o'clock.",'7じです。','時刻','Thank you.'],['Today is Monday.','きょうは げつようび。','曜日','Yes.'],['It is sunny.','はれです。','天気',"Let's play outside."],['It is rainy.','あめです。','天気','Take an umbrella.'],['I am happy.','わたしは うれしい。','気持ち','Me too!'],
  ['I am hungry.','おなかがすいた。','気持ち','Let us eat.'],['I am thirsty.','のどがかわいた。','気持ち','Here is water.'],['Please help me.','たすけてください。','お願い','Okay.'],['Can I have water?','みずを もらえますか？','お願い','Here you are.'],['Here you are.','どうぞ。','やりとり','Thank you.'],['Excuse me.','すみません。','やりとり','Yes?'],['I am sorry.','ごめんなさい。','やりとり','That is okay.'],['See you tomorrow.','また あした。','別れ','See you!'],['See you later.','また あとでね。','別れ','See you!'],['Have a nice day.','よい いちにちを。','あいさつ','Thank you!'],
  ['Where is the ball?','ボールは どこ？','場所','It is here.'],['It is here.','ここに あるよ。','場所','Thank you.'],['I can run.','わたしは はしれる。','できること','Great!'],['I can swim.','わたしは およげる。','できること','Great!'],['Open the door.','ドアを あけて。','指示','Okay.'],['Close the door.','ドアを しめて。','指示','Okay.'],['Please sit down.','すわってください。','教室','Okay.'],['Please stand up.','たってください。','教室','Okay.'],['What is this?','これは なに？','質問','It is a book.'],['It is a book.','これは ほんです。','もの紹介','Nice!']
 ]
@@ -58,13 +58,33 @@ export const ENGLISH_CATEGORIES = {
 
 function shuffle(values) { const a = [...values]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
 const clean = (value) => String(value || '').trim().toLocaleLowerCase()
-const baseKey = (key) => String(key || '').split('#')[0].replace(/^en[wp]?:/, '')
+export function normalizeEnglishKey(key) {
+  const raw = String(key || '').split('#')[0]
+  if (/^en:ew\d+$/i.test(raw)) return `enw:${raw.slice(3)}`
+  if (/^en:ep\d+$/i.test(raw)) return `enp:${raw.slice(3)}`
+  if (/^en:[A-Z]-[A-Z]$/i.test(raw)) return `ena:${raw.slice(3).toUpperCase()}`
+  if (/^ena:[A-Z]-[A-Z]$/i.test(raw)) return `ena:${raw.slice(4).toUpperCase()}`
+  return raw
+}
+const baseKey = (key) => normalizeEnglishKey(key).replace(/^en[wap]:/, '')
 const localDayNumber = (date = new Date()) => Math.floor(new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() / 86400000)
 function eligibleWords(params) { const items = ENGLISH_WORDS.filter((w) => w.minGrade <= (params.grade ?? 0)); return items.length >= 4 ? items : ENGLISH_WORDS.slice(0, 8) }
 function eligiblePhrases(params) { return ENGLISH_PHRASES.filter((p) => p.minGrade <= (params.grade ?? 0)) }
 function itemFromKey(key) {
   const id = baseKey(key)
   return ENGLISH_WORDS.find((w) => w.id === id) || ENGLISH_PHRASES.find((p) => p.id === id) || null
+}
+
+// 初日に学年分の全単語へ飛ばず、8〜12語程度のテーマを順番に開く。
+const THEME_ORDER = ['greeting', 'color', 'number', 'animal', 'food', 'body', 'family', 'school', 'home', 'action', 'feeling', 'weather', 'nature', 'place', 'vehicle', 'clothes', 'shape', 'computer', 'time', 'extra']
+function currentThemeWords(params) {
+  const all = eligibleWords(params)
+  const stats = params.englishWordStats || {}
+  for (const category of THEME_ORDER) {
+    const theme = all.filter((word) => word.category === category).slice(0, 12)
+    if (theme.length && theme.some((word) => (stats[word.id]?.stage || 0) < 1)) return theme
+  }
+  return all
 }
 
 // 同じ表示を選ばせる問題は、子どもが意味を思い出さずに当てられる。
@@ -100,7 +120,7 @@ export function chooseEnglishStudyItem(params = {}) {
   const seen = new Set((params.seenItemKeys || []).map(baseKey))
   const forced = itemFromKey(params.reviewKey || params.focusWordId)
   if (forced && forced.minGrade <= grade) return forced
-  const words = eligibleWords(params)
+  const words = currentThemeWords(params)
   const phrases = eligiblePhrases(params)
   const canUsePhrases = grade >= 3 && phrases.length > 0 && params.englishAudioAvailable !== false
   const all = canUsePhrases && Math.random() < (grade >= 5 ? 0.42 : 0.28) ? phrases : words
@@ -149,8 +169,15 @@ function spellingQuestion(word) {
   const options = shuffle([answer, ...shuffle(alphabet.filter((letter) => letter !== answer)).slice(0, 3)])
   return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', promptEnglishAudio: word.speak, autoPlayPrompt: true, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
 }
-function alphabetQuestion(params = {}) {
+function alphabetQuestion(params = {}, reviewKey = null) {
   const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const forced = normalizeEnglishKey(reviewKey || params.reviewKey)
+  const requested = forced.match(/^ena:([A-Z])-([A-Z])$/)
+  if (requested && order[order.indexOf(requested[1]) + 1] === requested[2]) {
+    const answer = requested[2]
+    const options = shuffle([answer, ...shuffle(order.filter((letter) => letter !== answer)).slice(0, 3)])
+    return { domain: 'english', itemKey: forced, type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${requested[1]} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: answer }, explain: `${requested[1]} の つぎは ${answer} だよ` }
+  }
   const seen = new Set((params.seenItemKeys || []).map(baseKey))
   const bases = order.slice(0, 22).filter((letter) => !seen.has(`ena:${letter}-${order[order.indexOf(letter) + 1]}`))
   const base = (bases.length ? bases : order.slice(0, 22))[Math.floor(Math.random() * (bases.length || 22))]
@@ -179,12 +206,12 @@ function orderQuestion(phrase) {
 
 export function englishTaskForms(grade = 0, englishAudioAvailable = false) {
   if (englishAudioAvailable) {
-    if (grade <= 0) return ['listen-picture', 'listen-picture', 'picture-word', 'alphabet']
+    if (grade <= 0) return ['listen-picture', 'picture-word', 'word-meaning', 'alphabet']
     if (grade <= 2) return ['listen-picture', 'picture-word', 'word-meaning', 'spelling']
     if (grade <= 4) return ['listen-picture', 'picture-word', 'conversation', 'word-meaning']
     return ['listen-picture', 'word-meaning', 'word-order', 'spelling']
   }
-  if (grade <= 0) return ['picture-word', 'alphabet', 'picture-word', 'alphabet']
+  if (grade <= 0) return ['picture-word', 'word-meaning', 'picture-word', 'alphabet']
   if (grade <= 2) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
   if (grade <= 4) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
   return ['picture-word', 'word-meaning', 'word-order', 'spelling']
@@ -195,7 +222,9 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
   let requestedForm = params.forceForm || params.taskForm
   // 図鑑・期限復習・誤答補強は形式より項目を優先する。対象が絵に不向きなら
   // 同じ項目の文字問題へ切り替える（別単語にはしない）。
-  const requestedItem = itemFromKey(reviewKey || params.reviewKey || params.focusWordId)
+  const normalizedReview = normalizeEnglishKey(reviewKey || params.reviewKey || params.focusWordId)
+  if (/^ena:/.test(normalizedReview)) return alphabetQuestion(params, normalizedReview)
+  const requestedItem = itemFromKey(normalizedReview)
   // テスト・復習から形式を明示しても、再生できない音声を必要とする問題は作らない。
   if (params.englishAudioAvailable === false && ['listen-picture', 'conversation'].includes(requestedForm)) {
     requestedForm = grade >= 5 ? 'word-order' : 'picture-word'
@@ -210,7 +239,7 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
   const forcedStats = requestedForm === 'conversation' || requestedForm === 'word-order' ? params.englishPhraseStats : params.englishWordStats
   const item = requestedItem || (forcedItemPool
     ? selectByStudyOrder(forcedItemPool, forcedStats, new Set((params.seenItemKeys || []).map(baseKey)), params.today ?? localDayNumber())
-    : chooseEnglishStudyItem({ ...params, reviewKey }))
+    : chooseEnglishStudyItem({ ...params, reviewKey: normalizedReview }))
   const word = ENGLISH_WORDS.find((entry) => entry.id === item.id)
   if (!word) {
     const phrase = item
@@ -222,6 +251,8 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
     : grade <= 0 ? ['listen', 'picture', 'alphabet'] : grade <= 2 ? ['listen', 'picture', 'meaning', 'spelling'] : grade <= 4 ? ['listen', 'picture', 'meaning', 'japanese'] : ['listen', 'meaning', 'japanese', 'spelling']
   const forceMode = { 'listen-picture': 'listen', 'picture-word': 'picture', 'word-meaning': 'meaning', 'japanese-word': 'japanese', spelling: 'spelling', alphabet: 'alphabet' }[requestedForm]
   let mode = forceMode || modes[Math.floor(Math.random() * modes.length)]
+  const stage = params.englishWordStats?.[word.id]?.stage || 0
+  if (!params.forceForm && stage < 2 && ['spelling', 'japanese'].includes(mode)) mode = hasUnambiguousPicture(word) ? 'picture' : 'meaning'
   // とっくん・試練のように形式計画を持たない出題経路でも、あいまいな絵を
   // 使わせない。英単語を見て意味を選ぶ形式へ安全に切り替える。
   if ((mode === 'listen' || mode === 'picture') && !hasUnambiguousPicture(word)) mode = 'meaning'
@@ -230,8 +261,8 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
   if (mode === 'picture') return pictureQuestion(word, pool, params)
   if (mode === 'meaning') return meaningQuestion(word, pool, params)
   if (mode === 'japanese') return japaneseQuestion(word, pool, params)
-  if (mode === 'alphabet') return alphabetQuestion(params)
+  if (mode === 'alphabet') return alphabetQuestion(params, normalizedReview)
   return spellingQuestion(word)
 }
 
-export function englishStatus(stat) { const stage = stat?.stage || 0; return stage >= 4 ? 'おぼえた！' : stage >= 3 ? 'もうすぐ おぼえる' : stage >= 1 ? 'れんしゅう中' : 'はじめて' }
+export function englishStatus(stat) { const stage = stat?.stage || 0; return stage >= 5 ? 'おぼえた！' : stage >= 4 ? 'もうすぐ おぼえる' : stage >= 1 ? 'れんしゅう中' : 'はじめて' }

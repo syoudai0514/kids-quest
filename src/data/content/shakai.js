@@ -69,13 +69,14 @@ const BANK = {
 const UNIT_KEYS = {
   3: ['map-symbols','map-symbols','map-symbols','map-symbols','safety','safety','shops','old-tools','old-tools','public-safety','public-safety'],
   4: ['prefectures','prefectures','prefectures','prefectures','prefectures','waste-water','waste-water','waste-water','disasters','disasters','maps'],
-  5: ['land','land','land','land','agriculture','agriculture','fishing','industry','industry','information','forests'],
-  6: ['history','history','history','history','politics','politics','constitution','international','international','international','society']
+  5: ['land','land','land','land','agriculture','fishing','industry','industry','information','forests'],
+  6: ['history','history','history','history','history','history','history','constitution','constitution','politics','politics','international']
 }
 for (const [grade, items] of Object.entries(BANK)) {
   items.forEach((item, index) => { item.unitId = `social:${grade}:${UNIT_KEYS[grade][index] || `topic-${index + 1}`}` })
 }
 export const SHAKAI_UNIT_IDS_BY_GRADE = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, [...new Set(items.map((item) => item.unitId))]]))
+export const SHAKAI_UNIT_EXPECTATIONS = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, Object.fromEntries(items.map((item) => [item.q, item.unitId]))]))
 
 function shuffle(arr) {
   const a = [...arr]

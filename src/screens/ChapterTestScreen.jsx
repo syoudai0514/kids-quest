@@ -14,7 +14,7 @@ import TracingCanvas from '../components/TracingCanvas.jsx'
 import { AppHeader, Starfield, Confetti, ProgressDots } from '../components/common.jsx'
 import { speak, cancelSpeak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
-import { reviewKeyFor, snapshotQuestion } from '../engine/reviewKey.js'
+import { reviewKeyFor, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
 import { trialUnlocked, withLearningUnit, promotionResult } from '../engine/learningUnits.js'
 
 function shuffle(items) {
@@ -27,10 +27,11 @@ function shuffle(items) {
 }
 
 // 英語・道徳は進級判定から外し、主要教科を層化して選ぶ。
-function makeTrialQuestions(state, grade) {
+export function makeTrialQuestions(state, grade) {
   const domains = domainsForGrade(grade)
   const choiceDomains = domains.filter((d) => !['kaku', 'doutoku', 'english'].includes(d.id))
   const list = []
+  const usedUnits = new Set()
   const order = shuffle(choiceDomains)
 
   // 年長は選択できる教科が4つなので、1つだけ2問にして5問にする。
@@ -40,16 +41,16 @@ function makeTrialQuestions(state, grade) {
     let question = null
     for (let tries = 0; tries < 8 && !question; tries++) {
       const candidate = d.generateQuestion(params, null)
-      if (candidate?.type === 'choice' && candidate.choices?.length) question = candidate
+      if (candidate?.type === 'choice' && candidate.choices?.length && !usedUnits.has(candidate.unitId)) question = candidate
     }
-    if (question) list.push({ ...withLearningUnit(question, grade), _domainId: d.id })
+    if (question) { const enriched = withQuestionIds(withLearningUnit(question, grade)); usedUnits.add(enriched.unitId); list.push({ ...enriched, _domainId: d.id }) }
   }
 
   const writing = domains.find((d) => d.id === 'kaku')
   if (writing) {
     const params = { ...difficultyParams(state.skills?.[grade]?.[writing.id] || {}), grade }
     const question = writing.generateQuestion(params, null)
-    if (question?.type === 'trace') list.push({ ...withLearningUnit({ ...question, stage: 'free' }, grade), _domainId: writing.id })
+    if (question?.type === 'trace') { const enriched = withQuestionIds(withLearningUnit({ ...question, stage: 'free' }, grade)); usedUnits.add(enriched.unitId); list.push({ ...enriched, _domainId: writing.id }) }
   }
 
   // 書く問題を作れないコンテンツでも、必ず6問になるよう選択式で補完する。
@@ -57,7 +58,7 @@ function makeTrialQuestions(state, grade) {
     const d = choiceDomains[list.length % choiceDomains.length]
     const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade }
     const question = d.generateQuestion(params, null)
-    if (question?.type === 'choice' && question.choices?.length) list.push({ ...withLearningUnit(question, grade), _domainId: d.id })
+    if (question?.type === 'choice' && question.choices?.length) list.push({ ...withQuestionIds(withLearningUnit(question, grade)), _domainId: d.id })
   }
   return shuffle(list).slice(0, STAR_TRIAL_QUESTIONS)
 }
@@ -98,7 +99,8 @@ export default function ChapterTestScreen({ onBack }) {
 
   const finish = () => {
     const correct = resultsRef.current.filter((r) => r.correct).length
-    const result = promotionResult(state, grade, { correct, total })
+    const correctDomains = [...new Set(resultsRef.current.filter((r) => r.correct).map((r) => r.domainId))]
+    const result = promotionResult(state, grade, { correct, total, correctDomains })
     const { correct: combinedCorrect, total: combinedTotal, passed } = result
     setDone(true)
     dispatch({ type: 'STAR_TRIAL_RESULT', grade, correct, total, results: resultsRef.current })
@@ -167,7 +169,8 @@ export default function ChapterTestScreen({ onBack }) {
 
   if (done) {
     const correct = resultsRef.current.filter((r) => r.correct).length
-    const result = promotionResult(state, grade, { correct, total })
+    const correctDomains = [...new Set(resultsRef.current.filter((r) => r.correct).map((r) => r.domainId))]
+    const result = promotionResult(state, grade, { correct, total, correctDomains })
     const { correct: combinedCorrect, total: combinedTotal, passed } = result
     const missing = Math.max(0, STAR_TRIAL_PASS_CORRECT - combinedCorrect)
     return (
@@ -208,7 +211,7 @@ export default function ChapterTestScreen({ onBack }) {
       <div className="center-col scroll-col">
         <div className="muted" style={{ fontSize: 'clamp(16px,3vw,24px)', fontWeight: 800, textAlign: 'center' }}>{q.instruction}</div>
         {q.type === 'trace' ? (
-          <TracingCanvas key={`${idx}-${q.target}-${q.stage}`} target={q.target} stage={q.stage} onComplete={record} />
+          <TracingCanvas key={`${idx}-${q.target}-${q.stage}`} target={q.target} stage={q.stage} allowGuide={false} onComplete={record} />
         ) : (
           <>
             <QuestionVisual question={q} />

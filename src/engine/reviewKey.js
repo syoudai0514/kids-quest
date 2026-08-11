@@ -1,61 +1,66 @@
-// ============================================================
-// 復習キーと問題スナップショット
-//
-// 以前は算数の復習キーが `n:add10` のように出題タイプだけだったため、
-// 「7+6」でつまずいても別のたし算が出てしまっていた。新しい問題には
-// 問題文・答え・図を元にした短い識別子を付け、元の問題をそのまま保存する。
-// ============================================================
+// 問題を三つの粒度で扱う。
+// knowledgeId: 同じ知識か（選択肢の順番では変わらない）
+// unitId/skillId: どの単元を練習するか
+// questionInstanceId: 今回の数値・問題文を含む設問。誤答補強の再出題に使う。
 
-/** 表示・旧ジェネレーター用に、問題種別だけを取り出す。 */
-export function baseItemKey(key) {
-  return String(key || '').split('#')[0]
-}
+export function baseItemKey(key) { return String(key || '').split('#')[0] }
 
-function fingerprint(question) {
-  return JSON.stringify({
-    instruction: question.instruction || '',
-    answerId: question.answerId || '',
-    type: question.type || 'choice',
-    visual: question.visual || null,
-    choices: (question.choices || []).map(({ id, label, emoji, grid }) => ({ id, label, emoji, grid })),
-    items: (question.items || []).map(({ id, label, shape, color }) => ({ id, label, shape, color })),
-    correctOrder: question.correctOrder || null,
-    correctGroups: question.correctGroups || null
-  })
-}
-
-// FNV-1a。暗号用途ではなく、localStorage のキーを短く安定させるためだけに使う。
 function hash(text) {
   let value = 0x811c9dc5
-  for (let i = 0; i < text.length; i++) {
-    value ^= text.charCodeAt(i)
-    value = Math.imul(value, 0x01000193)
-  }
+  for (let i = 0; i < text.length; i++) { value ^= text.charCodeAt(i); value = Math.imul(value, 0x01000193) }
   return (value >>> 0).toString(36)
 }
 
-/**
- * 新規出題の復習キーを返す。
- * すでに復習として出した問題は、保存済みキーを優先してそのまま使う。
- */
-export function reviewKeyFor(question) {
-  if (!question?.itemKey) return null
-  if (question.reviewKey) return question.reviewKey
-  return `${baseItemKey(question.itemKey)}#${hash(fingerprint(question))}`
+function normalizedChoices(question) {
+  return [...(question.choices || [])].map(({ id, label, emoji, grid }) => ({ id, label, emoji, grid }))
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)))
 }
 
-/** localStorage に保存してよい、問題だけのコピーを作る。 */
+function knowledgeFingerprint(question) {
+  // 固定知識は itemKey が教材の設問ID。算数だけは skillId を知識として復習し、
+  // 翌日には同じ単元の別の類題を出す。
+  if (question.domain === 'suuji' && (question.skillId || question.unitId)) return `skill:${question.skillId || question.unitId}`
+  if (question.domain === 'kaku' && question.target) return `char:${question.grade ?? ''}:${question.target}`
+  return JSON.stringify({
+    domain: question.domain || '', unitId: question.unitId || question.skillId || '',
+    itemKey: baseItemKey(question.itemKey), target: question.target || '',
+    instruction: question.instruction || '', answerId: question.answerId || '',
+    correctOrder: question.correctOrder || null, correctGroups: question.correctGroups || null
+  })
+}
+
+function instanceFingerprint(question) {
+  return JSON.stringify({
+    knowledge: knowledgeFingerprint(question), visual: question.visual || null,
+    // 並べ替えの偶然を除く。数値・問題文が違えば instance は変わる。
+    choices: normalizedChoices(question), items: [...(question.items || [])].map(({ id, label, shape, color }) => ({ id, label, shape, color })).sort((a, b) => String(a.id).localeCompare(String(b.id)))
+  })
+}
+
+export function questionIds(question) {
+  if (!question) return { knowledgeId: null, unitId: null, skillId: null, questionInstanceId: null }
+  const unitId = question.unitId || question.skillId || null
+  const direct = knowledgeFingerprint(question)
+  const knowledgeId = question.knowledgeId || (direct.startsWith('skill:') ? direct : `${question.domain || 'item'}:${hash(direct)}`)
+  const questionInstanceId = question.questionInstanceId || `${knowledgeId}#${hash(instanceFingerprint(question))}`
+  return { knowledgeId, unitId, skillId: question.skillId || unitId, questionInstanceId }
+}
+
+export function withQuestionIds(question) {
+  if (!question) return question
+  return { ...question, ...questionIds(question) }
+}
+
+// 旧API互換。SRS・単元達成とも知識IDを使う。
+export function reviewKeyFor(question) { return questionIds(question).knowledgeId }
+
 export function snapshotQuestion(question, reviewKey = reviewKeyFor(question)) {
   if (!question || !reviewKey) return null
-  const { reviewKey: _reviewKey, ...snapshot } = question
-  return { ...snapshot, reviewKey }
+  const { reviewKey: _reviewKey, ...snapshot } = withQuestionIds(question)
+  return { ...snapshot, reviewKey, reinforcement: true }
 }
 
-/**
- * 保存済み問題を読む。古いセーブには無いので、その場合は null を返して
- * 従来の「同じ種類の類題」を生成する。
- */
 export function savedReviewQuestion(state, domainId, reviewKey) {
   const question = state.reviewQuestions?.[domainId]?.[reviewKey]
-  return question ? { ...question, reviewKey } : null
+  return question ? withQuestionIds({ ...question, reviewKey }) : null
 }

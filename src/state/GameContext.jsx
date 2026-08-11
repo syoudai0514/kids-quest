@@ -22,15 +22,16 @@ import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engi
 import { DEFAULT_TTS_RATE, migrateTtsRate } from '../config/ttsRates.js'
 import { snapshotQuestion } from '../engine/reviewKey.js'
 import { advanceEnglishProgress, emptyEnglishProgress } from '../engine/englishProgress.js'
-import { recordUnitResult, promotionResult } from '../engine/learningUnits.js'
+import { recordUnitResult, promotionResult, unitLedger, unitReady } from '../engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../engine/englishMigration.js'
+import { migrateLearningProgress } from '../engine/progressMigration.js'
 
 const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
 export const REVIEW_BATCH_MAX = 8
 
 // コンテンツの大きな更新で上げる。進捗と開始済みの当日ミッションは保つ。
-const CONTENT_VERSION = 13
+const CONTENT_VERSION = 14
 export const STAR_TRIAL_QUESTIONS = 6
 export const STAR_TRIAL_ROUNDS = 2
 export const STAR_TRIAL_PASS_CORRECT = 9
@@ -63,10 +64,10 @@ export function skillOf(state, domainId, grade = state.grade) {
 
 // 学年マスター進捗（0〜1）: 全分野の平均レベル / マスター基準
 export function masteryProgress(state) {
-  const skills = skillsForGrade(state)
-  const doms = domainsForGrade(state.grade)
-  const avg = doms.reduce((sum, d) => sum + Math.floor((skills[d.id] || makeSkill()).level), 0) / doms.length
-  return Math.min(1, avg / MASTER_LEVEL)
+  const ledger = unitLedger(state.grade)
+  if (!ledger.length) return 0
+  const done = ledger.filter(({ domainId, unitId }) => unitReady(state.unitStats?.[state.grade]?.[domainId]?.[unitId])).length
+  return done / ledger.length
 }
 
 // きょう復習する問題の数（ホームのバッジ・とっくんの件数）
@@ -129,6 +130,8 @@ function createInitialState() {
     skills: { 0: freshSkills() },
     srs: {}, // { domainId: { itemKey: {box, due, lapses} } } 間隔反復
     unitStats: {}, // { grade: { domain: { unitId: 学習回数・別日成功 } } }
+    // 書字は単元ではなく文字ごと。未経験文字を別の成功で自由書きにしない。
+    writingStats: {}, // { 'grade:文字': { attempts, successDays, guideSeen, freeSuccess } }
     // 英語は「別の日に思い出せた」ことを可視化する。録音そのものでは上げない。
     englishWordStats: {},
     englishPhraseStats: {},
@@ -205,7 +208,7 @@ function normalizeProfileSaved(saved) {
       settings: settingsForCurrentVersion(saved.settings),
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
       srs: saved.srs || migrateMissed(saved.missed),
-      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}, englishPhraseStats: saved.englishPhraseStats || {}, englishAlphabetStats: saved.englishAlphabetStats || {}, unitStats: saved.unitStats || {}
+      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}, englishPhraseStats: saved.englishPhraseStats || {}, englishAlphabetStats: saved.englishAlphabetStats || {}, unitStats: saved.unitStats || {}, writingStats: saved.writingStats || {}
     }
   } else if (saved && (saved.version === 1 || saved.version === 2)) {
     base = migrateOld(saved)
@@ -252,6 +255,12 @@ function normalizeProfileSaved(saved) {
   if (!base.englishPhraseStats || typeof base.englishPhraseStats !== 'object') base = { ...base, englishPhraseStats: {} }
   if (!base.englishAlphabetStats || typeof base.englishAlphabetStats !== 'object') base = { ...base, englishAlphabetStats: {} }
   if (!base.unitStats || typeof base.unitStats !== 'object') base = { ...base, unitStats: {} }
+  if (!base.writingStats || typeof base.writingStats !== 'object') base = { ...base, writingStats: {} }
+  // v14: 選択肢順を含んだ旧itemKeyはdistinctItemsに使わない。過去の回数・
+  // 解放済み学年は守り、現在学年だけ新しい安定knowledgeIdで再確認する。
+  if ((base.unitProgressVersion || 0) < 14) {
+    base = migrateLearningProgress(base)
+  }
   // 旧コンテンツ版だけで ew173 は star だった。現行では diamond なので、
   // 現行保存を毎回 star に移し替えて消すことは絶対にしない。
   if ((saved?.contentVersion || 0) > 0 && (saved?.contentVersion || 0) < 13 && base.englishWordStats.ew173) {
@@ -342,7 +351,7 @@ export function starTrialInfo(state, grade = state.grade) {
     total,
     remainingRounds: Math.max(0, STAR_TRIAL_ROUNDS - relevant.length),
     todayDone: last?.day === dayNumber(),
-    passed: total >= STAR_TRIAL_QUESTIONS * STAR_TRIAL_ROUNDS && correct >= STAR_TRIAL_PASS_CORRECT
+    passed: promotionResult(state, grade).passed
   }
 }
 
@@ -430,7 +439,7 @@ function reduceProfile(state, action) {
       let reviewQuestions = state.reviewQuestions || {}
       let conquered = state.conquered
       let xpGain = correct ? 2 : 0
-      if (itemKey) {
+      if (itemKey && domainId !== 'english') {
         const day = dayNumber()
         const byKey = srs[domainId] || {}
         const prev = byKey[itemKey]
@@ -460,8 +469,8 @@ function reduceProfile(state, action) {
       let englishWordStats = state.englishWordStats || {}
       let englishPhraseStats = state.englishPhraseStats || {}
       let englishAlphabetStats = state.englishAlphabetStats || {}
-      if (domainId === 'english' && itemKey) {
-        const rawKey = String(itemKey).split('#')[0]
+      if (domainId === 'english' && action.englishItemKey) {
+        const rawKey = String(action.englishItemKey).split('#')[0]
         const isPhrase = rawKey.startsWith('enp:')
         const isAlphabet = rawKey.startsWith('ena:')
         const key = rawKey.replace(/^en[wap]?:/, '')
@@ -472,6 +481,19 @@ function reduceProfile(state, action) {
         if (isAlphabet) englishAlphabetStats = { ...englishAlphabetStats, [key]: next }
         else if (isPhrase) englishPhraseStats = { ...englishPhraseStats, [key]: next }
         else englishWordStats = { ...englishWordStats, [key]: next }
+      }
+
+      let writingStats = state.writingStats || {}
+      if (domainId === 'kaku' && action.question?.target) {
+        const key = `${grade}:${action.question.target}`
+        const prev = writingStats[key] || { attempts: 0, successDays: [], guideSeen: false, freeSuccess: false }
+        const day = dayNumber()
+        const successDays = correct && !prev.successDays.includes(day) ? [...prev.successDays, day].slice(-12) : prev.successDays
+        writingStats = { ...writingStats, [key]: {
+          ...prev, attempts: prev.attempts + 1, successDays,
+          guideSeen: prev.guideSeen || action.question.stage === 'trace',
+          freeSuccess: prev.freeSuccess || (correct && action.question.stage === 'free' && prev.successDays.some((d) => d < day))
+        } }
       }
 
       // v4: 学年の解放は「章末テストの合格」で行うので、ここでは解放しない
@@ -492,6 +514,7 @@ function reduceProfile(state, action) {
         lastActiveDate,
         srs,
         unitStats,
+        writingStats,
         englishWordStats,
         englishPhraseStats,
         englishAlphabetStats,

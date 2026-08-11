@@ -18,8 +18,9 @@ import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
 import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
 import { englishTaskForms } from '../data/content/english.js'
-import { reviewKeyFor, savedReviewQuestion, snapshotQuestion } from '../engine/reviewKey.js'
+import { reviewKeyFor, savedReviewQuestion, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
 import { nextLearningUnit, unitStatsFor, withLearningUnit, lessonForUnit } from '../engine/learningUnits.js'
+import { normalizeEnglishKey } from '../data/content/english.js'
 import { sfx } from '../engine/sfx.js'
 import { AppHeader, Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
@@ -134,6 +135,7 @@ export default function ActivityPlayer({ task, onDone }) {
   const reinforcementAttemptsRef = useRef({})
   // 英語は同じ4問で同じ単語・会話を繰り返さない（誤答後の補強だけは例外）。
   const shownEnglishItemsRef = useRef([])
+  const englishFocusItemRef = useRef(null)
 
   const currentDomainId = () =>
     isReviewTask ? task.plan[Math.min(qIndex, task.plan.length - 1)].domainId : task.domainId
@@ -150,8 +152,10 @@ export default function ActivityPlayer({ task, onDone }) {
       ...difficultyParams(skillOf(stateRef.current, domainId)),
       grade: stateRef.current.grade,
       englishAudioAvailable: domainId === 'english' ? englishAudioForTask : true,
-      taskForm: domainId === 'english' && !isReviewTask && !task.focusWordId && !reinforcementQueueRef.current.some((entry) => entry.after <= qIndex)
-        ? englishFormPlan[Math.min(qIndex, englishFormPlan.length - 1)]
+      taskForm: domainId === 'english' && !isReviewTask && !reinforcementQueueRef.current.some((entry) => entry.after <= qIndex)
+        ? (task.focusWordId
+            ? ['listen-picture', 'picture-word', 'word-meaning', 'japanese-word'][Math.min(qIndex, 3)]
+            : englishFormPlan[Math.min(qIndex, englishFormPlan.length - 1)])
         : undefined,
       englishWordStats: stateRef.current.englishWordStats,
       englishPhraseStats: stateRef.current.englishPhraseStats,
@@ -161,20 +165,28 @@ export default function ActivityPlayer({ task, onDone }) {
     }
     setSupportHint(params.hint >= 2)
 
-    let review = qIndex === 0 && task.focusWordId ? `en:${task.focusWordId}` : null
+    // 図鑑からの練習は4問すべて同じ語。形式だけを変えて結び付ける。
+    let review = task.focusWordId ? `enw:${task.focusWordId}` : null
+    let reinforcementSnapshot = null
     if (isReviewTask) {
       review = task.plan[Math.min(qIndex, task.plan.length - 1)].key
+    } else if (!review && domainId === 'english' && qIndex < 3 && englishFocusItemRef.current) {
+      // 初見の4問を無関係な語へ散らさず、同じ語を形式を変えて練習する。
+      review = englishFocusItemRef.current
     } else {
       // このタスクで間違えた問題は、2問ほど間を空けて同じ問題をもう一度。
       // その場で答えを押し直すだけで終わらせず、思い出す練習にする。
       const reinforcementIndex = reinforcementQueueRef.current.findIndex((entry) => entry.after <= qIndex)
       if (reinforcementIndex >= 0) {
-        review = reinforcementQueueRef.current.splice(reinforcementIndex, 1)[0].key
+        const reinforcement = reinforcementQueueRef.current.splice(reinforcementIndex, 1)[0]
+        review = reinforcement.key
+        reinforcementSnapshot = reinforcement.question
       }
       // 通常タスクでも、きょうが復習の期限になっている問題を混ぜる
       // （間隔反復: 忘れかけた ちょうどよい タイミングで もう一度 出会う）
       const due = dueKeys(stateRef.current.srs, domainId)
-      if (!review && due.length && Math.random() < 0.45) {
+      // 新単元の導入直後2問には、期限復習を割り込ませない。
+      if (!review && qIndex >= 2 && due.length && Math.random() < 0.45) {
         review = due[Math.floor(Math.random() * Math.min(due.length, 5))]
       }
     }
@@ -185,30 +197,33 @@ export default function ActivityPlayer({ task, onDone }) {
       .filter(([, stat]) => (stat.attempts || 0) >= 2)
       .map(([id]) => id)
     const targetUnit = !review && !isReviewTask
-      ? (qIndex < 2 ? focusUnitRef.current : learnedUnits[0] || focusUnitRef.current)
+      ? (qIndex < 2 ? focusUnitRef.current : [...learnedUnits].sort((a, b) => (unitStatsFor(stateRef.current, stateRef.current.grade, domainId)[a]?.lastPresentedDate || 0) - (unitStatsFor(stateRef.current, stateRef.current.grade, domainId)[b]?.lastPresentedDate || 0))[0] || focusUnitRef.current)
       : null
     // review は「出したい問題」と「記録する問題」を同じキーで束ねる。
     // ここで渡さないと、moon を指定して別の単語を出し moon に記録する事故になる。
-    const generated = saved || (domainId === 'english'
+    const generated = reinforcementSnapshot || saved || (domainId === 'english'
       ? dom.generateQuestion({ ...params, reviewKey: review }, review)
-      : questionForUnit(dom, { ...params, unitId: targetUnit }, targetUnit))
+      : review?.startsWith('skill:')
+        ? dom.generateQuestion({ ...params, unitId: review.slice(6) }, review.slice(6).replace(/^math:/, 'n:'))
+        : questionForUnit(dom, { ...params, unitId: targetUnit }, targetUnit))
     // 指定復習を作れない場合は、別問題へすり替えて採点しない。次回に残す。
-    if (!generated || (review && domainId === 'english' && String(generated.itemKey || '').split('#')[0] !== String(review).split('#')[0])) {
+    if (!generated || (review && domainId === 'english' && normalizeEnglishKey(generated.itemKey) !== normalizeEnglishKey(review))) {
       setQuestion(null)
       setFeedback({ good: false, word: 'この もんだいを じゅんび中だよ。あとで もういちど やろう。' })
       return setTimeout(advance, 900)
     }
     // 旧セーブの「種類だけ」の復習キーも、そのまま復習として扱えるようにする。
-    let q = withLearningUnit(review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated, params.grade)
+    let q = withQuestionIds(withLearningUnit(review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated, params.grade))
     // 未経験の書字は必ずお手本つき。別日に成功してから自由書きへ進む。
     if (q?.type === 'trace') {
-      const stat = unitStatsFor(stateRef.current, params.grade, domainId)[q.unitId]
+      const stat = stateRef.current.writingStats?.[`${params.grade}:${q.target}`]
       const hasEarlierDaySuccess = (stat?.successDays || []).some((day) => day < dayNumber())
-      if (!hasEarlierDaySuccess) q = { ...q, stage: 'trace' }
+      if (!hasEarlierDaySuccess || !stat?.guideSeen) q = { ...q, stage: 'trace' }
     }
     if (domainId === 'english' && !review && q.itemKey) {
       shownEnglishItemsRef.current = [...shownEnglishItemsRef.current, q.itemKey]
     }
+    if (domainId === 'english' && !englishFocusItemRef.current && /^enw:/.test(q.itemKey || '')) englishFocusItemRef.current = q.itemKey
     setQuestion(q)
     setPhase('answering')
     setChosenId(null)
@@ -323,8 +338,10 @@ export default function ActivityPlayer({ task, onDone }) {
     // 同じ問題を何度も間違えても、1タスク内で終わらなくならないよう上限は2回。
     if (attempts >= 2) return
     reinforcementAttemptsRef.current[key] = attempts + 1
-    reinforcementQueueRef.current.push({ key, after: qIndex + 2 })
-    setReinforcementCount((n) => n + 1)
+    // SRSは類題、タスク内の補強は「同じ設問」。算数も数値を保存して再出題する。
+    reinforcementQueueRef.current.push({ key, question: snapshotQuestion(question, key), after: qIndex + 2 })
+    // 最終問でも「2問後」を置ける長さまでだけ末尾を延長する。
+    setReinforcementCount((n) => Math.max(n, qIndex + 3 - baseQuestionCount))
   }
 
   const recordAnswer = (correct) => {
@@ -348,6 +365,7 @@ export default function ActivityPlayer({ task, onDone }) {
       correct,
       itemKey,
       unitId: question.unitId,
+      englishItemKey: question.itemKey,
       question: snapshotQuestion(question, itemKey)
     })
     if (!correct) addReinforcement(itemKey)
