@@ -25,6 +25,8 @@ import { advanceEnglishProgress, emptyEnglishProgress, englishDueEntries } from 
 import { recordUnitResult, promotionResult, unitLedger, unitReady } from '../engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../engine/englishMigration.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../engine/progressMigration.js'
+import { grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../engine/battleTickets.js'
+import { freshDailyMission, lowerGradeProgress } from '../engine/gradeReset.js'
 
 // 1日3戦は自由に遊べる。さらに、教科をやりきる・追加問題を正解すると
 // チケットで増えていく。「がんばるほど遊べる」を保ちつつ、以前より
@@ -83,62 +85,18 @@ export function equippedWeapon(state) {
   return getWeapon(state.equipped)
 }
 
-function freshDaily(date, grade = 0) {
-  return {
-    date,
-    coreTasks: buildCoreMission(grade),
-    coreIndex: 0,
-    coreDone: false,
-    tasksClearedToday: 0,
-    correctToday: 0,
-    attemptsToday: 0,
-    perDomainToday: {},
-    ticketsEarnedToday: 0,
-    battleUnlocks: [], // 2教科・全教科完了で解放した追加戦
-    okawariIndex: 0,
-    extraIndex: 0
-  }
-}
-
-const TICKET_VALID_DAYS = 7
-
-function freshBattle(date, ticketsList = []) {
+function freshBattle(date, previous = null) {
   return {
     date,
     playsUsed: 0,
-    ticketsList,
+    tickets: previous?.tickets || 0,
+    // 旧セーブとの区別のため、前の記録がない新規状態には ticketGrants を
+    // 置かない。normalizeBattleTickets が旧来の数値 tickets を安全に移行する。
+    ...(previous?.ticketGrants ? { ticketGrants: previous.ticketGrants } : {}),
     dailyLimit: BATTLE_DAILY_LIMIT,
     wins: 0,
     caught: []
   }
-}
-
-// 旧セーブは tickets が単なる整数。読むたびに、その個数ぶんを「今日獲得」の
-// チケットとして扱う（配列形式へは書き込み時に自然移行する）。
-function ticketsListOf(battle, today = dayNumber()) {
-  if (Array.isArray(battle?.ticketsList)) return battle.ticketsList
-  const n = typeof battle?.tickets === 'number' ? battle.tickets : 0
-  return Array.from({ length: n }, () => ({ earnedDay: today }))
-}
-
-// 手持ちチケットの枚数（期限切れは含めない）
-export function ticketCount(battle, today = dayNumber()) {
-  return ticketsListOf(battle, today).filter((t) => t.earnedDay + TICKET_VALID_DAYS > today).length
-}
-
-function expireOldTickets(ticketsList, today = dayNumber()) {
-  return (ticketsList || []).filter((t) => t.earnedDay + TICKET_VALID_DAYS > today)
-}
-
-function addTicket(battle) {
-  return { ...battle, ticketsList: [...ticketsListOf(battle), { earnedDay: dayNumber() }] }
-}
-
-// 期限が近いものから1枚減らす
-function removeOneTicket(battle) {
-  const list = [...ticketsListOf(battle)].sort((a, b) => a.earnedDay - b.earnedDay)
-  list.shift()
-  return { ...battle, ticketsList: list }
 }
 
 function createInitialState() {
@@ -180,7 +138,7 @@ function createInitialState() {
     domainAccuracy: {}, // { '学年:教科': {c, n} } 直近の正解率（おさらい授業の判定用）
     unlockedMonsters: [partner.id],
     totalClears: 0,
-    daily: freshDaily(today, 0),
+    daily: freshDailyMission(today, 0),
     battle: freshBattle(today),
     // neural は端末の声ではなく、アプリ内で動く女性ナビ音声。
     settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true },
@@ -324,15 +282,10 @@ function normalizeProfileSaved(saved) {
   }
   base = {
     ...base,
-    daily: { ...freshDaily(base.daily?.date || todayKey(), base.grade || 0), ...(base.daily || {}) },
-    battle: (() => {
-      // 旧セーブの tickets（整数）は、枚数を失わないよう配列形式へ移行する
-      // （いつ獲得したか分からないため、今日を起点に7日間もたせる）。
-      const merged = { ...freshBattle(base.battle?.date || todayKey()), ...(base.battle || {}), dailyLimit: BATTLE_DAILY_LIMIT }
-      const { tickets: _oldTickets, ...rest } = merged
-      return { ...rest, ticketsList: ticketsListOf(base.battle) }
-    })()
+    daily: { ...freshDailyMission(base.daily?.date || todayKey(), base.grade || 0), ...(base.daily || {}) },
+    battle: { ...freshBattle(base.battle?.date || todayKey()), ...(base.battle || {}), dailyLimit: BATTLE_DAILY_LIMIT }
   }
+  base = { ...base, battle: normalizeBattleTickets(base.battle, todayKey()) }
   // すでに先の学年へ進んでいた子が、テスト制になって戻されないようにする
   //（これまでの解放は そのまま みとめる）
   if (base.gradeMax > 0) {
@@ -410,8 +363,8 @@ function rolloverIfNeeded(state) {
   return {
     ...state,
     history,
-    daily: freshDaily(today, state.grade || 0),
-    battle: freshBattle(today, expireOldTickets(ticketsListOf(state.battle)))
+    daily: freshDailyMission(today, state.grade || 0),
+    battle: normalizeBattleTickets(freshBattle(today, state.battle), today)
   }
 }
 
@@ -610,10 +563,10 @@ function reduceProfile(state, action) {
       if (kind === 'core') {
         const coreIndex = state.daily.coreIndex + 1
         daily = { ...daily, coreIndex, coreDone: coreIndex >= state.daily.coreTasks.length }
-        // 1日1戦は自由。2教科・5教科を終えると追加戦を1回ずつ解放する。
+        // 1日3戦は自由。2教科・5教科を終えると追加戦を1回ずつ解放する。
         // 「正解数」ではなく教科を最後までやった行動に対して渡すので、連打の近道にならない。
         if ([2, state.daily.coreTasks.length].includes(coreIndex) && !(daily.battleUnlocks || []).includes(coreIndex)) {
-          battle = addTicket(battle)
+          battle = grantBattleTicket(battle, todayKey())
           daily = {
             ...daily,
             ticketsEarnedToday: daily.ticketsEarnedToday + 1,
@@ -634,15 +587,15 @@ function reduceProfile(state, action) {
         daily = { ...daily, extraIndex: state.daily.extraIndex + 1 }
         const acc = typeof action.accuracy === 'number' ? action.accuracy : 0
         if (action.suspicious) {
-          const lost = Math.min(1, ticketCount(battle))
-          battle = lost > 0 ? removeOneTicket(battle) : battle
+          const lost = Math.min(1, battle.tickets)
+          battle = lost ? spendBattleTicket(battle, todayKey()) : battle
           celebration.ticketPenalty = lost > 0 ? lost : 0
           celebration.ticketReason = lost > 0
             ? 'はやおしが つづいたから、チケットが 1まい へったよ'
             : 'はやおしが つづいたから、こんかいは チケットなしだよ'
           celebration.xpGain = 1
         } else if (acc >= 2 / 3) {
-          battle = addTicket(battle)
+          battle = grantBattleTicket(battle, todayKey())
           daily = { ...daily, ticketsEarnedToday: daily.ticketsEarnedToday + 1 }
           celebration.ticket = true
           celebration.ticketMessage = '3もん中 2もん できた！ バトルチケットを ゲット！'
@@ -699,10 +652,10 @@ function reduceProfile(state, action) {
           }
         }
       }
-      if (ticketCount(b) > 0) {
+      if (b.tickets > 0) {
         return {
           ...state,
-          battle: removeOneTicket(b),
+          battle: spendBattleTicket(b, todayKey()),
           rewardProgress: {
             ...state.rewardProgress,
             battleTutorialsSeen: (state.rewardProgress?.battleTutorialsSeen || 0) + 1
@@ -880,28 +833,7 @@ function reduceProfile(state, action) {
     // なったときに、今の力に合うところまで下げ直すための操作。
     // 進捗（XP・図鑑・そうび・とっくん）は消さない。
     case 'LOWER_GRADE_MAX': {
-      const gm = Math.max(0, Math.min(state.gradeMax, action.gradeMax))
-      if (gm === state.gradeMax) return state
-      const grade = Math.min(state.grade, gm)
-      // 戻した学年より先の合格記録・しれん履歴・保留中の進級は無効なので消す。
-      // XP・図鑑・そうび・英語進捗・SRS・ストリークは触らない（実力の記録として残す）。
-      const testPassed = Object.fromEntries(
-        Object.entries(state.testPassed || {}).filter(([g]) => Number(g) < gm)
-      )
-      const starTrials = Object.fromEntries(
-        Object.entries(state.starTrials || {}).filter(([g]) => Number(g) < gm)
-      )
-      const pendingGradeUp = state.pendingGradeUp != null && state.pendingGradeUp >= gm ? null : state.pendingGradeUp
-      return {
-        ...state,
-        gradeMax: gm,
-        grade,
-        testPassed,
-        starTrials,
-        pendingGradeUp,
-        // 学年が変わると教科構成も変わるので、その日のミッションを完全に作り直す
-        daily: grade === state.grade ? state.daily : freshDaily(state.daily.date, grade)
-      }
+      return lowerGradeProgress(state, action.gradeMax)
     }
 
     case 'SET_SETTING':

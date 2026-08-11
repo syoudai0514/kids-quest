@@ -272,12 +272,7 @@ export async function speakJapaneseThenEnglish(japanese, english) {
 // 「4ぶんの3」「2たい3」のように、子どもが授業で聞くとおりの言い方へ直す。
 const SYMBOL_READING = [
   [/❓/g, 'なに'],
-  // 時刻「hh:mm」。分は必ず2桁ゼロ埋めなので、教材の比の書式「2:3」
-  // （ゼロ埋めなしの小さい数字）とは形が違い、区別できる。
-  // あとの比ルール・分数ルール・ひき算ルールに食われる前に確定させる。
-  [/\b([01]?\d|2[0-3])[:：]([0-5]\d)\b/g, (_, h, mm) => `${Number(h)}時${mm === '00' ? '' : `${Number(mm)}分`}`],
-  // 日付「yyyy/mm/dd」「yyyy-mm-dd」。分数（／）・ひき算（−/-）ルールより先に。
-  [/\b(\d{4})[/／-](\d{1,2})[/／-](\d{1,2})\b/g, (_, y, mo, d) => `${y}年${Number(mo)}月${Number(d)}日`],
+  // 時刻・日付は normalizeDateAndTimeForSpeech() が先に変換済み。
   // 分数は「◯ぶんの◯」。解説文（例: 4分の3にそろえる）で頻出なので
   // 記号処理のいちばん最初に置き、あとの「／→、」に食われないようにする。
   [/(\d+)\s*[/／]\s*(\d+)/g, '$2ぶんの$1'],
@@ -294,11 +289,20 @@ const SYMBOL_READING = [
   [/～|〜/g, 'から'], [/[⭐✨🌟💫🎉🎊🚀📅🎌🔬🗾💗🕐👑⚔️❤️🎁]/g, '']
 ]
 
+function normalizeDateAndTimeForSpeech(text) {
+  return text
+    // 日付を先に保護する。これを分数より後にすると 2026/08/11 が分数に化ける。
+    .replace(/(\d{4})\s*[-/.／]\s*(\d{1,2})\s*[-/.／]\s*(\d{1,2})/g, (_all, year, month, day) => `${year}年${Number(month)}月${Number(day)}日`)
+    // 分が2桁の表記は時刻として扱う。小学校の比 2:3 はこの対象にせず「2たい3」と読む。
+    .replace(/\b(\d{1,2})\s*[:：]\s*(\d{2})(?!\d)/g, '$1時$2分')
+}
+
 export function normalizeForSpeech(text) {
   let s = String(text).normalize('NFKC')
   // 表示用の「こん虫」などを、辞書へ渡す前に正しい単語の読みへ直す。
   // これを記号処理や空白除去の前に行うことで、かな＋漢字の表記も拾える。
   s = applyPronunciationOverrides(s)
+  s = normalizeDateAndTimeForSpeech(s)
   for (const [re, to] of SYMBOL_READING) s = s.replace(re, to)
   for (let i = 0; i < 3; i += 1) {
     s = s.replace(/([぀-ゟ゠-ヿ一-鿿0-9０-９])[ 　]+([぀-ゟ゠-ヿ一-鿿0-9０-９])/g, '$1$2')

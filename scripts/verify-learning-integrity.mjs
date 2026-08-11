@@ -13,6 +13,8 @@ import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../src/engine/pr
 import { questionForUnit } from '../src/engine/unitQuestions.js'
 import { makeTrialQuestions } from '../src/engine/trialQuestions.js'
 import { reinforcementExtraCount, reinforcementTargetIndex } from '../src/engine/reinforcement.js'
+import { BATTLE_TICKET_TTL_DAYS, grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../src/engine/battleTickets.js'
+import { lowerGradeProgress } from '../src/engine/gradeReset.js'
 import { scheduleAnswer } from '../src/engine/srs.js'
 
 const must = (value, message) => { if (!value) throw new Error(message) }
@@ -114,6 +116,27 @@ must(!unitReady(sameDay[0].suuji['math:add10']), '同日連打で単元を習得
 const firstSchedule = scheduleAnswer(null, true, 20).entry
 const repeatedSameDay = scheduleAnswer(firstSchedule, true, 20)
 must(repeatedSameDay.advanced === false && repeatedSameDay.entry.box === firstSchedule.box, '期限前の同日連打でSRS段階が進んだ')
+
+// 学年を戻すと、先の学年の合格資格だけを消し、学習履歴・報酬は残す。
+const lowered = lowerGradeProgress({
+  grade: 3, gradeMax: 3, xp: 4200, unlockedMonsters: ['m001'], weapons: ['w01'],
+  englishWordStats: { ew001: { stage: 2 } }, srs: { yomu: { a: { due: 5 } } },
+  testPassed: { 0: { passed: true }, 1: { passed: true }, 2: { passed: true } },
+  starTrials: { 0: { rounds: [{}] }, 2: { rounds: [{}] } }, pendingGradeUp: 3,
+  daily: { date: '2026-08-11', coreIndex: 3, coreTasks: [{ domainId: 'rika' }], ticketsEarnedToday: 2 }
+}, 0)
+must(lowered.grade === 0 && lowered.gradeMax === 0 && Object.keys(lowered.testPassed).length === 0 && Object.keys(lowered.starTrials).length === 0 && lowered.pendingGradeUp === null, '学年を戻しても先の進級資格が残る')
+must(lowered.xp === 4200 && lowered.unlockedMonsters[0] === 'm001' && lowered.weapons[0] === 'w01' && lowered.englishWordStats.ew001.stage === 2 && lowered.srs.yomu.a.due === 5, '学年を戻す操作で既存の報酬・学習履歴を消した')
+must(lowered.daily.coreIndex === 0 && lowered.daily.coreTasks.every((task) => ['yomu', 'suuji', 'kaku', 'seikatsu', 'english', 'doutoku'].includes(task.domainId)), '学年を戻した当日のミッションを年長向けに再構成できない')
+
+// チケットは0時をまたいで残り、期限が過ぎたものだけ消費対象から外れる。
+const ticketToday = '2026-08-11'
+const earnedTicket = grantBattleTicket({ tickets: 0, ticketGrants: [] }, ticketToday)
+must(earnedTicket.tickets === 1 && earnedTicket.ticketGrants[0].expiresOn === '2026-08-18' && BATTLE_TICKET_TTL_DAYS === 7, 'チケットの7日期限を設定できない')
+must(normalizeBattleTickets({ tickets: 2 }, ticketToday).tickets === 2, '旧セーブの数値チケットを期限付きへ移行できない')
+must(normalizeBattleTickets(earnedTicket, '2026-08-12').tickets === 1, '日付をまたぐとチケットが消える')
+must(normalizeBattleTickets(earnedTicket, '2026-08-19').tickets === 0, '期限切れチケットが残る')
+must(spendBattleTicket({ tickets: 2, ticketGrants: [{ expiresOn: '2026-08-12' }, { expiresOn: '2026-08-18' }] }, '2026-08-11').ticketGrants[0].expiresOn === '2026-08-18', '期限が近いチケットから使わない')
 
 const practiceState = { unitStats: { 3: { rika: { a: { attempts: 2, nextDue: 10, lastPresentedDate: 9, firstAttemptCorrect: 2 }, b: { attempts: 2, nextDue: 30, lastPresentedDate: 1, firstAttemptCorrect: 0 } } } } }
 must(selectPracticeUnit(practiceState, 3, 'rika', ['a', 'b'], 20) === 'a', '期限到来単元を混合練習で優先できない')

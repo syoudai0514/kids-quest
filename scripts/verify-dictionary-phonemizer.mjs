@@ -26,6 +26,11 @@ assert.equal(
   'かんでんち。けんびきょう。しょうかかん。たいせき。ちそう。だんごむし。かぞく。'
 )
 
+// 算数の比は残しつつ、時刻・日付を分数や比に誤変換しない。
+assert.equal(normalizeForSpeech('比は 2:3 です。'), '比は2たい3です。')
+assert.equal(normalizeForSpeech('12:30に はじまるよ。'), '12時30分にはじまるよ。')
+assert.equal(normalizeForSpeech('2026/08/11の よてい。'), '2026年8月11日のよてい。')
+
 // 本番の辞書WASMを、Nodeでは同じバイナリを直接渡して初期化する。
 // 漢字まじりの出題文を辞書経路で音素にできることを確認する。
 const configUrl = 'https://huggingface.co/ayousanz/piper-plus-tsukuyomi-chan/resolve/36b59c825c36bd386b8960cf3f604382f52f2a87/config.json'

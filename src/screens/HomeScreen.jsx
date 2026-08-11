@@ -14,8 +14,7 @@ import {
   masteryProgress,
   missedCount,
   equippedWeapon,
-  starTrialInfo,
-  ticketCount
+  starTrialInfo
 } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
@@ -76,7 +75,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const okawariLeft = OKAWARI_MAX - daily.okawariIndex
 
   const battlePlaysLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
-  const battleTickets = ticketCount(state.battle)
+  const battleTickets = state.battle.tickets
   const canBattle = battlePlaysLeft > 0 || battleTickets > 0
 
   const [bubble, setBubble] = useState(null)
