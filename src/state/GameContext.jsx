@@ -27,7 +27,7 @@ const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教�
 export const REVIEW_BATCH_MAX = 8
 
 // コンテンツの大きな更新で上げる。進捗は保ったまま当日ミッションを作り直す。
-const CONTENT_VERSION = 10
+const CONTENT_VERSION = 11
 export const STAR_TRIAL_QUESTIONS = 6
 export const STAR_TRIAL_ROUNDS = 2
 export const STAR_TRIAL_PASS_CORRECT = 9
@@ -125,6 +125,8 @@ function createInitialState() {
     rewardProgress: { activityDays: [], eliteWins: 0, battleTutorialsSeen: 0 },
     skills: { 0: freshSkills() },
     srs: {}, // { domainId: { itemKey: {box, due, lapses} } } 間隔反復
+    // 英語は「別の日に思い出せた」ことを可視化する。録音そのものでは上げない。
+    englishWordStats: {},
     // { domainId: { reviewKey: question } }。誤答した問題を同じ形で復習するための保存。
     reviewQuestions: {},
     weapons: ['w01'], // 持っている武器のid（さいしょの1本）
@@ -197,7 +199,7 @@ function normalizeSaved(saved) {
       settings: settingsForCurrentVersion(saved.settings),
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
       srs: saved.srs || migrateMissed(saved.missed),
-      reviewQuestions: saved.reviewQuestions || {}
+      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}
     }
   } else if (saved && (saved.version === 1 || saved.version === 2)) {
     base = migrateOld(saved)
@@ -240,6 +242,7 @@ function normalizeSaved(saved) {
   if (!base.reviewQuestions || typeof base.reviewQuestions !== 'object') {
     base = { ...base, reviewQuestions: {} }
   }
+  if (!base.englishWordStats || typeof base.englishWordStats !== 'object') base = { ...base, englishWordStats: {} }
   if (base.missed) {
     // 旧形式は取り込み済みなので落とす（保存サイズを増やさない）
     const { missed, ...rest } = base
@@ -418,6 +421,25 @@ function reducer(state, action) {
         }
       }
 
+      // 英語単語は 1→3→7→14日。日をまたがない連打では段階を進めない。
+      let englishWordStats = state.englishWordStats || {}
+      if (domainId === 'english' && itemKey) {
+        const key = String(itemKey).replace('en:', '').split('#')[0]
+        const prevStat = englishWordStats[key] || { correct: 0, wrong: 0, streak: 0, stage: 0, lastDay: null, nextDue: dayNumber(), speakingCount: 0 }
+        const todayDay = dayNumber()
+        let next = { ...prevStat, lastAnsweredAt: Date.now() }
+        if (correct) {
+          const canAdvance = prevStat.lastDay !== todayDay && (prevStat.stage === 0 || (prevStat.nextDue ?? todayDay) <= todayDay)
+          const stage = canAdvance ? Math.min(4, prevStat.stage + 1) : prevStat.stage
+          const intervals = [0, 1, 3, 7, 14]
+          next = { ...next, correct: prevStat.correct + 1, streak: prevStat.streak + 1, stage, lastDay: todayDay, nextDue: todayDay + intervals[stage], masteredAt: stage >= 4 ? (prevStat.masteredAt || Date.now()) : null }
+        } else {
+          const stage = Math.max(0, prevStat.stage - 1)
+          next = { ...next, wrong: prevStat.wrong + 1, streak: 0, stage, nextDue: todayDay + 1 }
+        }
+        englishWordStats = { ...englishWordStats, [key]: next }
+      }
+
       // v4: 学年の解放は「章末テストの合格」で行うので、ここでは解放しない
       //（メーターは いまどれくらい仕上がっているかの めやす表示に使う）
 
@@ -435,6 +457,7 @@ function reducer(state, action) {
         streak,
         lastActiveDate,
         srs,
+        englishWordStats,
         reviewQuestions,
         conquered,
         daily: {
@@ -444,6 +467,13 @@ function reducer(state, action) {
           perDomainToday: addDomainTally(state.daily.perDomainToday, domainId, correct)
         }
       }
+    }
+
+    case 'ENGLISH_SPEAKING_DONE': {
+      const key = action.wordId
+      if (!key) return state
+      const prev = state.englishWordStats?.[key] || { correct: 0, wrong: 0, streak: 0, stage: 0, lastDay: null, nextDue: dayNumber() }
+      return { ...state, englishWordStats: { ...state.englishWordStats, [key]: { ...prev, speakingCount: (prev.speakingCount || 0) + 1 } } }
     }
 
     // タスク（数問のまとまり）をクリア → ごほうび進行
