@@ -383,6 +383,17 @@ export function generateSeikatsuQuestion(params, reviewKey = null) {
     const kind = reviewKey.slice(2)
     if (BUILDERS[kind]) return BUILDERS[kind](p)
   }
+  const byUnit = {
+    'life:calendar': ['todayDate', 'relativeDay', 'monthOrder', 'daysInMonth', 'monthEvent', 'holiday', 'holidayName'],
+    'life:weekday': ['todayWeek', 'weekOrder'],
+    'life:clock': ['clockRead', 'clockMinutes', 'clockBefore', 'clockAfter', 'amPm'],
+    'life:season': ['season']
+  }
+  if (params.unitId && byUnit[params.unitId]) {
+    const allowed = new Set(kindsForGrade(grade, params.level || 1))
+    const candidates = byUnit[params.unitId].filter((kind) => allowed.has(kind) && BUILDERS[kind])
+    if (candidates.length) return BUILDERS[pick(candidates)](p)
+  }
   return BUILDERS[pick(kindsForGrade(grade, params.level || 1))](p)
 }
 

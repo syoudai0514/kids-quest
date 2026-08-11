@@ -16,22 +16,22 @@ import { buildCoreMission } from '../engine/missions.js'
 import { DOMAINS, domainsForGrade } from '../engine/activities.js'
 import { getPartner } from '../data/monsters.js'
 import { planetUnlockedAt, currentPlanet } from '../data/planets.js'
-import { MAX_GRADE, MASTER_LEVEL } from '../data/grades.js'
+import { MAX_GRADE } from '../data/grades.js'
 import { getWeapon, weaponScore, starterWeaponsFor } from '../data/weapons.js'
-import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engine/srs.js'
+import { dayNumber, isDue, scheduleAnswer, scheduleNext, dueCount, migrateMissed } from '../engine/srs.js'
 import { DEFAULT_TTS_RATE, migrateTtsRate } from '../config/ttsRates.js'
-import { snapshotQuestion } from '../engine/reviewKey.js'
-import { advanceEnglishProgress, emptyEnglishProgress } from '../engine/englishProgress.js'
+import { persistentReviewSnapshot } from '../engine/reviewKey.js'
+import { advanceEnglishProgress, emptyEnglishProgress, englishDueEntries } from '../engine/englishProgress.js'
 import { recordUnitResult, promotionResult, unitLedger, unitReady } from '../engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../engine/englishMigration.js'
-import { migrateLearningProgress } from '../engine/progressMigration.js'
+import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../engine/progressMigration.js'
 
 const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
 export const REVIEW_BATCH_MAX = 8
 
 // コンテンツの大きな更新で上げる。進捗と開始済みの当日ミッションは保つ。
-const CONTENT_VERSION = 14
+const CONTENT_VERSION = 15
 export const STAR_TRIAL_QUESTIONS = 6
 export const STAR_TRIAL_ROUNDS = 2
 export const STAR_TRIAL_PASS_CORRECT = 9
@@ -62,7 +62,7 @@ export function skillOf(state, domainId, grade = state.grade) {
   return (state.skills[grade] || {})[domainId] || makeSkill()
 }
 
-// 学年マスター進捗（0〜1）: 全分野の平均レベル / マスター基準
+// 学年マスター進捗（0〜1）: 達成済み必須単元数 / 全必須単元数
 export function masteryProgress(state) {
   const ledger = unitLedger(state.grade)
   if (!ledger.length) return 0
@@ -72,7 +72,7 @@ export function masteryProgress(state) {
 
 // きょう復習する問題の数（ホームのバッジ・とっくんの件数）
 export function missedCount(state) {
-  return dueCount(state.srs)
+  return dueCount(state.srs) + englishDueEntries(state, dayNumber()).length
 }
 
 // いま そうびしている武器（無ければ null）
@@ -256,9 +256,9 @@ function normalizeProfileSaved(saved) {
   if (!base.englishAlphabetStats || typeof base.englishAlphabetStats !== 'object') base = { ...base, englishAlphabetStats: {} }
   if (!base.unitStats || typeof base.unitStats !== 'object') base = { ...base, unitStats: {} }
   if (!base.writingStats || typeof base.writingStats !== 'object') base = { ...base, writingStats: {} }
-  // v14: 選択肢順を含んだ旧itemKeyはdistinctItemsに使わない。過去の回数・
+  // v15: 選択肢順を含んだ旧itemKeyはdistinctItemsに使わない。過去の回数・
   // 解放済み学年は守り、現在学年だけ新しい安定knowledgeIdで再確認する。
-  if ((base.unitProgressVersion || 0) < 14) {
+  if ((base.unitProgressVersion || 0) < UNIT_PROGRESS_VERSION) {
     base = migrateLearningProgress(base)
   }
   // 旧コンテンツ版だけで ew173 は star だった。現行では diamond なので、
@@ -445,12 +445,12 @@ function reduceProfile(state, action) {
         const prev = byKey[itemKey]
         const wasDue = isDue(prev, day) // 復習として出ていた問題か
         {
-          const { entry, mastered } = scheduleNext(prev, correct, day)
+          const { entry, mastered } = scheduleAnswer(prev, correct, day)
           srs = { ...srs, [domainId]: { ...byKey, [itemKey]: entry } }
           // 固定知識は同じ設問を保存する。算数は skillId から別の類題を作るため、
           // 計算式そのものは保存しない。
           if (action.question && domainId !== 'suuji') {
-            const snapshot = snapshotQuestion(action.question, itemKey)
+            const snapshot = persistentReviewSnapshot(domainId, action.question, itemKey)
             if (snapshot) {
               reviewQuestions = {
                 ...reviewQuestions,
@@ -753,7 +753,7 @@ function reduceProfile(state, action) {
         const byKey = srs[result.domainId] || {}
         const { entry } = scheduleNext(byKey[result.itemKey], false, today)
         srs = { ...srs, [result.domainId]: { ...byKey, [result.itemKey]: entry } }
-        const snapshot = snapshotQuestion(result.question, result.itemKey)
+        const snapshot = persistentReviewSnapshot(result.domainId, result.question, result.itemKey)
         if (snapshot) {
           reviewQuestions = {
             ...reviewQuestions,
@@ -771,6 +771,7 @@ function reduceProfile(state, action) {
         correct: action.correct || 0,
         total: action.total || STAR_TRIAL_QUESTIONS,
         correctDomains: [...new Set((action.results || []).filter((r) => r.correct && ['yomu', 'kaku', 'suuji', 'seikatsu', 'rika', 'shakai'].includes(r.domainId)).map((r) => r.domainId))],
+        unitIds: [...new Set((action.results || []).map((r) => r.unitId).filter(Boolean))],
         day: dayNumber(),
         at: Date.now()
       }
@@ -804,7 +805,7 @@ function reduceProfile(state, action) {
         const byKey = srs[result.domainId] || {}
         const { entry } = scheduleNext(byKey[result.itemKey], false, round.day)
         srs = { ...srs, [result.domainId]: { ...byKey, [result.itemKey]: entry } }
-        const snapshot = snapshotQuestion(result.question, result.itemKey)
+        const snapshot = persistentReviewSnapshot(result.domainId, result.question, result.itemKey)
         if (snapshot) {
           reviewQuestions = {
             ...reviewQuestions,

@@ -171,20 +171,35 @@ function spellingQuestion(word) {
 }
 function alphabetQuestion(params = {}, reviewKey = null) {
   const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const pairs = order.slice(0, 22).map((letter, index) => `${letter}-${order[index + 1]}`)
   const forced = normalizeEnglishKey(reviewKey || params.reviewKey)
   const requested = forced.match(/^ena:([A-Z])-([A-Z])$/)
-  if (requested && order[order.indexOf(requested[1]) + 1] === requested[2]) {
-    const answer = requested[2]
-    const options = shuffle([answer, ...shuffle(order.filter((letter) => letter !== answer)).slice(0, 3)])
-    return { domain: 'english', itemKey: forced, type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${requested[1]} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: answer }, explain: `${requested[1]} の つぎは ${answer} だよ` }
+  let pair = requested && order[order.indexOf(requested[1]) + 1] === requested[2] ? `${requested[1]}-${requested[2]}` : null
+  if (!pair) {
+    const stats = params.englishAlphabetStats || {}
+    const groups = []
+    for (let i = 0; i < pairs.length; i += 4) groups.push(pairs.slice(i, i + 4))
+    const group = groups.find((items) => items.some((id) => (stats[id]?.stage || 0) < 1)) || groups.find((items) => items.some((id) => (stats[id]?.nextDue ?? Infinity) <= (params.today ?? localDayNumber()))) || groups.at(-1)
+    const seen = new Set((params.seenItemKeys || []).map((key) => baseKey(key).replace(/^ena:/, '')))
+    const usable = group.filter((id) => !seen.has(id))
+    pair = (usable.length ? usable : group)[Math.floor(Math.random() * (usable.length || group.length))]
   }
-  const seen = new Set((params.seenItemKeys || []).map(baseKey))
-  const bases = order.slice(0, 22).filter((letter) => !seen.has(`ena:${letter}-${order[order.indexOf(letter) + 1]}`))
-  const base = (bases.length ? bases : order.slice(0, 22))[Math.floor(Math.random() * (bases.length || 22))]
-  const index = order.indexOf(base)
-  const answer = order[index + 1]
-  const options = shuffle([answer, ...shuffle(order.filter((letter) => letter !== answer)).slice(0, 3)])
-  return { domain: 'english', itemKey: `ena:${base}-${answer}`, type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${base} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: answer }, explain: `${base} の つぎは ${answer} だよ` }
+  const [base, next] = pair.split('-')
+  // 同じ項目を進めるたびに「次の大文字→小文字→文字名」と形式を回す。
+  const variant = (params.englishAlphabetStats?.[pair]?.stage || 0) % 3
+  const itemKey = `ena:${pair}`
+  if (variant === 1) {
+    const answer = base.toLowerCase()
+    const lower = order.map((letter) => letter.toLowerCase())
+    const options = shuffle([answer, ...shuffle(lower.filter((letter) => letter !== answer)).slice(0, 3)])
+    return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-lowercase', visual: { kind: 'bigtext', text: base }, instruction: 'おなじ もじの こもじを えらぼう', speak: `${base} の こもじを えらぼう。`, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: `${base}, ${answer}` }, explain: `${base} の こもじは ${answer} だよ` }
+  }
+  if (variant === 2) {
+    const options = shuffle([base, ...shuffle(order.filter((letter) => letter !== base)).slice(0, 3)])
+    return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-name', visual: { kind: 'bigtext', text: '🔊 Listen!' }, instruction: 'きこえた もじを えらぼう', speak: 'えいごの もじの なまえを きこう。', promptEnglishAudio: base, autoPlayPrompt: true, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${base}`, answerWord: { text: base }, explain: `きこえた もじは ${base} だよ` }
+  }
+  const options = shuffle([next, ...shuffle(order.filter((letter) => letter !== next)).slice(0, 3)])
+  return { domain: 'english', itemKey, type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${base} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${next}`, answerWord: { text: next }, explain: `${base} の つぎは ${next} だよ` }
 }
 function phraseQuestion(phrase, params) {
   const response = { id: phrase.id, response: phrase.response }

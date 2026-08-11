@@ -24,7 +24,9 @@ const BANK = {
     { q: 'じしゃくに つく ものは どれ？', a: 'てつの クリップ', d: ['木のはし', 'ガラスの コップ', 'アルミの かん'], e: 'じしゃくに つくのは てつ。木・ガラス・アルミは つかないよ' },
     { q: 'じしゃくの N きょくと N きょくを 近づけると？', a: 'しりぞけあう', d: ['くっつく', 'なにも おきない', 'とける'], e: '同じ きょくどうしは しりぞけあい、ちがう きょくは 引きあうよ' },
     { q: '音が 出ている ものは どうなっている？', a: 'ふるえている', d: ['ひかっている', 'あたたかい', 'つめたい'], e: 'ものが ふるえる（しんどうする）ことで 音が 出るよ' },
-    { q: 'わゴムを 長く のばして とばすと どうなる？', a: 'とおくまで とぶ', d: ['近くに とぶ', 'とばない', '上に しか とばない'], e: 'のばすほど ゴムの 力が 大きくなって、とおくまで とぶよ' }
+    { q: 'わゴムを 長く のばして とばすと どうなる？', a: 'とおくまで とぶ', d: ['近くに とぶ', 'とばない', '上に しか とばない'], e: 'のばすほど ゴムの 力が 大きくなって、とおくまで とぶよ' },
+    { q: 'たいこの 音を 大きく するには どうする？', a: 'たいこを 強く たたく', d: ['そっと さわる', 'たいこを ぬらす', 'へやを 暗くする'], e: '強くたたくと たいこの ふるえが 大きくなり、音も 大きくなるよ' },
+    { q: '風で 走る 車を もっと 速くするには？', a: '強い 風を あてる', d: ['風を よわくする', '風を とめる', '車を 手で おさえる'], e: '風が強いほど、ものを動かす力も大きくなるよ' }
   ],
   4: [
     { q: 'とじこめた 空気を おすと どうなる？', a: '小さく なる（おしちぢめられる）', d: ['大きく なる', 'かわらない', 'きえる'], e: '空気は おしちぢめられる。水は ほとんど ちぢまないよ' },
@@ -38,7 +40,8 @@ const BANK = {
     { q: '水は 何度で ふっとうする？', a: '100ど', d: ['0ど', '50ど', '200ど'], e: '水は 100どで ふっとうし、0どで こおるよ' },
     { q: '水が こおるのは 何度？', a: '0ど', d: ['10ど', '100ど', '-50ど'], e: '水は 0どで こおって 氷に なるよ' },
     { q: '水が じょうはつして 目に 見えなく なったものを 何という？', a: '水じょうき', d: ['ゆげ', '氷', '雲'], e: '水じょうきは 目に 見えない。白い ゆげは 小さな 水のつぶだよ' },
-    { q: 'こん虫は 冬を こすとき、どんな すがたの ものが 多い？', a: 'たまごや さなぎで じっとして いる', d: ['たくさん とびまわる', '花を さかせる', '大きく そだつ'], e: 'こん虫によってちがうけれど、たまごや さなぎで 冬をこすものが多いよ' }
+    { q: 'こん虫は 冬を こすとき、どんな すがたの ものが 多い？', a: 'たまごや さなぎで じっとして いる', d: ['たくさん とびまわる', '花を さかせる', '大きく そだつ'], e: 'こん虫によってちがうけれど、たまごや さなぎで 冬をこすものが多いよ' },
+    { q: '春に なって あたたかくなると、生き物の ようすは？', a: '活動したり 育ったり するものが ふえる', d: ['すべて ねむりつづける', 'すべて いなくなる', '季節とは かんけいない'], e: '気温が上がる春は、芽が出たり動物が活動したりするようすが多く見られるよ' }
   ],
   5: [
     { q: 'たねが 発芽する のに ひつような 3つは？', a: '水・空気・てきとうな あたたかさ', d: ['水・光・土', '光・空気・肥料', '土・肥料・水'], e: '発芽には 光や 土は いらない。水・空気・あたたかさの 3つだよ' },
@@ -52,7 +55,9 @@ const BANK = {
     { q: '天気は だいたい どちらから どちらへ かわる？', a: '西から 東', d: ['東から 西', '北から 南', '南から 北'], e: '日本の 上空の 風の えいきょうで、天気は 西から 東へ うつるよ' },
     { q: '雨や雪がふっていないとき、雲の量が空の9わりなら天気は？', a: 'くもり', d: ['はれ', '雨', '雪'], e: '雨や雪がないときは、雲の量が0〜8ならはれ、9〜10ならくもりだよ' },
     { q: 'アサガオの 花の おしべで つくられる ものは？', a: '花ふん', d: ['み', 'たね', 'ね'], e: 'おしべの 花ふんが めしべに つくと 受粉して みが できるよ' },
-    { q: '受粉すると やがて 何が できる？', a: 'み（たね）', d: ['は', 'ね', 'えだ'], e: '受粉した めしべの もとが ふくらんで みに なるよ' }
+    { q: '受粉すると やがて 何が できる？', a: 'み（たね）', d: ['は', 'ね', 'えだ'], e: '受粉した めしべの もとが ふくらんで みに なるよ' },
+    { q: 'メダカの 受精した たまごの 中では どうなる？', a: '子メダカの からだが だんだん できる', d: ['すぐに 花が さく', 'たまごが 石に なる', '中が ずっと かわらない'], e: '日がたつと、目や心ぞうなど子メダカの体がだんだん見えるようになるよ' },
+    { q: 'ふりこの ひもを 長くすると、1おうふくの 時間は？', a: '長く なる', d: ['短く なる', 'かわらない', '0びょうに なる'], e: 'ふりこは、ひもが長いほど1往復する時間が長くなるよ' }
   ],
   6: [
     { q: 'ものが 燃える ときに つかわれる 気体は？', a: 'さんそ', d: ['ちっそ', '二さんか炭そ', '水そ'], e: '空気中の さんそを つかって 燃える。二さんか炭そは 燃えるのを たすけないよ' },
@@ -66,23 +71,31 @@ const BANK = {
     { q: 'てこで 小さな 力で 持ち上げる には？', a: '支点から 力点を 遠くする', d: ['支点から 力点を 近くする', 'ぼうを みじかくする', '作用点を 遠くする'], e: '力点を 支点から 遠く、作用点を 支点に 近くすると 楽に なるよ' },
     { q: 'てこが つりあう のは？', a: '重さ×きょり が 左右で 等しい とき', d: ['重さが 等しい とき', 'きょりが 等しい とき', 'いつでも'], e: '「おもさ × 支点からの きょり」が 左右で 同じなら つりあうよ' },
     { q: 'リトマス紙で 酸せいを しらべると？', a: '青色が 赤色に なる', d: ['赤色が 青色に なる', '色が かわらない', '白く なる'], e: '酸せいは 青→赤、アルカリせいは 赤→青に なるよ' },
-    { q: '地そうの しま模様が できる おもな げんいんは？', a: '水や風などで はこばれたものが つもった', d: ['人が つくった', '氷だけが とけた', '空から そのまま 落ちた'], e: '水や風などが はこんだ つぶが つもり、長い時間で そうに なるよ' }
+    { q: '地そうの しま模様が できる おもな げんいんは？', a: '水や風などで はこばれたものが つもった', d: ['人が つくった', '氷だけが とけた', '空から そのまま 落ちた'], e: '水や風などが はこんだ つぶが つもり、長い時間で そうに なるよ' },
+    { q: '食塩水は 酸せい・中せい・アルカリせいの どれ？', a: '中せい', d: ['酸せい', 'アルカリせい', 'どれでも ない'], e: '食塩水は中性。水よう液は性質によって三つに分けられるよ' },
+    { q: '地そうの 中の 化石から わかることは？', a: 'むかしの 生き物や かんきょう', d: ['あしたの 天気', '今の 人口', '電池の 強さ'], e: '化石は、その地層ができたころの生き物や環境を知る手がかりになるよ' }
   ]
 }
 
 // 問題を足したときに単元外へ落ちないよう、設問ごとの単元を教材データ側に持つ。
 // 同じ概念を確認する2問程度を1単元として、偶然の一問正解では終わらせない。
 const UNIT_KEYS = {
-  3: ['insects','insects','insects','insects','plants','plants','light-shadow','light-shadow','magnet','magnet','sound','rubber-wind'],
-  4: ['air-water','air-water','electricity','electricity','moon-stars','moon-stars','heat','heat','water-states','water-states','water-states','living-things'],
-  5: ['germination-growth','germination-growth','medaka','pendulum','electromagnet','electromagnet','running-water','running-water','weather','weather','flowers','flowers'],
-  6: ['combustion','combustion','combustion','plant-sunlight','plant-sunlight','body','body','body','lever','lever','solutions','earth']
+  3: ['insects','insects','insects','insects','plants','plants','light-shadow','light-shadow','magnet','magnet','sound','rubber-wind','sound','rubber-wind'],
+  4: ['air-water','air-water','electricity','electricity','moon-stars','moon-stars','heat','heat','water-states','water-states','water-states','living-things','living-things'],
+  5: ['germination-growth','germination-growth','medaka','pendulum','electromagnet','electromagnet','running-water','running-water','weather','weather','flowers','flowers','medaka','pendulum'],
+  6: ['combustion','combustion','combustion','plant-sunlight','plant-sunlight','body','body','body','lever','lever','solutions','earth','solutions','earth']
 }
 for (const [grade, items] of Object.entries(BANK)) {
   items.forEach((item, index) => { item.unitId = `science:${grade}:${UNIT_KEYS[grade][index] || `topic-${index + 1}`}` })
 }
 export const RIKA_UNIT_IDS_BY_GRADE = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, [...new Set(items.map((item) => item.unitId))]]))
 export const RIKA_UNIT_EXPECTATIONS = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, Object.fromEntries(items.map((item) => [item.q, item.unitId]))]))
+export const RIKA_LESSON_POINTS = Object.fromEntries(Object.values(BANK).flat().reduce((map, item) => {
+  const points = map.get(item.unitId) || []
+  if (points.length < 2) points.push(item.e)
+  map.set(item.unitId, points)
+  return map
+}, new Map()))
 
 function shuffle(arr) {
   const a = [...arr]

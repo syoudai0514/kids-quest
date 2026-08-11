@@ -19,8 +19,10 @@ import { difficultyParams } from '../engine/difficulty.js'
 import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
 import { englishTaskForms } from '../data/content/english.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
-import { nextLearningUnit, unitStatsFor, withLearningUnit, lessonForUnit } from '../engine/learningUnits.js'
+import { nextLearningUnit, selectPracticeUnit, unitStatsFor, withLearningUnit, lessonForUnit } from '../engine/learningUnits.js'
 import { normalizeEnglishKey } from '../data/content/english.js'
+import { questionForUnit } from '../engine/unitQuestions.js'
+import { reinforcementExtraCount, reinforcementTargetIndex } from '../engine/reinforcement.js'
 import { sfx } from '../engine/sfx.js'
 import { AppHeader, Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
@@ -44,22 +46,6 @@ const CHEER = [
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
-}
-
-function questionForUnit(dom, params, unitId) {
-  if (!unitId) return withLearningUnit(dom.generateQuestion(params, null), params.grade)
-  const math = unitId.match(/^math:(.+)$/)
-  const life = unitId.match(/^life:(.+)$/)
-  const lifeKey = { calendar: 'todayDate', weekday: 'todayWeek', clock: 'clockRead', season: 'season' }[life?.[1]]
-  if (math) return withLearningUnit(dom.generateQuestion(params, `n:${math[1]}`), params.grade)
-  if (lifeKey) return withLearningUnit(dom.generateQuestion(params, `s:${lifeKey}`), params.grade)
-  let first = null
-  for (let i = 0; i < 32; i++) {
-    const candidate = withLearningUnit(dom.generateQuestion(params, null), params.grade)
-    if (!first) first = candidate
-    if (candidate.unitId === unitId) return candidate
-  }
-  return first
 }
 
 export default function ActivityPlayer({ task, onDone }) {
@@ -159,6 +145,7 @@ export default function ActivityPlayer({ task, onDone }) {
         : undefined,
       englishWordStats: stateRef.current.englishWordStats,
       englishPhraseStats: stateRef.current.englishPhraseStats,
+      englishAlphabetStats: stateRef.current.englishAlphabetStats,
       today: dayNumber(),
       questionIndex: qIndex,
       seenItemKeys: domainId === 'english' ? shownEnglishItemsRef.current : undefined
@@ -197,7 +184,7 @@ export default function ActivityPlayer({ task, onDone }) {
       .filter(([, stat]) => (stat.attempts || 0) >= 2)
       .map(([id]) => id)
     const targetUnit = !review && !isReviewTask
-      ? (qIndex < 2 ? focusUnitRef.current : [...learnedUnits].sort((a, b) => (unitStatsFor(stateRef.current, stateRef.current.grade, domainId)[a]?.lastPresentedDate || 0) - (unitStatsFor(stateRef.current, stateRef.current.grade, domainId)[b]?.lastPresentedDate || 0))[0] || focusUnitRef.current)
+      ? (qIndex < 2 ? focusUnitRef.current : selectPracticeUnit(stateRef.current, stateRef.current.grade, domainId, learnedUnits) || focusUnitRef.current)
       : null
     // review は「出したい問題」と「記録する問題」を同じキーで束ねる。
     // ここで渡さないと、moon を指定して別の単語を出し moon に記録する事故になる。
@@ -205,15 +192,21 @@ export default function ActivityPlayer({ task, onDone }) {
       ? dom.generateQuestion({ ...params, reviewKey: review }, review)
       : review?.startsWith('skill:')
         ? dom.generateQuestion({ ...params, unitId: review.slice(6) }, review.slice(6).replace(/^math:/, 'n:'))
+        : review
+          ? dom.generateQuestion(params, review)
         : questionForUnit(dom, { ...params, unitId: targetUnit }, targetUnit))
     // 指定復習を作れない場合は、別問題へすり替えて採点しない。次回に残す。
-    if (!generated || (review && domainId === 'english' && normalizeEnglishKey(generated.itemKey) !== normalizeEnglishKey(review))) {
+    const generatedWithIds = generated ? withQuestionIds(withLearningUnit(generated, params.grade)) : null
+    const wrongReviewItem = review && (domainId === 'english'
+      ? normalizeEnglishKey(generatedWithIds?.itemKey) !== normalizeEnglishKey(review)
+      : generatedWithIds?.knowledgeId !== review)
+    if (!generated || wrongReviewItem) {
       setQuestion(null)
       setFeedback({ good: false, word: 'この もんだいを じゅんび中だよ。あとで もういちど やろう。' })
       return setTimeout(advance, 900)
     }
     // 旧セーブの「種類だけ」の復習キーも、そのまま復習として扱えるようにする。
-    let q = withQuestionIds(withLearningUnit(review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated, params.grade))
+    let q = review && !generatedWithIds.reviewKey ? { ...generatedWithIds, reviewKey: review } : generatedWithIds
     // 未経験の書字は必ずお手本つき。別日に成功してから自由書きへ進む。
     if (q?.type === 'trace') {
       const stat = stateRef.current.writingStats?.[`${params.grade}:${q.target}`]
@@ -339,9 +332,9 @@ export default function ActivityPlayer({ task, onDone }) {
     if (attempts >= 2) return
     reinforcementAttemptsRef.current[key] = attempts + 1
     // SRSは類題、タスク内の補強は「同じ設問」。算数も数値を保存して再出題する。
-    reinforcementQueueRef.current.push({ key, question: snapshotQuestion(question, key), after: qIndex + 2 })
+    reinforcementQueueRef.current.push({ key, question: snapshotQuestion(question, key), after: reinforcementTargetIndex(qIndex) })
     // 最終問でも「2問後」を置ける長さまでだけ末尾を延長する。
-    setReinforcementCount((n) => Math.max(n, qIndex + 3 - baseQuestionCount))
+    setReinforcementCount((n) => reinforcementExtraCount(baseQuestionCount, n, qIndex))
   }
 
   const recordAnswer = (correct) => {

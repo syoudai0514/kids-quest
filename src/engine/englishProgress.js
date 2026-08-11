@@ -26,3 +26,32 @@ export function advanceEnglishProgress(previous, correct, today, at = Date.now()
     lastAnsweredAt: at
   }
 }
+
+// 英語は汎用SRSへ二重登録せず、この進捗だけから「とっくん」を組み立てる。
+export function englishDueEntries(state, today) {
+  const sources = [
+    ['enw:', state?.englishWordStats],
+    ['enp:', state?.englishPhraseStats],
+    ['ena:', state?.englishAlphabetStats]
+  ]
+  const out = []
+  for (const [prefix, stats] of sources) {
+    for (const [id, entry] of Object.entries(stats || {})) {
+      if (((entry.correct || 0) > 0 || (entry.wrong || 0) > 0) && (entry.nextDue ?? Infinity) <= today) {
+        out.push({ domainId: 'english', key: `${prefix}${id}`, entry: { ...entry, due: entry.nextDue } })
+      }
+    }
+  }
+  return out.sort((a, b) => (a.entry.due ?? 0) - (b.entry.due ?? 0))
+}
+
+export function englishDaysUntilNext(state, today) {
+  let next = Infinity
+  for (const stats of [state?.englishWordStats, state?.englishPhraseStats, state?.englishAlphabetStats]) {
+    for (const entry of Object.values(stats || {})) {
+      const days = (entry.nextDue ?? Infinity) - today
+      if (((entry.correct || 0) > 0 || (entry.wrong || 0) > 0) && days > 0) next = Math.min(next, days)
+    }
+  }
+  return Number.isFinite(next) ? next : null
+}

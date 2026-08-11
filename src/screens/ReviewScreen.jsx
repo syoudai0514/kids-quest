@@ -13,7 +13,8 @@
 import React, { useEffect } from 'react'
 import { useGame, missedCount, REVIEW_BATCH_MAX } from '../state/GameContext.jsx'
 import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
-import { dueEntries, daysUntilNext, boxCounts, MAX_BOX } from '../engine/srs.js'
+import { dueEntries, daysUntilNext, boxCounts, dayNumber, MAX_BOX } from '../engine/srs.js'
+import { englishDaysUntilNext, englishDueEntries } from '../engine/englishProgress.js'
 import { KIND_LABELS } from '../data/content/numbers.js'
 import { SEIKATSU_LABELS } from '../data/content/seikatsu.js'
 import { ENGLISH_WORDS, ENGLISH_PHRASES } from '../data/content/english.js'
@@ -36,7 +37,10 @@ function labelOf(domainId, key) {
     if (baseKey.startsWith('k:')) return { big: baseKey.slice(2), sub: 'かんじ' }
     if (baseKey.startsWith('w:')) return { big: baseKey.slice(2), sub: 'ことば' }
   }
-  if (domainId === 'kaku') return { big: baseKey, sub: 'かく' }
+  if (domainId === 'kaku') return { big: baseKey.startsWith('char:') ? baseKey.split(':').slice(2).join(':') : baseKey.replace(/^k:/, ''), sub: 'かく' }
+  if (domainId === 'suuji' && baseKey.startsWith('skill:math:')) {
+    return { big: '🔢', sub: KIND_LABELS[baseKey.slice('skill:math:'.length)] || 'さんすう' }
+  }
   if (domainId === 'suuji' && baseKey.startsWith('n:')) {
     return { big: '🔢', sub: KIND_LABELS[baseKey.slice(2)] || 'さんすう' }
   }
@@ -63,16 +67,18 @@ function labelOf(domainId, key) {
 export default function ReviewScreen({ onBack, onStartTask }) {
   const { state } = useGame()
   const count = missedCount(state)
-  const items = dueEntries(state.srs)
-  const nextInDays = daysUntilNext(state.srs)
+  const items = [...dueEntries(state.srs), ...englishDueEntries(state, dayNumber())]
+    .sort((a, b) => (a.entry.due ?? 0) - (b.entry.due ?? 0))
+  const nextInDays = Math.min(daysUntilNext(state.srs) ?? Infinity, englishDaysUntilNext(state, dayNumber()) ?? Infinity)
+  const normalizedNextInDays = Number.isFinite(nextInDays) ? nextInDays : null
   const boxes = boxCounts(state.srs)
   const learning = boxes.slice(0, MAX_BOX).reduce((a, b) => a + b, 0)
 
   useEffect(() => {
     if (count === 0) {
       speak(
-        nextInDays
-          ? `すごい！ きょう ふくしゅうする もんだいは ないよ。つぎの ふくしゅうは ${nextInDays}にちごに でてくるね`
+        normalizedNextInDays
+          ? `すごい！ きょう ふくしゅうする もんだいは ないよ。つぎの ふくしゅうは ${normalizedNextInDays}にちごに でてくるね`
           : `すごい！ いまは ぜんぶ おぼえてるよ。きみは まちがいから ${state.conquered}こも おぼえたんだ！`
       )
     } else {
@@ -115,9 +121,9 @@ export default function ReviewScreen({ onBack, onStartTask }) {
               きょうの ふくしゅうは かんりょう！
             </div>
             <div className="muted" style={{ fontWeight: 700, lineHeight: 1.6 }}>
-              {nextInDays ? (
+              {normalizedNextInDays ? (
                 <>
-                  つぎの ふくしゅうは <b>{nextInDays}にちご</b>に でてくるよ。
+                  つぎの ふくしゅうは <b>{normalizedNextInDays}にちご</b>に でてくるよ。
                   <br />
                   わすれた ころに もういちど 出すから、
                   <br />

@@ -432,6 +432,17 @@ export function generateReadingQuestion(params, reviewKey = null) {
     }
   }
 
+  // 単元導入・しれんでは、指定された読みの種類から外さない。
+  if (String(params.unitId || '').endsWith(':kanji-words')) {
+    const jpool = jukugoPoolForGrade(Math.max(1, params.grade || 1))
+    if (jpool.length) return jukugoQuestion(shuffle(jpool)[0], params)
+  }
+  if (String(params.unitId || '').endsWith(':kana-words')) {
+    const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard, params.grade || 0)
+    const safePool = pool.length >= params.choiceCount ? pool : WORDS
+    return wordQuestion(shuffle(safePool)[0], params)
+  }
+
   // 漢字は必ず熟語で出す。裸の一字に語全体の読みを答えさせない。
   const grade = params.grade || 0
   const kanjiProb = grade >= 2 ? 0.65 : grade === 1 ? 0.45 : params.level >= 3 ? 0.35 : 0

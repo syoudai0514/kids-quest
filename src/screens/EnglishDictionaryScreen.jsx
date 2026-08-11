@@ -11,7 +11,7 @@ export default function EnglishDictionaryScreen({ onBack, onStartTask }) {
   const [status, setStatus] = useState('all')
   const words = useMemo(() => ENGLISH_WORDS.filter((word) => word.minGrade <= state.grade && (category === 'all' || word.category === category) && (status === 'all' || englishStatus(state.englishWordStats?.[word.id]) === status)), [state.grade, state.englishWordStats, category, status])
   const gradeWords = ENGLISH_WORDS.filter((w) => w.minGrade <= state.grade)
-  const learned = gradeWords.filter((w) => state.englishWordStats?.[w.id]?.stage >= 4).length
+  const learned = gradeWords.filter((w) => state.englishWordStats?.[w.id]?.stage >= 5).length
   useSpeakOnMount('えいご ずかん。えいごを タッチすると、おてほんが きけるよ。')
   const startWord = (word) => onStartTask({ ...buildFreeTask('english'), focusWordId: word.id })
   return <div className="screen fade-in"><Starfield /><AppHeader onBack={onBack} title="🔤 えいごずかん" right={<div className="pill">{learned}/{gradeWords.length} おぼえた</div>} />

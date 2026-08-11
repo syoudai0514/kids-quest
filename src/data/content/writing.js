@@ -74,9 +74,10 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-function makeQuestion(target, stage) {
+function makeQuestion(target, stage, grade = 0) {
   return {
     domain: 'kaku',
+    grade,
     type: 'trace',
     itemKey: `k:${target}`,
     target,
@@ -92,19 +93,22 @@ function makeQuestion(target, stage) {
 
 export function generateWritingQuestion(params, reviewChar = null) {
   // 復習: 前につまずいた文字は、お手本つきでもう一度
-  const requested = String(reviewChar || '').replace(/^k:/, '')
+  const requested = String(reviewChar || '').replace(/^char:\d+:/, '').replace(/^k:/, '')
+  const grade = Math.max(0, Math.min(6, params.grade || 0))
   if (requested && ALL.includes(requested)) {
-    return makeQuestion(requested, 'trace')
+    return makeQuestion(requested, 'trace', grade)
   }
 
-  const grade = Math.max(0, Math.min(6, params.grade || 0))
+  // 新単元の導入2問・しれんの層化抽出では、指定グループから必ず出す。
+  const requestedGroupId = String(params.unitId || '').match(/^writing:\d+:(.+)$/)?.[1]
+  const requestedGroup = requestedGroupId && (WRITING_GROUPS_BY_GRADE[grade] || []).find((entry) => entry.id === requestedGroupId)
   const { level } = params
   const tiers = POOLS[grade]
   // レベル 1-12 を 4段階のプールに割り当て
   const tierIdx = level <= 2 ? 0 : level <= 4 ? 1 : level <= 7 ? 2 : 3
-  const pool = tiers[tierIdx].length ? tiers[tierIdx] : tiers.flat()
+  const pool = requestedGroup?.chars?.length ? requestedGroup.chars : tiers[tierIdx].length ? tiers[tierIdx] : tiers.flat()
 
   const freeChance = level <= 2 ? 0 : level <= 4 ? 0.25 : level <= 7 ? 0.5 : 0.7
   const stage = Math.random() < freeChance ? 'free' : 'trace'
-  return makeQuestion(pick(pool), stage)
+  return makeQuestion(pick(pool), stage, grade)
 }

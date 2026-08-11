@@ -16,33 +16,41 @@ function normalizedChoices(question) {
     .sort((a, b) => String(a.id).localeCompare(String(b.id)))
 }
 
-function knowledgeFingerprint(question) {
-  // 固定知識は itemKey が教材の設問ID。算数だけは skillId を知識として復習し、
-  // 翌日には同じ単元の別の類題を出す。
-  if (question.domain === 'suuji' && (question.skillId || question.unitId)) return `skill:${question.skillId || question.unitId}`
-  if (question.domain === 'kaku' && question.target) return `char:${question.grade ?? ''}:${question.target}`
-  return JSON.stringify({
-    domain: question.domain || '', unitId: question.unitId || question.skillId || '',
-    itemKey: baseItemKey(question.itemKey), target: question.target || '',
-    instruction: question.instruction || '', answerId: question.answerId || '',
-    correctOrder: question.correctOrder || null, correctGroups: question.correctGroups || null
-  })
+function stableKnowledgeId(question) {
+  const unitId = question.unitId || question.skillId || ''
+  // 算数は数値ではなく技能単位。翌日以降は同じ技能の別の類題にする。
+  if (question.domain === 'suuji' && unitId) return `skill:${unitId}`
+  // 書字は別の文字の成功を流用しない。学年も単元IDから復元できるようにする。
+  if (question.domain === 'kaku' && question.target) {
+    const grade = question.grade ?? String(unitId).split(':')[1] ?? ''
+    return `char:${grade}:${question.target}`
+  }
+  // 固定教材は itemKey 自体が安定ID。問題文・正解・選択肢順は混ぜない。
+  const itemKey = baseItemKey(question.itemKey)
+  if (itemKey) return itemKey
+  return `${question.domain || 'item'}:${hash(JSON.stringify({ unitId, target: question.target || '' }))}`
 }
 
-function instanceFingerprint(question) {
+function instanceFingerprint(question, knowledgeId) {
   return JSON.stringify({
-    knowledge: knowledgeFingerprint(question), visual: question.visual || null,
-    // 並べ替えの偶然を除く。数値・問題文が違えば instance は変わる。
-    choices: normalizedChoices(question), items: [...(question.items || [])].map(({ id, label, shape, color }) => ({ id, label, shape, color })).sort((a, b) => String(a.id).localeCompare(String(b.id)))
+    knowledgeId,
+    instruction: question.instruction || '',
+    answerId: question.answerId || '',
+    visual: question.visual || null,
+    // 表示時のランダムな並べ替えだけを除く。答え・数値・問題文が違えば変わる。
+    choices: normalizedChoices(question),
+    items: [...(question.items || [])].map(({ id, label, shape, color }) => ({ id, label, shape, color })).sort((a, b) => String(a.id).localeCompare(String(b.id))),
+    correctOrder: question.correctOrder || null,
+    correctGroups: question.correctGroups || null
   })
 }
 
 export function questionIds(question) {
   if (!question) return { knowledgeId: null, unitId: null, skillId: null, questionInstanceId: null }
   const unitId = question.unitId || question.skillId || null
-  const direct = knowledgeFingerprint(question)
-  const knowledgeId = question.knowledgeId || (direct.startsWith('skill:') ? direct : `${question.domain || 'item'}:${hash(direct)}`)
-  const questionInstanceId = question.questionInstanceId || `${knowledgeId}#${hash(instanceFingerprint(question))}`
+  const knowledgeId = stableKnowledgeId(question)
+  // 古い保存に入ったIDは再計算して正規化する。今回生成済みのIDだけは同じ値になる。
+  const questionInstanceId = `${knowledgeId}#${hash(instanceFingerprint(question, knowledgeId))}`
   return { knowledgeId, unitId, skillId: question.skillId || unitId, questionInstanceId }
 }
 
@@ -58,6 +66,11 @@ export function snapshotQuestion(question, reviewKey = reviewKeyFor(question)) {
   if (!question || !reviewKey) return null
   const { reviewKey: _reviewKey, ...snapshot } = withQuestionIds(question)
   return { ...snapshot, reviewKey, reinforcement: true }
+}
+
+// 算数の翌日以降は同じskillIdの類題を作るので、式のスナップショットは永続化しない。
+export function persistentReviewSnapshot(domainId, question, reviewKey = reviewKeyFor(question)) {
+  return domainId === 'suuji' ? null : snapshotQuestion(question, reviewKey)
 }
 
 export function savedReviewQuestion(state, domainId, reviewKey) {

@@ -6,7 +6,7 @@
 // ============================================================
 
 import React, { useEffect, useState } from 'react'
-import { useGame, skillOf } from '../state/GameContext.jsx'
+import { useGame, skillOf, missedCount } from '../state/GameContext.jsx'
 import { DOMAINS, domainName } from '../engine/activities.js'
 import { trendLabel } from '../engine/difficulty.js'
 import { TTS_RATE_PRESETS } from '../config/ttsRates.js'
@@ -22,7 +22,7 @@ import { setSfxEnabled } from '../engine/sfx.js'
 import { setBgmEnabled } from '../engine/bgm.js'
 import { serializeForExport, parseImport } from '../engine/storage.js'
 import { GRADES, MAX_GRADE, gradeOf } from '../data/grades.js'
-import { boxCounts, dueCount, daysUntilNext, MAX_BOX } from '../engine/srs.js'
+import { boxCounts, daysUntilNext, MAX_BOX } from '../engine/srs.js'
 import { getWeapon } from '../data/weapons.js'
 import { AppHeader } from '../components/common.jsx'
 import { trialUnlocked, unitLabel } from '../engine/learningUnits.js'
@@ -651,7 +651,7 @@ export default function ParentScreen({ onBack }) {
               <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, marginTop: 0 }}>
                 とりくみ日数: {activeDays}日 ／ 累計クリア: {state.totalClears}回
                 <br />
-                <b>定着状況（間隔反復）</b>: きょう復習 {dueCount(state.srs)}問 ／
+                <b>定着状況（間隔反復）</b>: きょう復習 {missedCount(state)}問（英語を含む）／
                 おぼえかけ {boxCounts(state.srs).slice(0, MAX_BOX).reduce((a, b) => a + b, 0)}問 ／
                 定着ずみ {boxCounts(state.srs)[MAX_BOX]}問
                 {daysUntilNext(state.srs) ? `（次の復習は${daysUntilNext(state.srs)}日後）` : ''}

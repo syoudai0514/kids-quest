@@ -22,7 +22,8 @@ const BANK = {
     { q: '昔、ごはんを たく のに つかった 道具は？', a: 'かまど', d: ['電子レンジ', 'れいぞうこ', 'せんたくき'], e: '昔は まきを もやして かまどで ごはんを たいたよ' },
     { q: '昔、せんたくに つかった 道具は？', a: 'せんたく板', d: ['そうじき', 'アイロン', 'ミシン'], e: 'せんたく板で こすって あらったよ' },
     { q: '消防しょで はたらく 人は？', a: '消防士', d: ['けいさつかん', 'いしゃ', 'うんてんしゅ'], e: '消防士が 火を けしたり 人を たすけたり するよ' },
-    { q: '町の 中で 安全を まもる ため けいさつかんが いる 小さな しせつは？', a: 'こうばん', d: ['市やくしょ', 'としょかん', 'ゆうびんきょく'], e: 'こうばんは 町の 中に あって、みまわりも するよ' }
+    { q: '町の 中で 安全を まもる ため けいさつかんが いる 小さな しせつは？', a: 'こうばん', d: ['市やくしょ', 'としょかん', 'ゆうびんきょく'], e: 'こうばんは 町の 中に あって、みまわりも するよ' },
+    { q: 'スーパーマーケットが 品物を ならべる ときに 大切にすることは？', a: 'お客さんが 見つけやすく 買いやすいこと', d: ['品物を すべて かくすこと', 'ねだんを 書かないこと', '同じ品物を 店の外だけに置くこと'], e: '店は、表示や並べ方を工夫して、お客さんが選びやすくしているよ' }
   ],
   4: [
     { q: '日本の 都道府県は いくつ？', a: '47', d: ['43', '50', '39'], e: '1都(東京)・1道(北海道)・2府(大阪・京都)・43県で 47だよ' },
@@ -35,7 +36,8 @@ const BANK = {
     { q: 'つかった あとの 水を きれいに する しせつは？', a: 'げ水しょり場', d: ['じょう水場', 'ダム', 'ポンプ場'], e: 'よごれた 水は げ水しょり場で きれいに してから 川へ もどすよ' },
     { q: '地しんの とき 海から くる 大きな 波を 何という？', a: 'つ波', d: ['たいふう', 'こうずい', 'なだれ'], e: 'つ波は 高い ところへ にげるのが 大事だよ' },
     { q: 'ひなん場所や きけんな 場所が 書いて ある 地図を 何という？', a: 'ハザードマップ', d: ['天気図', '地球ぎ', '路線図'], e: 'ハザードマップで 前もって かくにん して おこう' },
-    { q: '地図で 北は ふつう どちら？', a: '上', d: ['下', '右', '左'], e: '地図は ふつう 上が 北だよ' }
+    { q: '地図で 北は ふつう どちら？', a: '上', d: ['下', '右', '左'], e: '地図は ふつう 上が 北だよ' },
+    { q: '地図の しゅくしゃくは 何を あらわす？', a: '地図の長さと じっさいの長さの 関係', d: ['土地の 高さだけ', '人の 数だけ', '天気の かわり方'], e: '縮尺を見ると、地図上の長さから実際の距離を求められるよ' }
   ],
   5: [
     { q: '日本の まわりに ある 海で、東がわに 広がるのは？', a: '太平洋', d: ['日本海', 'オホーツク海', '東シナ海'], e: '日本の 東は 太平洋、西は 日本海だよ' },
@@ -47,7 +49,11 @@ const BANK = {
     { q: '太平洋がわに 工場が 帯のように ならぶ ところを 何という？', a: '太平洋ベルト', d: ['日本海ベルト', '中央高地', '北海道工業地帯'], e: '海に 近く 運びやすいので 工場が あつまるよ' },
     { q: '自動車工場で 部品を つくって おさめる 工場を 何という？', a: '関連工場', d: ['組み立て工場', '製鉄所', '発電所'], e: '関連工場から 部品が とどき、組み立て工場で 車に なるよ' },
     { q: 'テレビや 新聞など、多くの 人に 情報を 伝える ものを 何という？', a: 'マスメディア', d: ['ハザードマップ', 'コンパス', 'ダム'], e: '正しいか どうか 自分で たしかめる ことも 大事だよ' },
-    { q: '森林には 水を たくわえる はたらきが ある。この よび名は？', a: '緑のダム', d: ['白いダム', '海のゆりかご', '空の道'], e: '森林は 雨水を たくわえて ゆっくり 流すので 緑のダムと よばれるよ' }
+    { q: '森林には 水を たくわえる はたらきが ある。この よび名は？', a: '緑のダム', d: ['白いダム', '海のゆりかご', '空の道'], e: '森林は 雨水を たくわえて ゆっくり 流すので 緑のダムと よばれるよ' },
+    { q: '気温を 調節した ハウスで 作物を そだてる 良さは？', a: '季節を ずらして 出荷しやすい', d: ['水が まったく いらない', 'どんな作物も 1日で育つ', '土地が なくても 必ず育つ'], e: 'ハウスでは温度などを調節し、出荷する時期を工夫できるよ' },
+    { q: '海岸の 近くで 日帰りできるほどの 海で 行う ぎょぎょうは？', a: '沿岸ぎょぎょう', d: ['遠洋ぎょぎょう', '林業', '畜産業'], e: '沿岸漁業は海岸に近い海で行い、養殖も沿岸でさかんだよ' },
+    { q: 'ニュースを 正しく 受け取るために 大切なことは？', a: 'いくつかの 情報源を くらべる', d: ['最初に見た話だけを信じる', '見出しだけで決める', 'だれにも確かめず広める'], e: '発信元や日付を見て、複数の情報を比べることが大切だよ' },
+    { q: '森林の 木の根には どんな はたらきが ある？', a: '土を おさえて 流れにくくする', d: ['土を すべて かわかす', '雨を まったく降らせない', '川の水を ぜんぶ止める'], e: '木の根が土を支え、雨で土が流れたり崩れたりするのを防ぎやすくするよ' }
   ],
   6: [
     { q: '大きな 前方後円ふんが つくられた 時代は？', a: '古ふん時代', d: ['縄文時代', '弥生時代', '平安時代'], e: '力の ある 豪族や 大王の はかとして つくられたよ' },
@@ -61,22 +67,29 @@ const BANK = {
     { q: '日本国憲法が 施行された 日は？', a: '5月3日', d: ['11月3日', '2月11日', '1月1日'], e: '施行の 5月3日が 憲法記念日。公布は 11月3日だよ' },
     { q: '国の 法律を つくる ところは？', a: '国会', d: ['内閣', '裁判所', '市役所'], e: '国会が 法律を つくり、内閣が 実行し、裁判所が さばくよ（三権分立）' },
     { q: '裁判を 行う ところは？', a: '裁判所', d: ['国会', '内閣', '県庁'], e: '争いを 法律に もとづいて 解決するのが 裁判所だよ' },
-    { q: '世界の 平和を まもる ために つくられた 国際組織は？', a: '国際連合（国連）', d: ['ユネスコだけ', 'オリンピック委員会', 'ＷＴＯ'], e: '1945年に つくられ、日本は 1956年に 加盟したよ' }
+    { q: '世界の 平和を まもる ために つくられた 国際組織は？', a: '国際連合（国連）', d: ['ユネスコだけ', 'オリンピック委員会', 'ＷＴＯ'], e: '1945年に つくられ、日本は 1956年に 加盟したよ' },
+    { q: 'ユニセフが おもに 支えるのは だれ？', a: '世界の 子どもたち', d: ['一つの国の大人だけ', '会社の社長だけ', 'スポーツ選手だけ'], e: 'ユニセフは、世界の子どもの命や健康、教育を守る活動をしているよ' }
   ]
 }
 
 // 進級台帳の単元を、実際の設問バンクへ直接付与する。
 const UNIT_KEYS = {
-  3: ['map-symbols','map-symbols','map-symbols','map-symbols','safety','safety','shops','old-tools','old-tools','public-safety','public-safety'],
-  4: ['prefectures','prefectures','prefectures','prefectures','prefectures','waste-water','waste-water','waste-water','disasters','disasters','maps'],
-  5: ['land','land','land','land','agriculture','fishing','industry','industry','information','forests'],
-  6: ['history','history','history','history','history','history','history','constitution','constitution','politics','politics','international']
+  3: ['map-symbols','map-symbols','map-symbols','map-symbols','safety','safety','shops','old-tools','old-tools','public-safety','public-safety','shops'],
+  4: ['prefectures','prefectures','prefectures','prefectures','prefectures','waste-water','waste-water','waste-water','disasters','disasters','maps','maps'],
+  5: ['land','land','land','land','agriculture','fishing','industry','industry','information','forests','agriculture','fishing','information','forests'],
+  6: ['history','history','history','history','history','history','history','constitution','constitution','politics','politics','international','international']
 }
 for (const [grade, items] of Object.entries(BANK)) {
   items.forEach((item, index) => { item.unitId = `social:${grade}:${UNIT_KEYS[grade][index] || `topic-${index + 1}`}` })
 }
 export const SHAKAI_UNIT_IDS_BY_GRADE = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, [...new Set(items.map((item) => item.unitId))]]))
 export const SHAKAI_UNIT_EXPECTATIONS = Object.fromEntries(Object.entries(BANK).map(([grade, items]) => [grade, Object.fromEntries(items.map((item) => [item.q, item.unitId]))]))
+export const SHAKAI_LESSON_POINTS = Object.fromEntries(Object.values(BANK).flat().reduce((map, item) => {
+  const points = map.get(item.unitId) || []
+  if (points.length < 2) points.push(item.e)
+  map.set(item.unitId, points)
+  return map
+}, new Map()))
 
 function shuffle(arr) {
   const a = [...arr]

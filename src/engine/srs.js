@@ -53,6 +53,12 @@ export function scheduleNext(entry, correct, today = dayNumber()) {
   }
 }
 
+// 期限前の同日連打では箱を進めない。初回・期限到来・誤答だけを更新する。
+export function scheduleAnswer(entry, correct, today = dayNumber()) {
+  if (correct && entry && !isDue(entry, today)) return { entry, mastered: false, advanced: false }
+  return { ...scheduleNext(entry, correct, today), advanced: true }
+}
+
 /** きょう出すべきか（期限が来ているか） */
 export function isDue(entry, today = dayNumber()) {
   return !!entry && (entry.due ?? 0) <= today

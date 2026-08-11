@@ -6,69 +6,24 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame, STAR_TRIAL_PASS_CORRECT, STAR_TRIAL_QUESTIONS, starTrialInfo } from '../state/GameContext.jsx'
-import { domainsForGrade, DOMAIN_BY_ID, domainName } from '../engine/activities.js'
-import { difficultyParams } from '../engine/difficulty.js'
+import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import { gradeOf, MAX_GRADE } from '../data/grades.js'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
 import { AppHeader, Starfield, Confetti, ProgressDots } from '../components/common.jsx'
 import { speak, cancelSpeak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
-import { reviewKeyFor, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
-import { trialUnlocked, withLearningUnit, promotionResult } from '../engine/learningUnits.js'
-
-function shuffle(items) {
-  const list = [...items]
-  for (let i = list.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[list[i], list[j]] = [list[j], list[i]]
-  }
-  return list
-}
-
-// 英語・道徳は進級判定から外し、主要教科を層化して選ぶ。
-export function makeTrialQuestions(state, grade) {
-  const domains = domainsForGrade(grade)
-  const choiceDomains = domains.filter((d) => !['kaku', 'doutoku', 'english'].includes(d.id))
-  const list = []
-  const usedUnits = new Set()
-  const order = shuffle(choiceDomains)
-
-  // 年長は選択できる教科が4つなので、1つだけ2問にして5問にする。
-  for (let i = 0; i < STAR_TRIAL_QUESTIONS - 1; i++) {
-    const d = order[i % order.length]
-    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade }
-    let question = null
-    for (let tries = 0; tries < 8 && !question; tries++) {
-      const candidate = d.generateQuestion(params, null)
-      if (candidate?.type === 'choice' && candidate.choices?.length && !usedUnits.has(candidate.unitId)) question = candidate
-    }
-    if (question) { const enriched = withQuestionIds(withLearningUnit(question, grade)); usedUnits.add(enriched.unitId); list.push({ ...enriched, _domainId: d.id }) }
-  }
-
-  const writing = domains.find((d) => d.id === 'kaku')
-  if (writing) {
-    const params = { ...difficultyParams(state.skills?.[grade]?.[writing.id] || {}), grade }
-    const question = writing.generateQuestion(params, null)
-    if (question?.type === 'trace') { const enriched = withQuestionIds(withLearningUnit({ ...question, stage: 'free' }, grade)); usedUnits.add(enriched.unitId); list.push({ ...enriched, _domainId: writing.id }) }
-  }
-
-  // 書く問題を作れないコンテンツでも、必ず6問になるよう選択式で補完する。
-  while (list.length < STAR_TRIAL_QUESTIONS && choiceDomains.length) {
-    const d = choiceDomains[list.length % choiceDomains.length]
-    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade }
-    const question = d.generateQuestion(params, null)
-    if (question?.type === 'choice' && question.choices?.length) list.push({ ...withQuestionIds(withLearningUnit(question, grade)), _domainId: d.id })
-  }
-  return shuffle(list).slice(0, STAR_TRIAL_QUESTIONS)
-}
+import { reviewKeyFor, snapshotQuestion } from '../engine/reviewKey.js'
+import { trialUnlocked, promotionResult } from '../engine/learningUnits.js'
+import { makeTrialQuestions } from '../engine/trialQuestions.js'
+export { makeTrialQuestions } from '../engine/trialQuestions.js'
 
 export default function ChapterTestScreen({ onBack }) {
   const { state, dispatch } = useGame()
   const grade = state.grade
   const trialInfo = starTrialInfo(state, grade)
   const unlock = trialUnlocked(state, grade)
-  const questions = useMemo(() => makeTrialQuestions(state, grade), [grade])
+  const questions = useMemo(() => makeTrialQuestions(state, grade), [grade, state.starTrials?.[grade]?.rounds?.length])
   const [idx, setIdx] = useState(0)
   const [chosen, setChosen] = useState(null)
   const [done, setDone] = useState(false)
