@@ -13,7 +13,7 @@ const expectedForms = {
   3: ['listen-picture', 'picture-word', 'word-meaning', 'japanese-word', 'conversation'],
   5: ['listen-picture', 'word-meaning', 'japanese-word', 'spelling', 'conversation', 'word-order']
 }
-const englishPromptForms = new Set(['listen-picture', 'conversation', 'word-meaning', 'spelling'])
+const englishPromptForms = new Set(['listen-picture', 'conversation', 'word-meaning', 'alphabet-name'])
 
 must(ENGLISH_WORDS.length >= 200, `単語数が不足: ${ENGLISH_WORDS.length}`)
 must(ENGLISH_PHRASES.length >= 50, `会話表現数が不足: ${ENGLISH_PHRASES.length}`)
@@ -46,9 +46,11 @@ function verifyQuestion(q, grade, audioAvailable) {
   if (!englishPromptForms.has(q.form)) {
     must(!q.autoPlayPrompt && !q.promptEnglishAudio, `小${grade}: 回答前に正解音声が流れる (${q.form})`)
   }
-  if (['word-meaning', 'spelling'].includes(q.form)) {
+  if (q.form === 'word-meaning') {
     must(q.autoPlayPrompt && q.promptEnglishAudio === q.answerWord?.text, `小${grade}: 文字問題で英語の音が再生されない (${q.form})`)
   }
+  if (q.form === 'spelling') must(!q.autoPlayPrompt && !q.promptEnglishAudio, `小${grade}: スペル問題で正解を音で先読みしている`)
+  if (q.form === 'conversation') must(q.practiceEnglish === q.promptEnglishAudio, `小${grade}: 会話問題で正解の返事を先に発音練習させている`)
   if (!audioAvailable) must(!['listen-picture', 'conversation'].includes(q.form), `小${grade}: 音声なしでリスニングが生成された`)
   if (q.form === 'alphabet') {
     must(q.itemKey.startsWith('ena:'), 'アルファベット問題が単語進捗キーを使っている')
@@ -97,6 +99,15 @@ for (const [grade, forms] of Object.entries(expectedForms)) {
   }
 }
 
+// 日本語ナビに英字を混ぜると、iPhoneの日本語声がアルファベットをカタカナや
+// つづりとして読む。英語教材の英字は answerWord / promptEnglishAudio 経由で
+// 英語音声へ渡すため、ナビ文は日本語だけに保つ。
+for (const form of ['alphabet-lowercase', 'alphabet-name', 'alphabet']) {
+  const stats = { 'A-B': { stage: form === 'alphabet-lowercase' ? 1 : form === 'alphabet-name' ? 2 : 0 } }
+  const q = generateEnglishQuestion({ grade: 0, englishAudioAvailable: true, forceForm: 'alphabet', reviewKey: 'ena:A-B', englishAlphabetStats: stats })
+  must(!/[A-Za-z]/.test(q.speak || ''), `${form}: 日本語ナビ文に英字が混ざっている`)
+}
+
 // タスク開始時に4問の形式を確定し、学年別の必須経験を保証する。
 const expectedPlans = {
   0: ['listen-picture', 'picture-word', 'word-meaning', 'alphabet'],
@@ -114,37 +125,35 @@ for (const [grade, plan] of Object.entries(expectedPlans)) {
   }
 }
 
-// 通常の4問は、同じ語を3回続けず「Aを2形式、Bを2形式」にする。
-// 年長のアルファベットは単語とは別の3枠目として扱う。
+// 通常の4問は、正答済みの項目を繰り返さず、すべて別項目にする。
+// 誤答だけはActivityPlayerが2問後に同じ設問を差し込む。
 for (const grade of [0, 1, 3, 5, 6]) {
   const plan = englishTaskForms(grade, true)
   const slots = plan.map((_, index) => englishTaskItemSlot(plan, index))
-  must(slots[0] === slots[1], `小${grade}: 最初の語を2形式で練習できない`)
-  must(slots[2] !== slots[1], `小${grade}: 同じ項目が3問連続する計画`)
-  if (plan[3] !== 'alphabet') must(slots[2] === slots[3], `小${grade}: 後半の項目を2形式で練習できない`)
+  must(new Set(slots).size === slots.length, `小${grade}: 通常4問の項目枠が重複している`)
 
-  const itemBySlot = {}
   const seenItems = []
   const generatedKeys = plan.map((form, index) => {
-    const slot = slots[index]
-    const reviewKey = itemBySlot[slot]
-    const q = generateEnglishQuestion({ grade, englishAudioAvailable: true, taskForm: form, reviewKey, seenItemKeys: seenItems }, reviewKey)
-    if (!reviewKey) {
-      itemBySlot[slot] = q.itemKey
-      seenItems.push(q.itemKey)
-    }
+    const q = generateEnglishQuestion({ grade, englishAudioAvailable: true, taskForm: form, seenItemKeys: seenItems })
+    seenItems.push(q.itemKey)
     return q.itemKey
   })
-  must(!generatedKeys.some((key, index) => index >= 2 && key === generatedKeys[index - 1] && key === generatedKeys[index - 2]), `小${grade}: 実生成で同じ英語項目が3問連続 ${generatedKeys.join(',')}`)
+  must(new Set(generatedKeys).size === generatedKeys.length, `小${grade}: 実生成で正答済み項目を再出題 ${generatedKeys.join(',')}`)
 }
 
 // 正解後の発音チャレンジは進行を止めず、英文は日本語ナビを挟まず直接再生する。
 const activitySource = readFileSync(new URL('../src/screens/ActivityPlayer.jsx', import.meta.url), 'utf8')
 const visualSource = readFileSync(new URL('../src/components/QuestionVisual.jsx', import.meta.url), 'utf8')
+const ttsSource = readFileSync(new URL('../src/engine/tts.js', import.meta.url), 'utf8')
 must(!activitySource.includes("setPhase(needsSpeaking ? 'practice'"), '正解後に発音チャレンジで進行を止めている')
-must(activitySource.includes("phase === 'answering' && question.autoPlayPrompt && question.practiceEnglish"), '発音チャレンジが回答前の任意操作になっていない')
+must(activitySource.includes("phase === 'answering' && question.autoPlayPrompt && question.promptEnglishAudio && question.practiceEnglish"), '発音チャレンジが回答前の任意操作になっていない')
+must(activitySource.includes("{isEnglish && ("), '英語問題に聞き直しボタンが常に表示されない')
 must(activitySource.includes("disabled={phase !== 'answering' || wrongIds.includes(choice.id)}"), '採点後も回答ボタンが押せるように見える')
 must(!activitySource.includes("speak('よく きいてね').then") && !visualSource.includes("speak('もういちど、よく きいてね').then"), '英文の前に日本語音声を挟んでいる')
+must(ttsSource.includes('const voice = pickEnglishVoice()') && ttsSource.includes('if (!voice) return resolve()'), '英語音声がない時に日本語音声へフォールバックする')
+must(ttsSource.includes('u.voice = voice') && ttsSource.includes('u.lang = voice.lang'), '英語再生で英語音声を明示指定していない')
+must(ttsSource.includes('export async function speakEnglishThenJapanese'), '英語と日本語を分けて再生するAPIがない')
+must(activitySource.includes('speakEnglishThenJapanese') && !activitySource.includes('`${tail}${combo'), '正解した英単語を日本語ナビへ渡している')
 for (const grade of [0, 1, 3, 5, 6]) {
   const plan = englishTaskForms(grade, false)
   must(!plan.some((form) => ['listen-picture', 'conversation'].includes(form)), `小${grade}: 音声OFFで音声形式を計画した`)

@@ -227,18 +227,25 @@ export function hasEnglishVoice() {
 function pickEnglishVoice() {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null
   const voices = window.speechSynthesis.getVoices().filter((v) => /^en(-|_)/i.test(v.lang || ''))
-  return voices.find((v) => /^en-us$/i.test(v.lang)) || voices[0] || null
+  // iPhone では日本語を優先言語にしていると、voice を指定せず lang だけを
+  // en-US にしても日本語音声がローマ字を一文字ずつ読んでしまうことがある。
+  // 必ず端末に登録された英語音声そのものを明示して使う。
+  return voices.find((v) => /^en[-_]us$/i.test(v.lang)) || voices[0] || null
 }
 
 /** 英語のお手本。日本語ナビモデルは使わず、端末の英語音声で発音する。 */
 export function speakEnglish(text, opts = {}) {
   return new Promise((resolve) => {
     if (!enabled || !text || typeof window === 'undefined' || !window.speechSynthesis) return resolve()
+    const voice = pickEnglishVoice()
+    // 英語音声がまだ端末に読み込まれていない時は、日本語音声へのフォールバック
+    // で単語を「えむ・おー…」と読ませない。voiceschanged 後に改めて再生できる。
+    if (!voice) return resolve()
     cancelSpeak()
     const id = ++requestId
     const u = new SpeechSynthesisUtterance(String(text))
-    u.lang = 'en-US'
-    u.voice = pickEnglishVoice()
+    u.lang = voice.lang
+    u.voice = voice
     u.rate = opts.rate ?? 0.78
     u.pitch = opts.pitch ?? 1
     u.volume = opts.volume ?? volume
@@ -247,6 +254,12 @@ export function speakEnglish(text, opts = {}) {
     u.onerror = finish
     window.speechSynthesis.speak(u)
   })
+}
+
+/** 英語の答えは英語音声、日本語の案内はナビ音声で、混ぜずに順に読む。 */
+export async function speakEnglishThenJapanese(english, japanese, opts = {}) {
+  if (english) await speakEnglish(english, opts)
+  if (japanese) await speak(japanese, { ...opts, interrupt: false })
 }
 
 export async function speakJapaneseThenEnglish(japanese, english) {

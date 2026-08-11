@@ -16,8 +16,8 @@ import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
-import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
-import { englishTaskForms, englishTaskItemSlot, normalizeEnglishKey } from '../data/content/english.js'
+import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish, speakEnglishThenJapanese } from '../engine/tts.js'
+import { englishTaskForms, normalizeEnglishKey } from '../data/content/english.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
 import { nextLearningUnit, selectPracticeUnit, unitStatsFor, withLearningUnit, lessonForUnit } from '../engine/learningUnits.js'
 import { questionForUnit } from '../engine/unitQuestions.js'
@@ -118,10 +118,9 @@ export default function ActivityPlayer({ task, onDone }) {
   const shownAtRef = useRef(Date.now())
   const reinforcementQueueRef = useRef([])
   const reinforcementAttemptsRef = useRef({})
-  // 英語は1項目を2つの形式で結び付け、次の2問では別項目へ進む。
+  // 通常の英語タスクでは正答済みの同一項目を繰り返さない。
   // 図鑑から指定した練習だけは、4問すべて同じ単語に固定する。
   const shownEnglishItemsRef = useRef([])
-  const englishItemSlotsRef = useRef({})
 
   const currentDomainId = () =>
     isReviewTask ? task.plan[Math.min(qIndex, task.plan.length - 1)].domainId : task.domainId
@@ -163,16 +162,6 @@ export default function ActivityPlayer({ task, onDone }) {
         const reinforcement = reinforcementQueueRef.current.splice(reinforcementIndex, 1)[0]
         review = reinforcement.key
         reinforcementSnapshot = reinforcement.question
-      }
-      // 4問を「Aを2形式、Bを2形式」にする。gift など同じ語が3問以上
-      // 連続することを防ぎつつ、毎問ばらばらの新語にも散らさない。
-      if (!review) {
-        const slot = englishTaskItemSlot(englishFormPlan, qIndex)
-        const pairedItem = englishItemSlotsRef.current[slot] || null
-        // 1問目を間違えた場合は3問目に同じ設問を出すため、2問目まで同じ語に
-        // すると3連続になる。補強待ちの項目はここでは重ねない。
-        const waitsForReinforcement = reinforcementQueueRef.current.some((entry) => entry.key === pairedItem)
-        review = waitsForReinforcement ? null : pairedItem
       }
     } else {
       // このタスクで間違えた問題は、2問ほど間を空けて同じ問題をもう一度。
@@ -229,10 +218,6 @@ export default function ActivityPlayer({ task, onDone }) {
     }
     if (domainId === 'english' && q.itemKey) {
       if (!review) shownEnglishItemsRef.current = [...new Set([...shownEnglishItemsRef.current, q.itemKey])]
-      if (!review && !task.focusWordId) {
-        const slot = englishTaskItemSlot(englishFormPlan, qIndex)
-        englishItemSlotsRef.current[slot] ||= q.itemKey
-      }
     }
     setQuestion(q)
     setPhase('answering')
@@ -314,12 +299,17 @@ export default function ActivityPlayer({ task, onDone }) {
     }
   }
 
-  const advanceAfterFeedback = (line, { rate: feedbackRate, minVisibleMs = 900 } = {}) => {
+  const advanceAfterFeedback = (line, { english = '', rate: feedbackRate, minVisibleMs = 900 } = {}) => {
     const speechId = ++feedbackSpeechRef.current
     const startedAt = Date.now()
     // speak() は、専用音声なら <audio> の ended、iPhone音声なら utterance の
     // end を待って解決する。したがって次問の問題文がコメントを止めない。
-    void speak(line, { rate: feedbackRate }).finally(() => {
+    // 日本語ナビに英単語を渡すと、端末によっては "monkey" をつづり読み、
+    // "bus" を「バス」と読む。英語教材の答えは必ず英語音声で先に読む。
+    const narration = domainIdRef.current === 'english' && english
+      ? speakEnglishThenJapanese(english, line, { rate: feedbackRate })
+      : speak(line, { rate: feedbackRate })
+    void narration.finally(() => {
       if (speechId !== feedbackSpeechRef.current) return
       const remain = Math.max(0, minVisibleMs - (Date.now() - startedAt))
       feedbackTimerRef.current = setTimeout(() => {
@@ -411,14 +401,16 @@ export default function ActivityPlayer({ task, onDone }) {
         // まちがえたことのある問題を克服！ 金の演出＋ボーナス
         sfx.levelUp()
         setFeedback({ good: true, word: 'ちからに なった！', gold: true })
-        const tail = question.answerWord ? `${question.answerWord.text}！ ` : ''
-        advanceAfterFeedback(`${tail}まちがいが ちからに なった！ ボーナス ゲット！`)
+        advanceAfterFeedback('まちがいが ちからに なった！ ボーナス ゲット！', {
+          english: isEnglish ? question.answerWord?.text : ''
+        })
       } else {
         sfx.correct()
         const word = combo >= 2 ? `${combo}れんぞく！` : pick(PRAISE)
         setFeedback({ good: true, word })
-        const tail = question.answerWord ? `${question.answerWord.text}！ ` : ''
-        advanceAfterFeedback(`${tail}${combo >= 2 ? `${combo}れんぞく せいかい！ すごい！` : word}`)
+        advanceAfterFeedback(combo >= 2 ? `${combo}れんぞく せいかい！ すごい！` : word, {
+          english: isEnglish ? question.answerWord?.text : ''
+        })
       }
     } else {
       comboRef.current = 0
@@ -430,7 +422,11 @@ export default function ActivityPlayer({ task, onDone }) {
 
       if (wrongCountRef.current >= 2) {
         setShowAnswerHint(true)
-        speak(`${question.explain || ''}。 ひかってる ところを おしてみよう`, { rate: 0.88 })
+        if (isEnglish) {
+          // explain は英語と日本語が混在する教材文なので、日本語ナビへ渡さない。
+          // 答えの英語だけをネイティブ音声で聞かせ、その後は日本語で案内する。
+          void speakEnglishThenJapanese(question.answerWord?.text, 'こたえを きいて、ひかってる ところを おしてみよう', { rate: 0.88 })
+        } else speak(`${question.explain || ''}。 ひかってる ところを おしてみよう`, { rate: 0.88 })
       } else {
         const ans = question.answerWord
         const hint =
@@ -461,8 +457,10 @@ export default function ActivityPlayer({ task, onDone }) {
     const ansText = question.answerWord?.text || ans?.label || ''
     setFeedback({ good: false, word: 'いっしょに おぼえよう' })
     advanceAfterFeedback(
-      `だいじょうぶ。こたえは 「${ansText}」。${question.explain || ''} つぎは できるよ！`,
-      { rate: 0.9, minVisibleMs: 1200 }
+      isEnglish
+        ? 'だいじょうぶ。こたえを きいて、おぼえよう。つぎは できるよ！'
+        : `だいじょうぶ。こたえは 「${ansText}」。${question.explain || ''} つぎは できるよ！`,
+      { english: isEnglish ? ansText : '', rate: 0.9, minVisibleMs: 1200 }
     )
   }
 
@@ -517,16 +515,19 @@ export default function ActivityPlayer({ task, onDone }) {
         ) : (
           <>
             <QuestionVisual question={question} />
-            {isEnglish && englishAudioForTask && question.promptEnglishAudio && (
+            {isEnglish && (
               <button
                 className="btn btn--ghost english-audio-replay"
                 type="button"
-                onClick={() => { void speakEnglish(question.promptEnglishAudio) }}
+                onClick={() => {
+                  if (englishAudioForTask && question.promptEnglishAudio) void speakEnglish(question.promptEnglishAudio)
+                  else void speak(question.speak)
+                }}
               >
-                🔊 英語を もういちど きく
+                🔊 {englishAudioForTask && question.promptEnglishAudio ? '英語を もういちど きく' : 'もんだいを もういちど きく'}
               </button>
             )}
-            {isEnglish && englishAudioForTask && phase === 'answering' && question.autoPlayPrompt && question.practiceEnglish && (
+            {isEnglish && englishAudioForTask && phase === 'answering' && question.autoPlayPrompt && question.promptEnglishAudio && question.practiceEnglish && (
               <EnglishSpeakingPractice
                 key={question.questionInstanceId || `${qIndex}:${question.itemKey}`}
                 text={question.practiceEnglish}

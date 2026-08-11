@@ -3,16 +3,16 @@ import { speakEnglish } from '../engine/tts.js'
 
 // 録音はこの画面だけの一時Blob。送信・永続化・自動採点はしない。
 export default function EnglishSpeakingPractice({ text, onDone }) {
-  const recorder = useRef(null); const stream = useRef(null); const url = useRef(null); const timer = useRef(null); const player = useRef(null); const mounted = useRef(true); const completed = useRef(false)
+  const recorder = useRef(null); const stream = useRef(null); const url = useRef(null); const timer = useRef(null); const player = useRef(null); const mounted = useRef(true); const reported = useRef(false)
   const [expanded, setExpanded] = useState(false); const [state, setState] = useState('idle'); const [audioUrl, setAudioUrl] = useState(null); const [note, setNote] = useState('おてほんを きいて、まねして いってみよう！')
   const stopTracks = () => { stream.current?.getTracks().forEach((t) => t.stop()); stream.current = null }
   const stop = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; if (recorder.current?.state === 'recording') recorder.current.stop(); else stopTracks() }
-  const finish = () => { if (completed.current) return; completed.current = true; stop(); player.current?.pause(); setExpanded(false); onDone?.() }
+  const reportPractice = () => { if (reported.current) return; reported.current = true; onDone?.() }
   useEffect(() => () => { mounted.current = false; stop(); player.current?.pause(); stopTracks(); if (url.current) URL.revokeObjectURL(url.current) }, [])
   const start = async () => {
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { setNote('この ききでは ろくおん できないよ。おてほんを きいて こえに だしてみよう！'); return }
-    try { stopTracks(); const nextStream = await navigator.mediaDevices.getUserMedia({ audio: true }); if (!mounted.current || completed.current) { nextStream.getTracks().forEach((t) => t.stop()); return }; stream.current = nextStream; const chunks = []; const r = new MediaRecorder(nextStream); recorder.current = r
-      r.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }; r.onstop = () => { nextStream.getTracks().forEach((t) => t.stop()); if (stream.current === nextStream) stream.current = null; if (!mounted.current || completed.current) return; const next = URL.createObjectURL(new Blob(chunks, { type: r.mimeType || 'audio/webm' })); if (url.current) URL.revokeObjectURL(url.current); url.current = next; setAudioUrl(next); setState('done'); setNote('じぶんの こえを きいてみよう！') }
+    try { stopTracks(); const nextStream = await navigator.mediaDevices.getUserMedia({ audio: true }); if (!mounted.current) { nextStream.getTracks().forEach((t) => t.stop()); return }; stream.current = nextStream; const chunks = []; const r = new MediaRecorder(nextStream); recorder.current = r
+      r.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }; r.onstop = () => { nextStream.getTracks().forEach((t) => t.stop()); if (stream.current === nextStream) stream.current = null; if (!mounted.current) return; const next = URL.createObjectURL(new Blob(chunks, { type: r.mimeType || 'audio/webm' })); if (url.current) URL.revokeObjectURL(url.current); url.current = next; setAudioUrl(next); setState('done'); setNote('じぶんの こえを きいてみよう！'); reportPractice() }
       r.start(); setState('recording'); setNote('🔴 ろくおん中… 5びょうで とまるよ'); timer.current = setTimeout(stop, 5000)
     } catch (_) { stopTracks(); if (mounted.current) setNote('マイクを つかわなくても だいじょうぶ。おてほんを まねして いってみよう！') }
   }
@@ -26,24 +26,23 @@ export default function EnglishSpeakingPractice({ text, onDone }) {
       <button
         className="btn btn--ghost english-speaking-open"
         type="button"
-        onClick={() => { completed.current = false; setExpanded(true); void speakEnglish(text) }}
+        onClick={() => { setExpanded(true); void speakEnglish(text) }}
       >
-        🎙️ 発音も やってみる（おまけ）
+        🎙️ まねして いってみる
       </button>
     )
   }
 
   return (
     <section className={'english-speaking-practice' + (state === 'recording' ? ' english-speaking-practice--recording' : '')} aria-label="まねして いってみよう">
-      <strong className="english-speaking-practice__title">🗣️ 発音チャレンジ（おまけ）</strong>
+      <strong className="english-speaking-practice__title">🗣️ おてほんを まねして いってみよう</strong>
       <div className="english-speaking-actions">
         <button className="btn btn--ghost english-speaking-action" onClick={() => speakEnglish(text)} type="button">🔊 おてほん</button>
         <button className="btn btn--primary english-speaking-action" onClick={state === 'recording' ? stop : start} type="button">
           {state === 'recording' ? '⏹ とめる' : '🎙️ ろくおん'}
         </button>
         <button className="btn btn--ghost english-speaking-action" onClick={playOwnVoice} disabled={!audioUrl} type="button">▶️ じぶんのこえ</button>
-        <button className="btn btn--sun english-speaking-action" onClick={finish} type="button">✅ まねできた！</button>
-        <button className="btn btn--ghost english-speaking-action" onClick={() => { stop(); setExpanded(false) }} type="button">↩️ もんだいへ</button>
+        <button className="btn btn--sun english-speaking-action" onClick={() => { stop(); setExpanded(false) }} type="button">↩️ もんだいへ もどる</button>
       </div>
       <small className="english-speaking-practice__note">{note}</small>
     </section>

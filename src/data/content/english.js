@@ -167,7 +167,9 @@ function spellingQuestion(word) {
   const answer = word.english[index].toLowerCase()
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const options = shuffle([answer, ...shuffle(alphabet.filter((letter) => letter !== answer)).slice(0, 3)])
-  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', promptEnglishAudio: word.speak, autoPlayPrompt: true, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
+  // ここで単語を音で読んでしまうと、空欄の答えまで先に教えてしまう。
+  // スペル問題は、見えている文字だけを手がかりに考えさせる。
+  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
 }
 function alphabetQuestion(params = {}, reviewKey = null) {
   const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -192,11 +194,11 @@ function alphabetQuestion(params = {}, reviewKey = null) {
     const answer = base.toLowerCase()
     const lower = order.map((letter) => letter.toLowerCase())
     const options = shuffle([answer, ...shuffle(lower.filter((letter) => letter !== answer)).slice(0, 3)])
-    return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-lowercase', visual: { kind: 'bigtext', text: base }, instruction: 'おなじ もじの こもじを えらぼう', speak: `${base} の こもじを えらぼう。`, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: `${base}, ${answer}` }, explain: `${base} の こもじは ${answer} だよ` }
+    return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-lowercase', visual: { kind: 'bigtext', text: base }, instruction: 'おなじ もじの こもじを えらぼう', speak: 'おなじ もじの こもじを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: `${base}, ${answer}` }, explain: `${base} の こもじは ${answer} だよ` }
   }
   if (variant === 2) {
     const options = shuffle([base, ...shuffle(order.filter((letter) => letter !== base)).slice(0, 3)])
-    return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-name', visual: { kind: 'bigtext', text: '🔊 Listen!' }, instruction: 'きこえた もじを えらぼう', speak: 'えいごの もじの なまえを きこう。', promptEnglishAudio: base, autoPlayPrompt: true, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${base}`, answerWord: { text: base }, explain: `きこえた もじは ${base} だよ` }
+    return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-name', visual: { kind: 'bigtext', text: '🔊 Listen!' }, instruction: 'きこえた もじを えらぼう', speak: 'えいごの もじの なまえを きこう。', promptEnglishAudio: base, autoPlayPrompt: true, practiceEnglish: base, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${base}`, answerWord: { text: base }, explain: `きこえた もじは ${base} だよ` }
   }
   const options = shuffle([next, ...shuffle(order.filter((letter) => letter !== next)).slice(0, 3)])
   return { domain: 'english', itemKey, type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${base} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${next}`, answerWord: { text: next }, explain: `${base} の つぎは ${next} だよ` }
@@ -209,7 +211,8 @@ function phraseQuestion(phrase, params) {
     .filter((text) => text !== phrase.response)
     .map((response, index) => ({ id: `wrong:${phrase.id}:${index}`, response }))
   const choices = shuffle([response, ...distractors]).map((item) => ({ id: item.id, label: item.response }))
-  return { domain: 'english', type: 'choice', form: 'conversation', itemKey: `enp:${phrase.id}`, visual: { kind: 'word', text: phrase.english }, instruction: 'ぴったりの へんじを えらぼう', speak: 'ぴったりの へんじを えらぼう。', promptEnglishAudio: phrase.english, autoPlayPrompt: true, practiceEnglish: phrase.response, choices, answerId: phrase.id, answerWord: { text: phrase.response }, explain: `${phrase.english} には「${phrase.response}」と こたえられるよ` }
+  // 回答前に練習するのは問い掛けだけ。正解の返事を先に読ませない。
+  return { domain: 'english', type: 'choice', form: 'conversation', itemKey: `enp:${phrase.id}`, visual: { kind: 'word', text: phrase.english }, instruction: 'ぴったりの へんじを えらぼう', speak: 'ぴったりの へんじを えらぼう。', promptEnglishAudio: phrase.english, autoPlayPrompt: true, practiceEnglish: phrase.english, choices, answerId: phrase.id, answerWord: { text: phrase.response }, explain: `${phrase.english} には「${phrase.response}」と こたえられるよ` }
 }
 function orderQuestion(phrase) {
   const tokens = phrase.english.replace(/[.!?]/g, '').split(/\s+/).filter(Boolean)
@@ -232,25 +235,10 @@ export function englishTaskForms(grade = 0, englishAudioAvailable = false) {
   return ['picture-word', 'word-meaning', 'word-order', 'spelling']
 }
 
-// 4問を「同じ項目を2形式ずつ」で組み立てるための枠番号。
-// アルファベットだけは単語とは別教材なので、独立した枠にする。
-// 例: listen / picture / meaning / spelling -> 0, 0, 1, 1
-function englishFormFamily(form) {
-  if (form === 'alphabet') return 'alphabet'
-  if (form === 'conversation' || form === 'word-order') return 'phrase'
-  return 'word'
-}
-
+// 通常タスクでは、正答済みの同一語を繰り返さない。各設問を別枠にする。
+// 誤答だけはActivityPlayerが2問後に同じ設問を補強として差し込む。
 export function englishTaskItemSlot(forms, questionIndex) {
-  let slot = -1
-  let previousFamily = null
-  for (let index = 0; index <= questionIndex; index++) {
-    const family = englishFormFamily(forms[index])
-    const continuesPair = index % 2 === 1 && family === previousFamily && family !== 'alphabet'
-    if (!continuesPair) slot += 1
-    previousFamily = family
-  }
-  return slot
+  return Math.min(questionIndex, Math.max(0, forms.length - 1))
 }
 
 export function generateEnglishQuestion(params = {}, reviewKey) {
