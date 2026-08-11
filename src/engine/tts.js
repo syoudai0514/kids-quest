@@ -201,6 +201,42 @@ function pickJapaneseVoice() {
   return ja.find((v) => v.lang.toLowerCase() === 'ja-jp') || ja[0] || null
 }
 
+export function hasEnglishVoice() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return false
+  return window.speechSynthesis.getVoices().some((v) => /^en(-|_)/i.test(v.lang || ''))
+}
+
+function pickEnglishVoice() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null
+  const voices = window.speechSynthesis.getVoices().filter((v) => /^en(-|_)/i.test(v.lang || ''))
+  return voices.find((v) => /^en-us$/i.test(v.lang)) || voices[0] || null
+}
+
+/** 英語のお手本。日本語ナビモデルは使わず、端末の英語音声で発音する。 */
+export function speakEnglish(text, opts = {}) {
+  return new Promise((resolve) => {
+    if (!enabled || !text || typeof window === 'undefined' || !window.speechSynthesis) return resolve()
+    cancelSpeak()
+    const id = ++requestId
+    const u = new SpeechSynthesisUtterance(String(text))
+    u.lang = 'en-US'
+    u.voice = pickEnglishVoice()
+    u.rate = opts.rate ?? 0.78
+    u.pitch = opts.pitch ?? 1
+    u.volume = opts.volume ?? volume
+    const finish = () => { if (id === requestId) resolve() }
+    u.onend = finish
+    u.onerror = finish
+    window.speechSynthesis.speak(u)
+  })
+}
+
+export async function speakJapaneseThenEnglish(japanese, english) {
+  await speak(japanese)
+  await new Promise((resolve) => setTimeout(resolve, 260))
+  await speakEnglish(english, { interrupt: false })
+}
+
 const SYMBOL_READING = [
   [/❓/g, 'なに'], [/[＋+]/g, ' たす '], [/[−-]/g, ' ひく '], [/×/g, ' かける '],
   [/÷/g, ' わる '], [/[＝=]/g, ' は '], [/[％%]/g, 'パーセント'], [/[:：]/g, '、'],
