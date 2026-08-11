@@ -18,7 +18,7 @@ import { AppHeader, Starfield, useSpeakOnMount } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
-export default function FreeStudyScreen({ onBack, onStartTask }) {
+export default function FreeStudyScreen({ onBack, onStartTask, onEnglishDictionary }) {
   const { state } = useGame()
   const grade = gradeOf(state.grade)
   const doms = domainsForGrade(state.grade)
@@ -70,6 +70,7 @@ export default function FreeStudyScreen({ onBack, onStartTask }) {
               )
             })}
           </div>
+          <button className="btn btn--ghost" style={{ margin: '16px auto 0', display: 'block', minHeight: 56 }} onClick={onEnglishDictionary}>🔤 えいごずかんを みる</button>
 
           <div className="muted" style={{ fontSize: 12, fontWeight: 700, textAlign: 'center', marginTop: 14, lineHeight: 1.6 }}>
             ふきだしの すう字は「きょう ふくしゅうすると いい もんだい」の かず
