@@ -18,6 +18,7 @@ import { generateSeikatsuQuestion } from '../data/content/seikatsu.js'
 import { generateRikaQuestion } from '../data/content/rika.js'
 import { generateShakaiQuestion } from '../data/content/shakai.js'
 import { generateDoutokuQuestion } from '../data/content/doutoku.js'
+import { generateEnglishQuestion } from '../data/content/english.js'
 
 export const DOMAINS = [
   {
@@ -89,6 +90,11 @@ export const DOMAINS = [
     available: true,
     grades: [0, 1, 2, 3, 4, 5, 6],
     generateQuestion: generateDoutokuQuestion
+  },
+  {
+    id: 'english', name: 'えいご', nameByGrade: () => 'えいご', emoji: '🔤',
+    color: 'linear-gradient(180deg,#9edbff,#5f9df5)', available: true,
+    grades: [0, 1, 2, 3, 4, 5, 6], generateQuestion: generateEnglishQuestion
   }
 ]
 
