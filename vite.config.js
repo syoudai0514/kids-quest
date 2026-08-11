@@ -13,7 +13,7 @@ export default defineConfig(({ command }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon-180-v2.png'],
+      includeAssets: ['favicon.png', 'icon-180-v2.png'],
       manifest: {
         name: 'ほしぞらクエスト',
         short_name: 'ほしぞら',
