@@ -15,7 +15,8 @@
     "test:tts-patch": "node scripts/verify-piper-speaker-feed.mjs",
     "test:tts-full": "node scripts/verify-piper-dictionary-synthesis.mjs",
     "test:content": "node scripts/verify-content.mjs",
-    "check": "npm run test:content && npm run test:tts-cache && npm run build"
+    "test:english": "node scripts/verify-english.mjs",
+    "check": "npm run test:content && npm run test:english && npm run test:tts-cache && npm run build"
   },
   "dependencies": {
     "onnxruntime-web": "^1.24.3",
