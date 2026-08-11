@@ -1,4 +1,5 @@
-import { ENGLISH_WORDS, ENGLISH_PHRASES, englishTaskForms, generateEnglishQuestion } from '../src/data/content/english.js'
+import { readFileSync } from 'node:fs'
+import { ENGLISH_WORDS, ENGLISH_PHRASES, englishTaskForms, englishTaskItemSlot, generateEnglishQuestion } from '../src/data/content/english.js'
 import { domainsForGrade } from '../src/engine/activities.js'
 import { buildCoreMission } from '../src/engine/missions.js'
 import { migrateContentVersion, saveProfileSnapshot } from '../src/engine/storage.js'
@@ -100,8 +101,8 @@ for (const [grade, forms] of Object.entries(expectedForms)) {
 const expectedPlans = {
   0: ['listen-picture', 'picture-word', 'word-meaning', 'alphabet'],
   1: ['listen-picture', 'picture-word', 'word-meaning', 'spelling'],
-  3: ['listen-picture', 'picture-word', 'conversation', 'word-meaning'],
-  5: ['listen-picture', 'word-meaning', 'word-order', 'spelling']
+  3: ['listen-picture', 'picture-word', 'conversation', 'word-order'],
+  5: ['listen-picture', 'word-meaning', 'conversation', 'word-order']
 }
 for (const [grade, plan] of Object.entries(expectedPlans)) {
   must(JSON.stringify(englishTaskForms(Number(grade), true)) === JSON.stringify(plan), `小${grade}: 音声あり4問構成が不正`)
@@ -112,6 +113,38 @@ for (const [grade, plan] of Object.entries(expectedPlans)) {
     seenPlan.push(q.itemKey)
   }
 }
+
+// 通常の4問は、同じ語を3回続けず「Aを2形式、Bを2形式」にする。
+// 年長のアルファベットは単語とは別の3枠目として扱う。
+for (const grade of [0, 1, 3, 5, 6]) {
+  const plan = englishTaskForms(grade, true)
+  const slots = plan.map((_, index) => englishTaskItemSlot(plan, index))
+  must(slots[0] === slots[1], `小${grade}: 最初の語を2形式で練習できない`)
+  must(slots[2] !== slots[1], `小${grade}: 同じ項目が3問連続する計画`)
+  if (plan[3] !== 'alphabet') must(slots[2] === slots[3], `小${grade}: 後半の項目を2形式で練習できない`)
+
+  const itemBySlot = {}
+  const seenItems = []
+  const generatedKeys = plan.map((form, index) => {
+    const slot = slots[index]
+    const reviewKey = itemBySlot[slot]
+    const q = generateEnglishQuestion({ grade, englishAudioAvailable: true, taskForm: form, reviewKey, seenItemKeys: seenItems }, reviewKey)
+    if (!reviewKey) {
+      itemBySlot[slot] = q.itemKey
+      seenItems.push(q.itemKey)
+    }
+    return q.itemKey
+  })
+  must(!generatedKeys.some((key, index) => index >= 2 && key === generatedKeys[index - 1] && key === generatedKeys[index - 2]), `小${grade}: 実生成で同じ英語項目が3問連続 ${generatedKeys.join(',')}`)
+}
+
+// 正解後の発音チャレンジは進行を止めず、英文は日本語ナビを挟まず直接再生する。
+const activitySource = readFileSync(new URL('../src/screens/ActivityPlayer.jsx', import.meta.url), 'utf8')
+const visualSource = readFileSync(new URL('../src/components/QuestionVisual.jsx', import.meta.url), 'utf8')
+must(!activitySource.includes("setPhase(needsSpeaking ? 'practice'"), '正解後に発音チャレンジで進行を止めている')
+must(activitySource.includes("phase === 'answering' && question.autoPlayPrompt && question.practiceEnglish"), '発音チャレンジが回答前の任意操作になっていない')
+must(activitySource.includes("disabled={phase !== 'answering' || wrongIds.includes(choice.id)}"), '採点後も回答ボタンが押せるように見える')
+must(!activitySource.includes("speak('よく きいてね').then") && !visualSource.includes("speak('もういちど、よく きいてね').then"), '英文の前に日本語音声を挟んでいる')
 for (const grade of [0, 1, 3, 5, 6]) {
   const plan = englishTaskForms(grade, false)
   must(!plan.some((form) => ['listen-picture', 'conversation'].includes(form)), `小${grade}: 音声OFFで音声形式を計画した`)

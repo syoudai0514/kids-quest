@@ -135,7 +135,7 @@ export default function QuestionVisual({ question }) {
 
   const replay = () => {
     if (question.autoPlayPrompt && question.promptEnglishAudio) {
-      void speak('もういちど、よく きいてね').then(() => speakEnglish(question.promptEnglishAudio))
+      void speakEnglish(question.promptEnglishAudio)
     } else speak(question.speak)
   }
   return (

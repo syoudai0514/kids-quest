@@ -544,6 +544,13 @@ body {
   margin: 8px auto 0;
   font-size: clamp(15px, 3.3vw, 20px);
 }
+.english-speaking-open {
+  width: min(560px, 94vw);
+  min-height: 42px;
+  margin: 0 auto;
+  font-size: clamp(14px, 3vw, 18px);
+  opacity: 0.9;
+}
 .english-speaking-action {
   min-width: 0;
   min-height: clamp(54px, 8vh, 70px);

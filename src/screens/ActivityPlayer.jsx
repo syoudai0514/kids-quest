@@ -17,10 +17,9 @@ import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
 import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
-import { englishTaskForms } from '../data/content/english.js'
+import { englishTaskForms, englishTaskItemSlot, normalizeEnglishKey } from '../data/content/english.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
 import { nextLearningUnit, selectPracticeUnit, unitStatsFor, withLearningUnit, lessonForUnit } from '../engine/learningUnits.js'
-import { normalizeEnglishKey } from '../data/content/english.js'
 import { questionForUnit } from '../engine/unitQuestions.js'
 import { reinforcementExtraCount, reinforcementTargetIndex } from '../engine/reinforcement.js'
 import { sfx } from '../engine/sfx.js'
@@ -119,9 +118,10 @@ export default function ActivityPlayer({ task, onDone }) {
   const shownAtRef = useRef(Date.now())
   const reinforcementQueueRef = useRef([])
   const reinforcementAttemptsRef = useRef({})
-  // 英語は同じ4問で同じ単語・会話を繰り返さない（誤答後の補強だけは例外）。
+  // 英語は1項目を2つの形式で結び付け、次の2問では別項目へ進む。
+  // 図鑑から指定した練習だけは、4問すべて同じ単語に固定する。
   const shownEnglishItemsRef = useRef([])
-  const englishFocusItemRef = useRef(null)
+  const englishItemSlotsRef = useRef({})
 
   const currentDomainId = () =>
     isReviewTask ? task.plan[Math.min(qIndex, task.plan.length - 1)].domainId : task.domainId
@@ -157,9 +157,23 @@ export default function ActivityPlayer({ task, onDone }) {
     let reinforcementSnapshot = null
     if (isReviewTask) {
       review = task.plan[Math.min(qIndex, task.plan.length - 1)].key
-    } else if (!review && domainId === 'english' && qIndex < 3 && englishFocusItemRef.current) {
-      // 初見の4問を無関係な語へ散らさず、同じ語を形式を変えて練習する。
-      review = englishFocusItemRef.current
+    } else if (!review && domainId === 'english') {
+      const reinforcementIndex = reinforcementQueueRef.current.findIndex((entry) => entry.after <= qIndex)
+      if (reinforcementIndex >= 0) {
+        const reinforcement = reinforcementQueueRef.current.splice(reinforcementIndex, 1)[0]
+        review = reinforcement.key
+        reinforcementSnapshot = reinforcement.question
+      }
+      // 4問を「Aを2形式、Bを2形式」にする。gift など同じ語が3問以上
+      // 連続することを防ぎつつ、毎問ばらばらの新語にも散らさない。
+      if (!review) {
+        const slot = englishTaskItemSlot(englishFormPlan, qIndex)
+        const pairedItem = englishItemSlotsRef.current[slot] || null
+        // 1問目を間違えた場合は3問目に同じ設問を出すため、2問目まで同じ語に
+        // すると3連続になる。補強待ちの項目はここでは重ねない。
+        const waitsForReinforcement = reinforcementQueueRef.current.some((entry) => entry.key === pairedItem)
+        review = waitsForReinforcement ? null : pairedItem
+      }
     } else {
       // このタスクで間違えた問題は、2問ほど間を空けて同じ問題をもう一度。
       // その場で答えを押し直すだけで終わらせず、思い出す練習にする。
@@ -213,10 +227,13 @@ export default function ActivityPlayer({ task, onDone }) {
       const hasEarlierDaySuccess = (stat?.successDays || []).some((day) => day < dayNumber())
       if (!hasEarlierDaySuccess || !stat?.guideSeen) q = { ...q, stage: 'trace' }
     }
-    if (domainId === 'english' && !review && q.itemKey) {
-      shownEnglishItemsRef.current = [...shownEnglishItemsRef.current, q.itemKey]
+    if (domainId === 'english' && q.itemKey) {
+      if (!review) shownEnglishItemsRef.current = [...new Set([...shownEnglishItemsRef.current, q.itemKey])]
+      if (!review && !task.focusWordId) {
+        const slot = englishTaskItemSlot(englishFormPlan, qIndex)
+        englishItemSlotsRef.current[slot] ||= q.itemKey
+      }
     }
-    if (domainId === 'english' && !englishFocusItemRef.current && /^enw:/.test(q.itemKey || '')) englishFocusItemRef.current = q.itemKey
     setQuestion(q)
     setPhase('answering')
     setChosenId(null)
@@ -228,9 +245,9 @@ export default function ActivityPlayer({ task, onDone }) {
     shownAtRef.current = Date.now()
     return setTimeout(() => {
       if (domainId === 'english' && q.autoPlayPrompt && q.promptEnglishAudio) {
-        // 音声問題に加え、英単語そのものを画面に出す問題では、文字と音を
-        // 直後に結び付ける。絵→英語や日本語→英語の正解先読みには使わない。
-        void speak('よく きいてね').then(() => speakEnglish(q.promptEnglishAudio))
+        // iPhoneでは日本語ナビの完了後に英語を開始すると、2本目だけ再生されない
+        // ことがある。英語問題は英文を直接流し、聞くための追加タップをなくす。
+        void speakEnglish(q.promptEnglishAudio)
       } else speak(q.speak)
     }, 300)
   }
@@ -311,15 +328,6 @@ export default function ActivityPlayer({ task, onDone }) {
     })
   }
 
-  const finishSpeakingPractice = () => {
-    if (phaseRef.current !== 'practice') return
-    const word = pick(PRAISE)
-    setFeedback({ good: true, word })
-    phaseRef.current = 'feedback'
-    setPhase('feedback')
-    advanceAfterFeedback(word)
-  }
-
   // この問題が復習キューにある（＝克服チャンス）か
   const isConquerTarget = () =>
     !!reviewKeyFor(question) &&
@@ -394,17 +402,11 @@ export default function ActivityPlayer({ task, onDone }) {
 
     if (correct) {
       setChosenId(answerId)
-      // 発音は年齢や問題番号で止めない。毎回出すが、スキップできるので
-      // 年長から高学年まで本人の気分で取り組める。
-      const needsSpeaking = isEnglish && englishAudioForTask && question.practiceEnglish
-      setPhase(needsSpeaking ? 'practice' : 'feedback')
-      phaseRef.current = needsSpeaking ? 'practice' : 'feedback'
+      // 発音練習は回答前に任意で開ける補助機能。正解後の進行を止めない。
+      setPhase('feedback')
+      phaseRef.current = 'feedback'
       comboRef.current += 1
       const combo = comboRef.current
-      if (needsSpeaking) {
-        sfx.correct()
-        return true
-      }
       if (conquer) {
         // まちがえたことのある問題を克服！ 金の演出＋ボーナス
         sfx.levelUp()
@@ -515,16 +517,6 @@ export default function ActivityPlayer({ task, onDone }) {
         ) : (
           <>
             <QuestionVisual question={question} />
-            {isEnglish && englishAudioForTask && phase === 'practice' && question.practiceEnglish && (
-              <EnglishSpeakingPractice
-                text={question.practiceEnglish}
-                onDone={() => {
-                  dispatch({ type: 'ENGLISH_SPEAKING_DONE', itemKey: String(question.itemKey || '').split('#')[0] })
-                  finishSpeakingPractice()
-                }}
-                onSkip={finishSpeakingPractice}
-              />
-            )}
             {isEnglish && englishAudioForTask && question.promptEnglishAudio && (
               <button
                 className="btn btn--ghost english-audio-replay"
@@ -534,13 +526,22 @@ export default function ActivityPlayer({ task, onDone }) {
                 🔊 英語を もういちど きく
               </button>
             )}
+            {isEnglish && englishAudioForTask && phase === 'answering' && question.autoPlayPrompt && question.practiceEnglish && (
+              <EnglishSpeakingPractice
+                key={question.questionInstanceId || `${qIndex}:${question.itemKey}`}
+                text={question.practiceEnglish}
+                onDone={() => {
+                  dispatch({ type: 'ENGLISH_SPEAKING_DONE', itemKey: String(question.itemKey || '').split('#')[0] })
+                }}
+              />
+            )}
             {isChoice ? (
               <div className={grid}>
                 {question.choices.map((choice) => (
                   <button
                     key={choice.id}
                     className={choiceClass(choice)}
-                    disabled={phase !== 'answering' && choice.id !== chosenId}
+                    disabled={phase !== 'answering' || wrongIds.includes(choice.id)}
                     onClick={() => handleChoose(choice)}
                   >
                     {choice.emoji && <span className="choice__emoji">{choice.emoji}</span>}

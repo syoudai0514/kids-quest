@@ -223,13 +223,34 @@ export function englishTaskForms(grade = 0, englishAudioAvailable = false) {
   if (englishAudioAvailable) {
     if (grade <= 0) return ['listen-picture', 'picture-word', 'word-meaning', 'alphabet']
     if (grade <= 2) return ['listen-picture', 'picture-word', 'word-meaning', 'spelling']
-    if (grade <= 4) return ['listen-picture', 'picture-word', 'conversation', 'word-meaning']
-    return ['listen-picture', 'word-meaning', 'word-order', 'spelling']
+    if (grade <= 4) return ['listen-picture', 'picture-word', 'conversation', 'word-order']
+    return ['listen-picture', 'word-meaning', 'conversation', 'word-order']
   }
   if (grade <= 0) return ['picture-word', 'word-meaning', 'picture-word', 'alphabet']
   if (grade <= 2) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
   if (grade <= 4) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
   return ['picture-word', 'word-meaning', 'word-order', 'spelling']
+}
+
+// 4問を「同じ項目を2形式ずつ」で組み立てるための枠番号。
+// アルファベットだけは単語とは別教材なので、独立した枠にする。
+// 例: listen / picture / meaning / spelling -> 0, 0, 1, 1
+function englishFormFamily(form) {
+  if (form === 'alphabet') return 'alphabet'
+  if (form === 'conversation' || form === 'word-order') return 'phrase'
+  return 'word'
+}
+
+export function englishTaskItemSlot(forms, questionIndex) {
+  let slot = -1
+  let previousFamily = null
+  for (let index = 0; index <= questionIndex; index++) {
+    const family = englishFormFamily(forms[index])
+    const continuesPair = index % 2 === 1 && family === previousFamily && family !== 'alphabet'
+    if (!continuesPair) slot += 1
+    previousFamily = family
+  }
+  return slot
 }
 
 export function generateEnglishQuestion(params = {}, reviewKey) {
