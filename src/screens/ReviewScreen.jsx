@@ -16,6 +16,7 @@ import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import { dueEntries, daysUntilNext, boxCounts, MAX_BOX } from '../engine/srs.js'
 import { KIND_LABELS } from '../data/content/numbers.js'
 import { SEIKATSU_LABELS } from '../data/content/seikatsu.js'
+import { ENGLISH_WORDS, ENGLISH_PHRASES } from '../data/content/english.js'
 import { AppHeader, Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
@@ -45,6 +46,17 @@ function labelOf(domainId, key) {
   if (domainId === 'rika' && baseKey.startsWith('r:')) return { big: '🔬', sub: short(baseKey.slice(2)) }
   if (domainId === 'shakai' && baseKey.startsWith('c:')) return { big: '🗾', sub: short(baseKey.slice(2)) }
   if (domainId === 'doutoku' && baseKey.startsWith('d:')) return { big: '💗', sub: short(baseKey.slice(2)) }
+  if (domainId === 'english') {
+    if (baseKey.startsWith('enw:')) {
+      const word = ENGLISH_WORDS.find((item) => item.id === baseKey.slice(4))
+      return word ? { big: word.english, sub: word.japanese } : { big: '🔤', sub: 'えいたんご' }
+    }
+    if (baseKey.startsWith('enp:')) {
+      const phrase = ENGLISH_PHRASES.find((item) => item.id === baseKey.slice(4))
+      return phrase ? { big: short(phrase.english), sub: phrase.japanese } : { big: '💬', sub: 'えいかいわ' }
+    }
+    if (baseKey.startsWith('ena:')) return { big: baseKey.slice(4), sub: 'アルファベット' }
+  }
   return { big: '❓', sub: '' }
 }
 
