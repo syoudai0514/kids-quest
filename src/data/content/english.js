@@ -52,6 +52,45 @@ export const ENGLISH_PHRASES = phraseRows.map(([english, japanese, scene, respon
   minGrade: i < 20 ? 0 : i < 38 ? 2 : 4, speak: english
 }))
 
+// へんじ（response）は英語しか持たないため、解説で意味が伝わらなかった。
+// 「Can I have water? には Here you are. とこたえられるよ」だけでは、
+// 訳が無いと子ども・保護者に伝わらない。返答の日本語訳をここで補う。
+const RESPONSE_JAPANESE = {
+  'Hi!': 'やあ！',
+  'Good morning!': 'おはよう！',
+  'Good night!': 'おやすみ！',
+  'I am fine.': 'げんきだよ。',
+  'That is good!': 'それは よかったね！',
+  'You are welcome.': 'どういたしまして。',
+  'Thank you.': 'ありがとう。',
+  'Nice to meet you, too.': 'こちらこそ、はじめまして。',
+  'My name is Kai.': 'わたしの なまえは カイです。',
+  'Nice to meet you.': 'はじめまして。',
+  'Me too!': 'わたしも！',
+  'Yes, I do.': 'うん、すき。',
+  'Great!': 'すごい！',
+  'Okay.': 'わかった。',
+  'It is cute.': 'それは かわいいね。',
+  'Nice!': 'いいね！',
+  'Okay!': 'オーケー！',
+  'It is red.': 'それは あかです。',
+  'Red is nice.': 'あかは いいね。',
+  'Three.': '3つです。',
+  "It's seven o'clock.": '7じです。',
+  'Yes.': 'うん。',
+  "Let's play outside.": 'そとで あそぼう。',
+  'Take an umbrella.': 'かさを もってね。',
+  'Let us eat.': 'たべよう。',
+  'Here is water.': 'みず、どうぞ。',
+  'Here you are.': 'どうぞ。',
+  'Yes?': 'なに？',
+  'That is okay.': 'だいじょうぶだよ。',
+  'See you!': 'またね！',
+  'Thank you!': 'ありがとう！',
+  'It is here.': 'ここに あるよ。',
+  'It is a book.': 'これは ほんです。'
+}
+
 export const ENGLISH_CATEGORIES = {
   greeting: 'あいさつ', animal: 'どうぶつ', food: 'たべもの・のみもの', color: 'いろ', number: 'かず', body: 'からだ', family: 'かぞく', school: '学校・もちもの', home: '家・身のまわり', action: 'うごき', feeling: '気持ち', weather: '天気・季節', time: '曜日・時間', nature: 'しぜん', place: 'ばしょ', vehicle: 'のりもの', clothes: 'ふく・もちもの', shape: 'かたち', computer: 'コンピューター', extra: 'そのほか'
 }
@@ -212,7 +251,8 @@ function phraseQuestion(phrase, params) {
     .map((response, index) => ({ id: `wrong:${phrase.id}:${index}`, response }))
   const choices = shuffle([response, ...distractors]).map((item) => ({ id: item.id, label: item.response }))
   // 回答前に練習するのは問い掛けだけ。正解の返事を先に読ませない。
-  return { domain: 'english', type: 'choice', form: 'conversation', itemKey: `enp:${phrase.id}`, visual: { kind: 'word', text: phrase.english }, instruction: 'ぴったりの へんじを えらぼう', speak: 'ぴったりの へんじを えらぼう。', promptEnglishAudio: phrase.english, autoPlayPrompt: true, practiceEnglish: phrase.english, choices, answerId: phrase.id, answerWord: { text: phrase.response }, explain: `${phrase.english} には「${phrase.response}」と こたえられるよ` }
+  const responseJp = RESPONSE_JAPANESE[phrase.response]
+  return { domain: 'english', type: 'choice', form: 'conversation', itemKey: `enp:${phrase.id}`, visual: { kind: 'word', text: phrase.english }, instruction: 'ぴったりの へんじを えらぼう', speak: 'ぴったりの へんじを えらぼう。', promptEnglishAudio: phrase.english, autoPlayPrompt: true, practiceEnglish: phrase.english, choices, answerId: phrase.id, answerWord: { text: phrase.response }, explain: `${phrase.english}（${phrase.japanese}）には「${phrase.response}」${responseJp ? `（${responseJp}）` : ''}と こたえられるよ` }
 }
 function orderQuestion(phrase) {
   const tokens = phrase.english.replace(/[.!?]/g, '').split(/\s+/).filter(Boolean)
