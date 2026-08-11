@@ -868,6 +868,16 @@ const BUILDERS = {
 }
 
 export const NUMBERS_KINDS = Object.keys(BUILDERS)
+// 進級台帳と実際の出題元を同じ定義から読む。level による追加分も含む。
+export const NUMBERS_KINDS_BY_GRADE = {
+  0: ['count', 'compareCards', 'add10', 'make10', 'countKeypad', 'addKeypad', 'orderNumbers', 'shapeName', 'shapeGroups', 'sub10', 'sequence'],
+  1: ['add10', 'make10', 'sub10', 'addCarry', 'sequence', 'holeAdd', 'moneyAdd', 'tens', 'subBorrow', 'compareNum', 'add3nums'],
+  2: ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'sequence', 'holeSub', 'double', 'half', 'mul10', 'evenOdd', 'moneyChange', 'clockPlus', 'lengthConv', 'countMoney100', 'compareNum'],
+  3: ['kuku', 'div', 'add3digit', 'mul2x1', 'holeMul', 'tensMul', 'unitPrice', 'divRemainder', 'fracCompareSame', 'perimeter', 'timeCalc', 'kgConv', 'literConv'],
+  4: ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub', 'bigNumbers', 'roundNum', 'roundTen', 'area'],
+  5: ['div3digit', 'decimalAdd', 'decimalMul', 'fracAddDiff', 'decimalSub', 'average', 'percent', 'fracCompareDiff', 'area', 'triangleArea'],
+  6: ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio', 'average', 'discount', 'lcm', 'gcdKind', 'speed', 'speedTime', 'fracCompareDiff', 'volume']
+}
 
 // 学年ごとの出題タイプ（あとの学年ほど前の学年の一部も混ざる）
 function kindsForGrade(grade, level) {
