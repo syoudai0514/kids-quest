@@ -13,7 +13,7 @@
 
 import { generateReadingQuestion } from '../data/content/reading.js'
 import { generateWritingQuestion } from '../data/content/writing.js'
-import { generateNumbersQuestion } from '../data/content/numbers.js'
+import { generateNumbersQuestion, isNumbersReviewStale } from '../data/content/numbers.js'
 import { generateSeikatsuQuestion } from '../data/content/seikatsu.js'
 import { generateRikaQuestion } from '../data/content/rika.js'
 import { generateShakaiQuestion } from '../data/content/shakai.js'
@@ -49,7 +49,10 @@ export const DOMAINS = [
     color: 'linear-gradient(180deg,#ffe08a,#ffb84d)',
     available: true,
     grades: [0, 1, 2, 3, 4, 5, 6],
-    generateQuestion: generateNumbersQuestion
+    generateQuestion: generateNumbersQuestion,
+    // 2学年以上前の出題タイプ（例: 小2の九九）は、いまの学年には相応しくない
+    // ため、期限が来ていても復習の候補から外す（他分野は語彙・知識なので対象外）。
+    isReviewStale: isNumbersReviewStale
   },
   {
     id: 'seikatsu',

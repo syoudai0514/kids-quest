@@ -922,6 +922,26 @@ export const NUMBERS_KINDS_BY_GRADE = {
   6: ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio', 'average', 'discount', 'lcm', 'gcdKind', 'speed', 'speedTime', 'fracCompareDiff', 'volume']
 }
 
+// 出題タイプ→はじめて出てくる学年。復習キュー（SRS）は「まちがえた」から
+// 期限つきで残り続けるが、算数は分野（りか・しゃかいの用語など）と違い
+// 出題タイプそのものが特定の学年の単元なので、2学年以上さかのぼる古い
+// 単元（例: 小2の九九を小6にそのまま単独出題）は学年相応とは言えない。
+const KIND_HOME_GRADE = {}
+for (const grade of Object.keys(NUMBERS_KINDS_BY_GRADE).map(Number).sort((a, b) => a - b)) {
+  for (const kind of NUMBERS_KINDS_BY_GRADE[grade]) {
+    if (!(kind in KIND_HOME_GRADE)) KIND_HOME_GRADE[kind] = grade
+  }
+}
+
+// 復習キュー（'n:しゅるい' 形式）が、いまの学年より2学年以上前の単元なら true。
+// 呼び出し側（ActivityPlayer）はこれで候補から外し、学年相応の問題に譲る。
+export function isNumbersReviewStale(itemKey, grade) {
+  if (!itemKey || !itemKey.startsWith('n:')) return false
+  const kind = itemKey.slice(2).split('#')[0]
+  const home = KIND_HOME_GRADE[kind]
+  return home != null && grade - home >= 2
+}
+
 // 学年ごとの出題タイプ（あとの学年ほど前の学年の一部も混ざる）
 function kindsForGrade(grade, level) {
   if (grade <= 0) {

@@ -174,8 +174,11 @@ export default function ActivityPlayer({ task, onDone }) {
         reinforcementSnapshot = reinforcement.question
       }
       // 通常タスクでも、きょうが復習の期限になっている問題を混ぜる
-      // （間隔反復: 忘れかけた ちょうどよい タイミングで もう一度 出会う）
-      const due = dueKeys(stateRef.current.srs, domainId)
+      // （間隔反復: 忘れかけた ちょうどよい タイミングで もう一度 出会う）。
+      // ただし算数など、出題タイプ自体が学年の単元になっている分野では、
+      // 2学年以上前の古い単元（例: 小6での九九だけの単独出題）を除く。
+      const dueAll = dueKeys(stateRef.current.srs, domainId)
+      const due = dom?.isReviewStale ? dueAll.filter((key) => !dom.isReviewStale(key, stateRef.current.grade)) : dueAll
       // 新単元の導入直後2問には、期限復習を割り込ませない。
       if (!review && qIndex >= 2 && due.length && Math.random() < 0.45) {
         review = due[Math.floor(Math.random() * Math.min(due.length, 5))]
