@@ -288,11 +288,20 @@ const SYMBOL_READING = [
   [/～|〜/g, 'から'], [/[⭐✨🌟💫🎉🎊🚀📅🎌🔬🗾💗🕐👑⚔️❤️🎁]/g, '']
 ]
 
+function normalizeDateAndTimeForSpeech(text) {
+  return text
+    // 日付を先に保護する。これを分数より後にすると 2026/08/11 が分数に化ける。
+    .replace(/(\d{4})\s*[-/.／]\s*(\d{1,2})\s*[-/.／]\s*(\d{1,2})/g, (_all, year, month, day) => `${year}年${Number(month)}月${Number(day)}日`)
+    // 分が2桁の表記は時刻として扱う。小学校の比 2:3 はこの対象にせず「2たい3」と読む。
+    .replace(/\b(\d{1,2})\s*[:：]\s*(\d{2})(?!\d)/g, '$1時$2分')
+}
+
 export function normalizeForSpeech(text) {
   let s = String(text).normalize('NFKC')
   // 表示用の「こん虫」などを、辞書へ渡す前に正しい単語の読みへ直す。
   // これを記号処理や空白除去の前に行うことで、かな＋漢字の表記も拾える。
   s = applyPronunciationOverrides(s)
+  s = normalizeDateAndTimeForSpeech(s)
   for (const [re, to] of SYMBOL_READING) s = s.replace(re, to)
   for (let i = 0; i < 3; i += 1) {
     s = s.replace(/([぀-ゟ゠-ヿ一-鿿0-9０-９])[ 　]+([぀-ゟ゠-ヿ一-鿿0-9０-９])/g, '$1$2')
