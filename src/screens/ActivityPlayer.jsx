@@ -397,6 +397,20 @@ export default function ActivityPlayer({ task, onDone }) {
       // 発音練習は回答前に任意で開ける補助機能。正解後の進行を止めない。
       setPhase('feedback')
       phaseRef.current = 'feedback'
+
+      if (showAnswerHint) {
+        // 2回まちがえて「答えを見せた」あと、光っている正解をタップしただけ。
+        // ここで「せいかい！」の音・れんぞく表示を出すと、教えてもらっただけ
+        // なのに正解扱いされたように見えて誤解を招く（実際の採点・SRSは
+        // 1回目の誤答のまま記録済みで変わらない）。淡々と次へ進む。
+        sfx.pop()
+        setFeedback({ good: true, word: 'つぎへ いこう' })
+        advanceAfterFeedback('こたえを かくにんできたね。つぎの もんだいへ いこう', {
+          english: isEnglish ? question.answerWord?.text : ''
+        })
+        return correct
+      }
+
       comboRef.current += 1
       const combo = comboRef.current
       // 一度でも間違えてから正解できた問題は、復習の意味で解説も添える
