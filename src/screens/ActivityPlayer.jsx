@@ -17,13 +17,15 @@ import { pickLesson, hasLesson } from '../data/lessons.js'
 import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
-import { speak, cancelSpeak } from '../engine/tts.js'
+import { speak, cancelSpeak, hasEnglishVoice } from '../engine/tts.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion } from '../engine/reviewKey.js'
 import { sfx } from '../engine/sfx.js'
 import { AppHeader, Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import QuestionInteraction from '../components/QuestionInteraction.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
+import EnglishSpeakingPractice from '../components/EnglishSpeakingPractice.jsx'
+import { speakEnglish } from '../engine/tts.js'
 
 // 「才能」ではなく、思い出す・数え直すなど再現できる行動をほめる。
 const PRAISE = [
@@ -114,11 +116,12 @@ export default function ActivityPlayer({ task, onDone }) {
     const dom = DOMAIN_BY_ID[domainId]
     const params = {
       ...difficultyParams(skillOf(stateRef.current, domainId)),
-      grade: stateRef.current.grade
+      grade: stateRef.current.grade,
+      englishAudioAvailable: domainId === 'english' ? hasEnglishVoice() : true
     }
     setSupportHint(params.hint >= 2)
 
-    let review = null
+    let review = qIndex === 0 && task.focusWordId ? `en:${task.focusWordId}` : null
     if (isReviewTask) {
       review = task.plan[Math.min(qIndex, task.plan.length - 1)].key
     } else {
@@ -148,7 +151,12 @@ export default function ActivityPlayer({ task, onDone }) {
     wrongCountRef.current = 0
     firstAttemptRef.current = true
     shownAtRef.current = Date.now()
-    return setTimeout(() => speak(q.speak), 300)
+    return setTimeout(() => {
+      if (domainId === 'english' && q.englishSpeak) {
+        // 英語のお手本は、まず日本語で意図を伝えてから再生する。
+        void speak('よく きいてね').then(() => speakEnglish(q.englishSpeak))
+      } else speak(q.speak)
+    }, 300)
   }
 
   useEffect(() => {
@@ -409,6 +417,7 @@ export default function ActivityPlayer({ task, onDone }) {
         ) : (
           <>
             <QuestionVisual question={question} />
+            {domainIdRef.current === 'english' && question.englishSpeak && <EnglishSpeakingPractice text={question.englishSpeak} onDone={() => dispatch({ type: 'ENGLISH_SPEAKING_DONE', wordId: String(question.itemKey || '').replace('en:', '').split('#')[0] })} />}
             {isChoice ? (
               <div className={grid}>
                 {question.choices.map((choice) => (
