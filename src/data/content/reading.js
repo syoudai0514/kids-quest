@@ -422,23 +422,22 @@ export function generateReadingQuestion(params, reviewKey = null) {
       if (j) return jukugoQuestion(j, params)
     }
     if (reviewKey.startsWith('k:')) {
-      const k = KANJI_BY_CHAR[reviewKey.slice(2)]
-      if (k) return kanjiQuestion(k, params)
+      // 旧セーブの裸漢字は、送り仮名や文脈のある熟語へ移行する。
+      const char = reviewKey.slice(2)
+      const example = jukugoPoolForGrade(Math.max(1, params.grade || 1)).find((j) => j.k.includes(char))
+      if (example) return jukugoQuestion(example, params)
     } else if (reviewKey.startsWith('w:')) {
       const w = WORD_BY_TEXT[reviewKey.slice(2)]
       if (w) return wordQuestion(w, params)
     }
   }
 
-  // 漢字の出題率は学年が上がるほど高くなる
+  // 漢字は必ず熟語で出す。裸の一字に語全体の読みを答えさせない。
   const grade = params.grade || 0
   const kanjiProb = grade >= 2 ? 0.65 : grade === 1 ? 0.45 : params.level >= 3 ? 0.35 : 0
   if (Math.random() < kanjiProb) {
     const jpool = jukugoPoolForGrade(grade)
-    if (grade >= 1 && jpool.length && Math.random() < 0.4) {
-      return jukugoQuestion(shuffle(jpool)[0], params)
-    }
-    return kanjiQuestion(shuffle(kanjiPoolForGrade(grade))[0], params)
+    if (grade >= 1 && jpool.length) return jukugoQuestion(shuffle(jpool)[0], params)
   }
   const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard, grade)
   const safePool = pool.length >= params.choiceCount ? pool : WORDS

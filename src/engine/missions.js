@@ -26,11 +26,16 @@ function makeTask(domainId, kind) {
   }
 }
 
-// その学年の教科を順番に割り当てる（こくご→かきとり→さんすう→…と自動ローテ）
+// 国語・算数を中心にしつつ、他教科にも定期的に触れる。道徳は週2回程度。
 function pickDomainId(i, grade = 0, today = dayNumber()) {
   const doms = domainsForGrade(grade)
   if (!doms.length) return 'yomu'
-  return doms[(i + today) % doms.length].id
+  const available = new Set(doms.map((d) => d.id))
+  const base = grade >= 3
+    ? ['yomu', 'suuji', 'kaku', 'rika', 'shakai', 'doutoku', 'english']
+    : ['yomu', 'suuji', 'kaku', 'seikatsu', 'doutoku', 'english']
+  const rotation = base.filter((id) => available.has(id))
+  return rotation[(i + today) % rotation.length]
 }
 
 // コアミッションは その学年の教科を ひととおり まわす
@@ -38,8 +43,15 @@ export function buildCoreMission(grade = 0, today = dayNumber()) {
   const doms = domainsForGrade(grade)
   const count = Math.max(CORE_TASK_COUNT, Math.min(doms.length, 6))
   const tasks = []
-  for (let i = 0; i < count; i++) {
-    tasks.push(makeTask(pickDomainId(i, grade, today), 'core'))
+  // 1日に同じ教科は重ねず、週内の開始位置をずらす。国語・算数は1タスクを
+  // 5問、道徳は2問にして、学習量を重み付けする（英語の既存ローテは維持）。
+  for (let i = 0, offset = 0; tasks.length < count && offset < doms.length * 2; offset++) {
+    const domainId = pickDomainId(i + offset, grade, today)
+    if (tasks.some((task) => task.domainId === domainId)) continue
+    const task = makeTask(domainId, 'core')
+    if (domainId === 'yomu' || domainId === 'suuji') task.questionCount = 5
+    if (domainId === 'doutoku') task.questionCount = 2
+    tasks.push(task)
   }
   return tasks
 }

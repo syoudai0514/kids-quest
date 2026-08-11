@@ -629,7 +629,8 @@ const BUILDERS = {
     const a = pick([20, 30, 40, 50]), b = pick([20, 30, 40, 50])
     const total = a + b
     const ans = total >= 60 ? `1じかん${total - 60 > 0 ? `${total - 60}ぷん` : ''}` : `${total}ぷん`
-    const dummies = [`${total}ぷん`, `1じかん${total - 50}ぷん`, `${a + b + 10}ぷん`, '1じかん'].filter((d) => d !== ans)
+    const asTime = (minutes) => minutes >= 60 ? `1じかん${minutes - 60 > 0 ? `${minutes - 60}ぷん` : ''}` : `${minutes}ぷん`
+    const dummies = [asTime(Math.max(10, total - 10)), asTime(total + 10), `${total}ぷん`, '1じかん'].filter((d) => d !== ans)
     return {
       domain: 'suuji', type: 'choice', itemKey: 'n:timeCalc',
       visual: { kind: 'bigtext', text: `${a}ぷん ＋ ${b}ぷん ＝ ❓` },
@@ -701,8 +702,8 @@ const BUILDERS = {
     const a = rng(1100, 9900)
     const ans = Math.round(a / 100) * 100
     return numQ('roundNum', {
-      visual: { kind: 'bigtext', text: `${a} を 百のくらいで\nしごにゅう ＝ ❓` },
-      instruction: `${a}の がいすうは？（百のくらい）`,
+      visual: { kind: 'bigtext', text: `${a} を 百の位までの\nがい数 ＝ ❓` },
+      instruction: `${a}を 百の位までの がい数に しよう`,
       speak: `${a}を ひゃくのくらいで ししゃごにゅうすると いくつ？`,
       answer: ans, cc: p.cc, spread: 100, say: `やく${ans}`,
       explain: `じゅうのくらいが 5いじょうなら くりあげ。こたえは ${ans}`
@@ -814,8 +815,8 @@ const BUILDERS = {
     const a = rng(11, 99)
     const ans = Math.round(a / 10) * 10
     return numQ('roundTen', {
-      visual: { kind: 'bigtext', text: `${a} を 十のくらいで\nしごにゅう ＝ ❓` },
-      instruction: `${a}の がいすうは？（十のくらい）`,
+      visual: { kind: 'bigtext', text: `${a} を 十の位までの\nがい数 ＝ ❓` },
+      instruction: `${a}を 十の位までの がい数に しよう`,
       speak: `${a}を じゅうのくらいで ししゃごにゅうすると いくつ？`,
       answer: ans, cc: p.cc, spread: 10, say: `やく${ans}`,
       explain: `一のくらいが 5いじょうなら くりあげ。こたえは ${ans}`
@@ -865,6 +866,8 @@ const BUILDERS = {
     })
   }
 }
+
+export const NUMBERS_KINDS = Object.keys(BUILDERS)
 
 // 学年ごとの出題タイプ（あとの学年ほど前の学年の一部も混ざる）
 function kindsForGrade(grade, level) {

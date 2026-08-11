@@ -36,7 +36,7 @@ const FIXED_HOLIDAYS = [
 // 月ごとの行事（季節感を育てる）
 const MONTH_EVENT = {
   1: 'お正月', 2: 'せつぶん', 3: 'ひなまつり', 4: 'にゅうがくしき', 5: 'こどもの日',
-  6: 'つゆ（雨がおおい）', 7: 'たなばた', 8: 'なつやすみ', 9: 'おつきみ', 10: 'ハロウィン',
+  6: 'つゆ（雨がおおい）', 7: 'たなばた', 8: 'なつやすみ', 10: 'ハロウィン',
   11: 'しちごさん', 12: 'クリスマス'
 }
 
@@ -97,12 +97,8 @@ const BUILDERS = {
     const m = t.getMonth() + 1
     const d = t.getDate()
     const ans = `${m}がつ ${d}にち`
-    const dummies = [
-      `${m}がつ ${d === 1 ? d + 2 : d - 1}にち`,
-      `${m}がつ ${d + 1}にち`,
-      `${m === 12 ? 1 : m + 1}がつ ${d}にち`,
-      `${m === 1 ? 12 : m - 1}がつ ${d}にち`
-    ]
+    const dateLabel = (x) => `${x.getMonth() + 1}がつ ${x.getDate()}にち`
+    const dummies = [-2, -1, 1, 2].map((offset) => dateLabel(addDays(t, offset)))
     return sq('todayDate', {
       visual: { kind: 'bigtext', text: '📅 きょうは？' },
       instruction: 'きょうは 何月何日？',
@@ -172,7 +168,7 @@ const BUILDERS = {
   },
   // 月のならび
   monthOrder(p) {
-    const m = rng(1, 12)
+    const m = pick(Object.keys(MONTH_EVENT).map(Number))
     const next = (m % 12) + 1
     const ans = `${next}がつ`
     return sq('monthOrder', {
@@ -237,15 +233,16 @@ const BUILDERS = {
   },
   // 何月は何日まで
   daysInMonth(p) {
+    const year = Math.random() < 0.5 ? 2024 : 2025
     const m = rng(1, 12)
-    const days = new Date(2025, m, 0).getDate() // 2025は平年
+    const days = new Date(year, m, 0).getDate()
     const ans = `${days}にち`
     return sq('daysInMonth', {
-      visual: { kind: 'bigtext', text: `${m}がつは\n何日まで？` },
-      instruction: `${m}がつは 何日まで ある？`,
-      speak: `${m}がつは なんにちまで あるかな？`,
+      visual: { kind: 'bigtext', text: `${year}ねん ${m}がつは\n何日まで？` },
+      instruction: `${year}ねん ${m}がつは 何日まで ある？`,
+      speak: `${year}ねん ${m}がつは なんにちまで あるかな？`,
       answer: ans, dummies: ['28にち', '29にち', '30にち', '31にち'].filter((x) => x !== ans), cc: p.cc,
-      explain: `${m}がつは ${days}にちまで。2がつだけ みじかいよ`
+      explain: `${year}ねんの ${m}がつは ${days}にちまで。うるう年の 2がつは 29にちだよ`
     })
   },
 
@@ -353,6 +350,8 @@ const BUILDERS = {
     })
   }
 }
+
+export const SEIKATSU_KINDS = Object.keys(BUILDERS)
 
 // 学年ごとの出題タイプ
 function kindsForGrade(grade, level) {

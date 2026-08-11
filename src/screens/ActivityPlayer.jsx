@@ -20,6 +20,7 @@ import { difficultyParams } from '../engine/difficulty.js'
 import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
 import { englishTaskForms } from '../data/content/english.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion } from '../engine/reviewKey.js'
+import { nextLearningUnit, unitStatsFor, withLearningUnit } from '../engine/learningUnits.js'
 import { sfx } from '../engine/sfx.js'
 import { AppHeader, Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
@@ -45,10 +46,31 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+function questionForUnit(dom, params, unitId) {
+  if (!unitId) return withLearningUnit(dom.generateQuestion(params, null), params.grade)
+  const math = unitId.match(/^math:(.+)$/)
+  const life = unitId.match(/^life:(.+)$/)
+  const lifeKey = { calendar: 'todayDate', weekday: 'todayWeek', clock: 'clockRead', season: 'season' }[life?.[1]]
+  if (math) return withLearningUnit(dom.generateQuestion(params, `n:${math[1]}`), params.grade)
+  if (lifeKey) return withLearningUnit(dom.generateQuestion(params, `s:${lifeKey}`), params.grade)
+  let first = null
+  for (let i = 0; i < 32; i++) {
+    const candidate = withLearningUnit(dom.generateQuestion(params, null), params.grade)
+    if (!first) first = candidate
+    if (candidate.unitId === unitId) return candidate
+  }
+  return first
+}
+
 export default function ActivityPlayer({ task, onDone }) {
   const { state, dispatch } = useGame()
   // とっくんタスクは1問ごとに分野が変わる
   const isReviewTask = task.kind === 'review' && Array.isArray(task.plan)
+  const focusUnitRef = useRef(
+    !isReviewTask && task.kind === 'core' && task.domainId !== 'english' && task.domainId !== 'doutoku'
+      ? nextLearningUnit(state, state.grade, task.domainId)
+      : null
+  )
 
   // 授業（勉強ターン）を出すか: コアミッションで
   //   ・その教科をはじめて やるとき → はじめての じゅぎょう
@@ -61,7 +83,8 @@ export default function ActivityPlayer({ task, onDone }) {
       if (!hasLesson(dId, g)) return null
       const seen = state.lessonSeen?.[`${g}:${dId}`] || 0
       const review = needsReviewLesson(state, dId, g)
-      if (seen > 0 && !review) return null
+      const unitSeen = unitStatsFor(state, g, dId)[focusUnitRef.current]
+      if (unitSeen?.attempts > 0 && seen > 0 && !review) return null
       return { lesson: pickLesson(dId, g, review ? seen : 0), isReview: review && seen > 0, domainId: dId, grade: g }
     })()
   ).current
@@ -158,9 +181,21 @@ export default function ActivityPlayer({ task, onDone }) {
     // 英語の旧スナップショットには「問題と選択肢が同じ絵」の形式が残り得る。
     // 進捗キーは生かし、表示だけは常に安全な新しい問題形式で再生成する。
     const saved = domainId === 'english' ? null : savedReviewQuestion(stateRef.current, domainId, review)
-    const generated = saved || dom.generateQuestion(params, review)
+    const learnedUnits = Object.entries(unitStatsFor(stateRef.current, stateRef.current.grade, domainId))
+      .filter(([, stat]) => (stat.attempts || 0) >= 2)
+      .map(([id]) => id)
+    const targetUnit = !review && !isReviewTask
+      ? (qIndex < 2 ? focusUnitRef.current : learnedUnits[0] || focusUnitRef.current)
+      : null
+    const generated = saved || questionForUnit(dom, params, targetUnit)
     // 旧セーブの「種類だけ」の復習キーも、そのまま復習として扱えるようにする。
-    const q = review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated
+    let q = withLearningUnit(review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated, params.grade)
+    // 未経験の書字は必ずお手本つき。別日に成功してから自由書きへ進む。
+    if (q?.type === 'trace') {
+      const stat = unitStatsFor(stateRef.current, params.grade, domainId)[q.unitId]
+      const hasEarlierDaySuccess = (stat?.successDays || []).some((day) => day < dayNumber())
+      if (!hasEarlierDaySuccess) q = { ...q, stage: 'trace' }
+    }
     if (domainId === 'english' && !review && q.itemKey) {
       shownEnglishItemsRef.current = [...shownEnglishItemsRef.current, q.itemKey]
     }
@@ -302,7 +337,8 @@ export default function ActivityPlayer({ task, onDone }) {
       domainId: domainIdRef.current,
       correct,
       itemKey,
-      question: correct ? null : snapshotQuestion(question, itemKey)
+      unitId: question.unitId,
+      question: snapshotQuestion(question, itemKey)
     })
     if (!correct) addReinforcement(itemKey)
     firstAttemptRef.current = false

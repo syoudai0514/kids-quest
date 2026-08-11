@@ -25,6 +25,7 @@ import Monster from '../components/Monster.jsx'
 import { Starfield, useSpeakOnMount } from '../components/common.jsx'
 import { sfx } from '../engine/sfx.js'
 import { speak } from '../engine/tts.js'
+import { trialUnlocked } from '../engine/learningUnits.js'
 
 const PARTNER_LINES = [
   'きょうも いっしょに がんばろう！',
@@ -66,6 +67,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const weapon = equippedWeapon(state)
   const testDone = !!state.testPassed?.[state.grade]?.passed
   const starTrial = starTrialInfo(state, state.grade)
+  const trialGate = trialUnlocked(state, state.grade)
 
   const daily = state.daily
   const coreDone = daily.coreDone
@@ -322,6 +324,10 @@ export default function HomeScreen({ onStartTask, onGo }) {
             style={{ background: 'linear-gradient(180deg,#ffd7a1,#ffab4d)' }}
             onClick={() => {
               sfx.tap()
+              if (!trialGate.unlocked) {
+                speak(`ほしのしれんは、あと ${trialGate.missing.length}この たんげんを べつの日にも できたら ちょうせんできるよ`)
+                return
+              }
               speak(
                 `${grade.name}の ほしのしれん。きょうは 6もん。2かいで 9こ できたら つぎの がくねんが あくよ！`
               )
@@ -333,13 +339,15 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__sub">
               {testDone
                 ? `クリアずみ（${Math.round((state.testPassed[state.grade]?.rate || 0) * 100)}%）`
-                : starTrial.todayDone
+                : !trialGate.unlocked
+                  ? `あと ${trialGate.missing.length}たんげん とっくん`
+                  : starTrial.todayDone
                   ? 'つづきは あした'
                   : starTrial.rounds.length === 1
                     ? `あと 1かい（いま ${starTrial.correct} / 6こ）`
                     : `2かいで 9こ できたら クリア`}
             </span>
-            {!testDone && mastery >= 0.6 && <span className="notice-badge">!</span>}
+            {!testDone && trialGate.unlocked && <span className="notice-badge">!</span>}
           </button>
 
           <button

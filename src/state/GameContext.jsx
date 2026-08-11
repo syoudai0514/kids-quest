@@ -22,13 +22,14 @@ import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engi
 import { DEFAULT_TTS_RATE, migrateTtsRate } from '../config/ttsRates.js'
 import { snapshotQuestion } from '../engine/reviewKey.js'
 import { advanceEnglishProgress, emptyEnglishProgress } from '../engine/englishProgress.js'
+import { recordUnitResult, requiredUnitIds } from '../engine/learningUnits.js'
 
 const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
 export const REVIEW_BATCH_MAX = 8
 
 // コンテンツの大きな更新で上げる。進捗と開始済みの当日ミッションは保つ。
-const CONTENT_VERSION = 12
+const CONTENT_VERSION = 13
 export const STAR_TRIAL_QUESTIONS = 6
 export const STAR_TRIAL_ROUNDS = 2
 export const STAR_TRIAL_PASS_CORRECT = 9
@@ -126,6 +127,7 @@ function createInitialState() {
     rewardProgress: { activityDays: [], eliteWins: 0, battleTutorialsSeen: 0 },
     skills: { 0: freshSkills() },
     srs: {}, // { domainId: { itemKey: {box, due, lapses} } } 間隔反復
+    unitStats: {}, // { grade: { domain: { unitId: 学習回数・別日成功 } } }
     // 英語は「別の日に思い出せた」ことを可視化する。録音そのものでは上げない。
     englishWordStats: {},
     englishPhraseStats: {},
@@ -202,7 +204,7 @@ function normalizeProfileSaved(saved) {
       settings: settingsForCurrentVersion(saved.settings),
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
       srs: saved.srs || migrateMissed(saved.missed),
-      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}, englishPhraseStats: saved.englishPhraseStats || {}, englishAlphabetStats: saved.englishAlphabetStats || {}
+      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}, englishPhraseStats: saved.englishPhraseStats || {}, englishAlphabetStats: saved.englishAlphabetStats || {}, unitStats: saved.unitStats || {}
     }
   } else if (saved && (saved.version === 1 || saved.version === 2)) {
     base = migrateOld(saved)
@@ -248,6 +250,7 @@ function normalizeProfileSaved(saved) {
   if (!base.englishWordStats || typeof base.englishWordStats !== 'object') base = { ...base, englishWordStats: {} }
   if (!base.englishPhraseStats || typeof base.englishPhraseStats !== 'object') base = { ...base, englishPhraseStats: {} }
   if (!base.englishAlphabetStats || typeof base.englishAlphabetStats !== 'object') base = { ...base, englishAlphabetStats: {} }
+  if (!base.unitStats || typeof base.unitStats !== 'object') base = { ...base, unitStats: {} }
   // 旧 ew173 は「shape の star」だった。教材上は同じ star を二重に覚えさせないため
   // ew137（自然の star）へ統合し、すでに積んだ進捗は高い方を残す。
   if (base.englishWordStats.ew173) {
@@ -410,7 +413,7 @@ function reduceProfile(state, action) {
     // 復習キューにあった問題に正解 → キューから外れ、ボーナスXP＋克服数が増える
     //   ＝「失敗から学ぶと知っていることが増える」を数字と演出で見せる
     case 'ANSWER': {
-      const { domainId, correct, itemKey } = action
+      const { domainId, correct, itemKey, unitId } = action
       const grade = state.grade
       const gradeSkills = skillsForGrade(state)
       const skill = gradeSkills[domainId] || makeSkill()
@@ -430,6 +433,7 @@ function reduceProfile(state, action) {
       //   期限の来た問題に正解 → 次に会う日を のばす（1→3→7→14→30日）
       //   最高boxに到達 → 「完全に自分のものになった」= conquered
       let srs = state.srs
+      const unitStats = recordUnitResult(state.unitStats, grade, domainId, unitId, correct, dayNumber())
       let reviewQuestions = state.reviewQuestions || {}
       let conquered = state.conquered
       let xpGain = correct ? 2 : 0
@@ -438,12 +442,12 @@ function reduceProfile(state, action) {
         const byKey = srs[domainId] || {}
         const prev = byKey[itemKey]
         const wasDue = isDue(prev, day) // 復習として出ていた問題か
-        if (correct && !prev) {
-          // 一度も間違えていない問題に正解 → なにも登録しない（キューを汚さない）
-        } else {
+        {
           const { entry, mastered } = scheduleNext(prev, correct, day)
           srs = { ...srs, [domainId]: { ...byKey, [itemKey]: entry } }
-          if (!correct && action.question) {
+          // 固定知識は同じ設問を保存する。算数は skillId から別の類題を作るため、
+          // 計算式そのものは保存しない。
+          if (action.question && domainId !== 'suuji') {
             const snapshot = snapshotQuestion(action.question, itemKey)
             if (snapshot) {
               reviewQuestions = {
@@ -494,6 +498,7 @@ function reduceProfile(state, action) {
         streak,
         lastActiveDate,
         srs,
+        unitStats,
         englishWordStats,
         englishPhraseStats,
         englishAlphabetStats,
@@ -749,6 +754,7 @@ function reduceProfile(state, action) {
       const round = {
         correct: action.correct || 0,
         total: action.total || STAR_TRIAL_QUESTIONS,
+        correctDomains: [...new Set((action.results || []).filter((r) => r.correct && ['yomu', 'kaku', 'suuji', 'seikatsu', 'rika', 'shakai'].includes(r.domainId)).map((r) => r.domainId))],
         day: dayNumber(),
         at: Date.now()
       }
@@ -756,7 +762,9 @@ function reduceProfile(state, action) {
       const rounds = [...oldRounds, round].slice(-STAR_TRIAL_ROUNDS)
       const correct = rounds.reduce((sum, r) => sum + r.correct, 0)
       const total = rounds.reduce((sum, r) => sum + r.total, 0)
-      const passed = total >= STAR_TRIAL_QUESTIONS * STAR_TRIAL_ROUNDS && correct >= STAR_TRIAL_PASS_CORRECT
+      const requiredDomains = new Set(requiredUnitIds(g).map((id) => id.startsWith('reading:') ? 'yomu' : id.startsWith('writing:') ? 'kaku' : id.startsWith('math:') ? 'suuji' : id.startsWith('life:') ? 'seikatsu' : id.startsWith('science:') ? 'rika' : 'shakai'))
+      const correctDomains = new Set(rounds.flatMap((r) => r.correctDomains || []))
+      const passed = total >= STAR_TRIAL_QUESTIONS * STAR_TRIAL_ROUNDS && correct >= STAR_TRIAL_PASS_CORRECT && [...requiredDomains].every((id) => correctDomains.has(id))
       const starTrials = { ...state.starTrials, [g]: { rounds } }
 
       let testPassed = state.testPassed
