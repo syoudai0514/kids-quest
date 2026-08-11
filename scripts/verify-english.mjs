@@ -1,4 +1,4 @@
-import { ENGLISH_WORDS, ENGLISH_PHRASES, generateEnglishQuestion } from '../src/data/content/english.js'
+import { ENGLISH_WORDS, ENGLISH_PHRASES, englishTaskForms, generateEnglishQuestion } from '../src/data/content/english.js'
 import { domainsForGrade } from '../src/engine/activities.js'
 import { buildCoreMission } from '../src/engine/missions.js'
 import { migrateContentVersion, saveProfileSnapshot } from '../src/engine/storage.js'
@@ -17,6 +17,14 @@ must(ENGLISH_WORDS.length >= 200, `単語数が不足: ${ENGLISH_WORDS.length}`)
 must(ENGLISH_PHRASES.length >= 50, `会話表現数が不足: ${ENGLISH_PHRASES.length}`)
 must(new Set(ENGLISH_WORDS.map((w) => w.id)).size === ENGLISH_WORDS.length, '単語IDが重複')
 must(new Set(ENGLISH_PHRASES.map((p) => p.id)).size === ENGLISH_PHRASES.length, '会話IDが重複')
+must(new Set(ENGLISH_WORDS.map((w) => w.japanese)).size === ENGLISH_WORDS.length, '日本語の意味が重複')
+for (const word of ENGLISH_WORDS) {
+  const sameEnglish = ENGLISH_WORDS.filter((other) => other.english === word.english)
+  if (sameEnglish.length > 1) {
+    const q = generateEnglishQuestion({ grade: 6, englishAudioAvailable: false, forceForm: 'word-meaning', englishWordStats: { [word.id]: { stage: 2, nextDue: 0 } } })
+    must(q.visual.text.includes('（'), `${word.english}: 同じ英単語の意味をカテゴリーで限定していない`)
+  }
+}
 
 function verifyQuestion(q, grade, audioAvailable) {
   must(q?.answerId, `小${grade}: 正解IDなし`)
@@ -37,6 +45,11 @@ function verifyQuestion(q, grade, audioAvailable) {
     must(!q.autoPlayPrompt && !q.promptEnglishAudio, `小${grade}: 回答前に正解音声が流れる (${q.form})`)
   }
   if (!audioAvailable) must(!['listen-picture', 'conversation'].includes(q.form), `小${grade}: 音声なしでリスニングが生成された`)
+  if (q.form === 'alphabet') {
+    must(q.itemKey.startsWith('ena:'), 'アルファベット問題が単語進捗キーを使っている')
+    must(!q.practiceEnglish, 'アルファベット問題に無関係な発音練習がある')
+  }
+  if (q.form === 'spelling' && /\s/.test(q.answerWord?.text || '')) must(/\s/.test(q.visual?.text || ''), '複数語スペルの空白が消えた')
 }
 
 for (let grade = 0; grade <= 6; grade++) {
@@ -51,6 +64,35 @@ for (const [grade, forms] of Object.entries(expectedForms)) {
     const q = generateEnglishQuestion({ grade: Number(grade), choiceCount: 4, englishAudioAvailable: true, forceForm: form })
     must(q.form === form, `小${grade}: ${form} が生成されない（${q.form}）`)
     verifyQuestion(q, grade, true)
+  }
+}
+
+// タスク開始時に4問の形式を確定し、学年別の必須経験を保証する。
+const expectedPlans = {
+  0: ['listen-picture', 'listen-picture', 'picture-word', 'alphabet'],
+  1: ['listen-picture', 'picture-word', 'word-meaning', 'spelling'],
+  3: ['listen-picture', 'picture-word', 'conversation', 'word-meaning'],
+  5: ['listen-picture', 'word-meaning', 'word-order', 'spelling']
+}
+for (const [grade, plan] of Object.entries(expectedPlans)) {
+  must(JSON.stringify(englishTaskForms(Number(grade), true)) === JSON.stringify(plan), `小${grade}: 音声あり4問構成が不正`)
+  const seenPlan = []
+  for (const form of plan) {
+    const q = generateEnglishQuestion({ grade: Number(grade), taskForm: form, englishAudioAvailable: true, seenItemKeys: seenPlan })
+    verifyQuestion(q, Number(grade), true)
+    seenPlan.push(q.itemKey)
+  }
+}
+for (const grade of [0, 1, 3, 5, 6]) {
+  const plan = englishTaskForms(grade, false)
+  must(!plan.some((form) => ['listen-picture', 'conversation'].includes(form)), `小${grade}: 音声OFFで音声形式を計画した`)
+  if (grade >= 5) must(plan.includes('word-order'), `小${grade}: 音声OFFで語順問題がない`)
+  const seenPlan = []
+  for (const form of plan) {
+    const q = generateEnglishQuestion({ grade, taskForm: form, englishAudioAvailable: false, seenItemKeys: seenPlan })
+    verifyQuestion(q, grade, false)
+    must(!seenPlan.includes(q.itemKey), `小${grade}: 音声OFFの4問で項目が重複`)
+    seenPlan.push(q.itemKey)
   }
 }
 
@@ -73,7 +115,21 @@ const baseParams = { grade: 1, englishAudioAvailable: false, today, forceForm: '
 } }
 must(generateEnglishQuestion(baseParams).itemKey === `enw:${due.id}`, '期限到来の単語が最優先にならない')
 const noDue = { ...baseParams, englishWordStats: { ...baseParams.englishWordStats, [due.id]: { stage: 2, nextDue: today + 1 } } }
-must(generateEnglishQuestion(noDue).itemKey === `enw:${wrong.id}`, '間違えた単語が未学習より優先されない')
+must(generateEnglishQuestion(noDue).itemKey !== `enw:${wrong.id}`, '未学習単語が期限前の誤答項目より優先されない')
+
+// 語順は問い掛けの意味と同じ英文を並べる。会話だけが response を答えにする。
+const howAreYou = ENGLISH_PHRASES.find((p) => p.english === 'How are you?')
+const nameQuestion = ENGLISH_PHRASES.find((p) => p.english === 'What is your name?')
+for (const phrase of [howAreYou, nameQuestion]) {
+  const q = generateEnglishQuestion({ grade: 5, today, englishAudioAvailable: true, forceForm: 'word-order', englishPhraseStats: { [phrase.id]: { stage: 2, nextDue: today - 1 } } })
+  const answer = q.correctOrder.map((id) => q.items.find((item) => item.id === id).label).join(' ')
+  must(answer === phrase.english.replace(/[.!?]/g, ''), `語順問題が ${phrase.japanese} の英文になっていない`)
+}
+for (const phrase of ENGLISH_PHRASES) {
+  const q = generateEnglishQuestion({ grade: 6, today, englishAudioAvailable: true, forceForm: 'conversation', englishPhraseStats: { [phrase.id]: { stage: 2, nextDue: today - 1 } } })
+  must(q.choices.filter((c) => c.id === q.answerId).length === 1, '会話の正解が一つに定まらない')
+  must(new Set(q.choices.map((c) => c.label)).size === q.choices.length, '会話選択肢の表示文言が重複')
+}
 
 const progressDay1 = advanceEnglishProgress(null, true, today, 1)
 const progressSameDay = advanceEnglishProgress(progressDay1, true, today, 2)
@@ -103,5 +159,11 @@ must(migrated.daily.coreTasks[0]?.uid === 'old' && migrated.daily.coreIndex === 
 const separated = saveProfileSnapshot({ childB: { name: 'しの', state: { grade: 1, xp: 22, englishWordStats: { ew002: { stage: 3 } } } } }, 'childA', 'しょうだい', { grade: 3, xp: 77, englishWordStats: { ew001: { stage: 2 } }, profiles: { ignored: true } })
 must(separated.childA.state.grade === 3 && separated.childA.state.profiles === undefined, 'プロフィール保存が現在の子どもの状態を正しく分離しない')
 must(separated.childB.state.grade === 1 && separated.childB.state.englishWordStats.ew002.stage === 3, '別プロフィールの進捗が上書きされた')
+const profileA = { grade: 3, unlockedMonsters: ['m001', 'm020'], daily: legacyDaily, englishWordStats: { ew001: { stage: 2 } }, englishPhraseStats: { ep001: { stage: 1 } }, englishAlphabetStats: { 'A-B': { stage: 1 } } }
+const profileB = { grade: 0, unlockedMonsters: ['m002'], daily: { ...legacyDaily, coreIndex: 0 }, englishWordStats: { ew002: { stage: 3 } }, englishPhraseStats: { ep002: { stage: 2 } }, englishAlphabetStats: { 'B-C': { stage: 1 } } }
+const profilesAfterSwitch = saveProfileSnapshot(saveProfileSnapshot({}, 'childA', 'A', profileA), 'childB', 'B', profileB)
+const reloadedProfiles = JSON.parse(JSON.stringify(profilesAfterSwitch))
+must(reloadedProfiles.childA.state.grade === 3 && reloadedProfiles.childA.state.englishPhraseStats.ep001.stage === 1 && reloadedProfiles.childA.state.daily.coreIndex === 1, 'プロフィールAの保存・再読み込みに失敗')
+must(reloadedProfiles.childB.state.grade === 0 && reloadedProfiles.childB.state.englishWordStats.ew002.stage === 3 && reloadedProfiles.childB.state.englishAlphabetStats['B-C'].stage === 1, 'プロフィールBの保存・再読み込みに失敗')
 
 console.log(`英語検証OK: ${ENGLISH_WORDS.length}語・${ENGLISH_PHRASES.length}表現、安全な出題・復習・保存移行・7教科ローテーションを確認`)

@@ -5,9 +5,9 @@ const rawWords = [
   ['greeting','hello','こんにちは','👋',0],['greeting','goodbye','さようなら','👋',0],['greeting','thank you','ありがとう','🙏',0],['greeting','please','おねがい','😊',0],['greeting','yes','はい','⭕',0],['greeting','no','いいえ','❌',0],
   ['animal','dog','いぬ','🐶',0],['animal','cat','ねこ','🐱',0],['animal','bird','とり','🐦',0],['animal','fish','さかな','🐟',0],['animal','rabbit','うさぎ','🐰',0],['animal','bear','くま','🐻',0],['animal','lion','ライオン','🦁',1],['animal','elephant','ぞう','🐘',1],['animal','giraffe','きりん','🦒',1],['animal','monkey','さる','🐵',1],['animal','tiger','とら','🐯',1],['animal','frog','かえる','🐸',1],['animal','penguin','ペンギン','🐧',2],['animal','dolphin','イルカ','🐬',2],
   ['food','apple','りんご','🍎',0],['food','banana','バナナ','🍌',0],['food','orange','みかん','🍊',0],['food','grape','ぶどう','🍇',0],['food','strawberry','いちご','🍓',0],['food','bread','パン','🍞',0],['food','rice','ごはん','🍚',1],['food','egg','たまご','🥚',1],['food','milk','ぎゅうにゅう','🥛',0],['food','water','みず','💧',0],['food','juice','ジュース','🧃',0],['food','cake','ケーキ','🍰',1],['food','pizza','ピザ','🍕',1],['food','carrot','にんじん','🥕',1],['food','tomato','トマト','🍅',1],['food','ice cream','アイスクリーム','🍦',1],
-  ['color','red','あか','🔴',0],['color','blue','あお','🔵',0],['color','yellow','きいろ','🟡',0],['color','green','みどり','🟢',0],['color','pink','ピンク','🩷',0],['color','black','くろ','⚫',1],['color','white','しろ','⚪',1],['color','purple','むらさき','🟣',1],['color','brown','ちゃいろ','🟤',1],['color','orange','オレンジ','🟠',1],
+  ['color','red','あか','🔴',0],['color','blue','あお','🔵',0],['color','yellow','きいろ','🟡',0],['color','green','みどり','🟢',0],['color','pink','ピンク','🩷',0],['color','black','くろ','⚫',1],['color','white','しろ','⚪',1],['color','purple','むらさき','🟣',1],['color','brown','ちゃいろ','🟤',1],['color','orange','オレンジ色','🟠',1],
   ['number','one','1','1️⃣',0],['number','two','2','2️⃣',0],['number','three','3','3️⃣',0],['number','four','4','4️⃣',0],['number','five','5','5️⃣',0],['number','six','6','6️⃣',1],['number','seven','7','7️⃣',1],['number','eight','8','8️⃣',1],['number','nine','9','9️⃣',1],['number','ten','10','🔟',1],
-  ['body','eye','め','👁️',0],['body','ear','みみ','👂',0],['body','nose','はな','👃',0],['body','mouth','くち','👄',0],['body','hand','て','✋',0],['body','foot','あし','🦶',0],['body','head','あたま','🙂',1],['body','tooth','は','🦷',1],['body','arm','うで','💪',1],['body','leg','あし','🦵',1],
+  ['body','eye','め','👁️',0],['body','ear','みみ','👂',0],['body','nose','はな（かお）','👃',0],['body','mouth','くち','👄',0],['body','hand','て','✋',0],['body','foot','足（足首から先）','🦶',0],['body','head','あたま','🙂',1],['body','tooth','は','🦷',1],['body','arm','うで','💪',1],['body','leg','脚（ももから足首）','🦵',1],
   ['family','mother','おかあさん','👩',0],['family','father','おとうさん','👨',0],['family','sister','おねえさん／いもうと','👧',1],['family','brother','おにいさん／おとうと','👦',1],['family','baby','あかちゃん','👶',0],['family','family','かぞく','👨‍👩‍👧‍👦',1],['family','grandmother','おばあちゃん','👵',2],['family','grandfather','おじいちゃん','👴',2],
   ['school','book','ほん','📘',0],['school','pen','ペン','🖊️',0],['school','pencil','えんぴつ','✏️',0],['school','bag','かばん','🎒',0],['school','desk','つくえ','🪑',1],['school','school','がっこう','🏫',0],['school','teacher','せんせい','🧑‍🏫',1],['school','eraser','けしごむ','🧽',1],['school','ruler','ものさし','📏',1],['school','notebook','ノート','📓',1],
   ['home','house','いえ','🏠',0],['home','door','ドア','🚪',0],['home','window','まど','🪟',0],['home','bed','ベッド','🛏️',0],['home','table','テーブル','🪑',1],['home','chair','いす','🪑',0],['home','clock','とけい','🕐',1],['home','key','かぎ','🔑',1],['home','phone','でんわ','📱',1],['home','ball','ボール','⚽',0],
@@ -15,13 +15,13 @@ const rawWords = [
   ['feeling','happy','うれしい','😊',0],['feeling','sad','かなしい','😢',0],['feeling','angry','おこっている','😠',1],['feeling','tired','つかれた','😴',1],['feeling','hungry','おなかがすいた','🍽️',1],['feeling','scared','こわい','😨',1],['feeling','good','げんき／よい','👍',0],['feeling','fine','げんきだよ','😄',1],
   ['weather','sunny','はれ','☀️',0],['weather','rainy','あめ','🌧️',0],['weather','cloudy','くもり','☁️',0],['weather','snowy','ゆき','❄️',1],['weather','hot','あつい','🥵',1],['weather','cold','さむい','🥶',1],['weather','spring','はる','🌸',1],['weather','summer','なつ','🌻',1],['weather','autumn','あき','🍁',1],['weather','winter','ふゆ','⛄',1],
   ['time','Monday','げつようび','🌙',2],['time','Tuesday','かようび','🔥',2],['time','Wednesday','すいようび','💧',2],['time','Thursday','もくようび','🌳',2],['time','Friday','きんようび','✨',2],['time','Saturday','どようび','🪐',2],['time','Sunday','にちようび','☀️',2],['time','morning','あさ','🌅',1],['time','night','よる','🌙',1],['time','today','きょう','📅',1],
-  ['nature','sun','たいよう','☀️',0],['nature','moon','つき','🌙',0],['nature','star','ほし','⭐',0],['nature','tree','き','🌳',0],['nature','flower','はな','🌸',0],['nature','mountain','やま','⛰️',1],['nature','sea','うみ','🌊',1],['nature','sky','そら','🌤️',1],['nature','rainbow','にじ','🌈',1],['nature','fire','ひ','🔥',1],
+  ['nature','sun','たいよう','☀️',0],['nature','moon','つき','🌙',0],['nature','star','ほし','⭐',0],['nature','tree','き','🌳',0],['nature','flower','はな（お花）','🌸',0],['nature','mountain','やま','⛰️',1],['nature','sea','うみ','🌊',1],['nature','sky','そら','🌤️',1],['nature','rainbow','にじ','🌈',1],['nature','fire','ひ','🔥',1],
   ['place','park','こうえん','🏞️',1],['place','station','えき','🚉',2],['place','shop','おみせ','🏪',1],['place','hospital','びょういん','🏥',2],['place','zoo','どうぶつえん','🦁',1],['place','library','としょかん','📚',2],['place','bathroom','おてあらい','🚻',1],['place','kitchen','だいどころ','🍳',1],
   ['vehicle','car','くるま','🚗',0],['vehicle','bus','バス','🚌',0],['vehicle','train','でんしゃ','🚃',1],['vehicle','airplane','ひこうき','✈️',1],['vehicle','boat','ふね','🚢',1],['vehicle','bicycle','じてんしゃ','🚲',1],['vehicle','ambulance','きゅうきゅうしゃ','🚑',3],['vehicle','fire truck','しょうぼうしゃ','🚒',3],
   ['clothes','shirt','シャツ','👕',1],['clothes','pants','ズボン','👖',1],['clothes','shoes','くつ','👟',1],['clothes','hat','ぼうし','🧢',1],['clothes','dress','ドレス','👗',2],['clothes','sock','くつした','🧦',2],['clothes','coat','コート','🧥',2],['clothes','umbrella','かさ','☂️',1],
-  ['shape','circle','まる','⭕',1],['shape','square','しかく','🟦',1],['shape','triangle','さんかく','🔺',1],['shape','heart','ハート','❤️',1],['shape','star','ほし','⭐',1],['shape','line','せん','➖',2],
+  ['shape','circle','まる','⭕',1],['shape','square','しかく','🟦',1],['shape','triangle','さんかく','🔺',1],['shape','heart','ハート','❤️',1],['shape','diamond','ひし形','🔶',1],['shape','line','せん','➖',2],
   ['computer','computer','コンピューター','💻',2],['computer','keyboard','キーボード','⌨️',2],['computer','mouse','マウス','🖱️',2],['computer','camera','カメラ','📷',2],['computer','game','ゲーム','🎮',1],['computer','music','おんがく','🎵',1],['computer','picture','え','🖼️',1],['computer','toy','おもちゃ','🧸',0],
-  ['extra','day','ひる','🌞',1],['extra','week','しゅう','📆',2],['extra','year','とし','🎆',2],['extra','birthday','たんじょうび','🎂',1],['extra','party','パーティー','🎉',2],['extra','gift','プレゼント','🎁',1],['extra','question','しつもん','❓',2],['extra','answer','こたえ','💡',2],['extra','again','もういちど','🔁',1],['extra','stop','とまる','🛑',1],
+  ['extra','day','日・昼間','🌞',1],['extra','week','しゅう','📆',2],['extra','year','とし','🎆',2],['extra','birthday','たんじょうび','🎂',1],['extra','party','パーティー','🎉',2],['extra','gift','プレゼント','🎁',1],['extra','question','しつもん','❓',2],['extra','answer','こたえ','💡',2],['extra','again','もういちど','🔁',1],['extra','stop','とまる','🛑',1],
   ['extra','big','おおきい','🐘',1],['extra','small','ちいさい','🐜',1],['extra','new','あたらしい','✨',2],['extra','old','ふるい','🏚️',2],['extra','fast','はやい','💨',2],['extra','slow','ゆっくり','🐢',2],['extra','friend','ともだち','🧑‍🤝‍🧑',1],['extra','love','だいすき','❤️',2],['extra','robot','ロボット','🤖',1],['extra','rocket','ロケット','🚀',1]
 ]
 
@@ -72,10 +72,10 @@ function selectByStudyOrder(items, stats, seen, today) {
   const pool = usable.length ? usable : items
   const stat = (item) => stats?.[item.id] || {}
   const due = pool.filter((item) => (stat(item).stage || 0) > 0 && (stat(item).nextDue ?? Infinity) <= today)
-  const wrong = pool.filter((item) => !due.includes(item) && (stat(item).wrong || 0) > 0)
-  const unseen = pool.filter((item) => !due.includes(item) && !wrong.includes(item) && !(stat(item).correct || 0) && !(stat(item).wrong || 0))
-  const learned = pool.filter((item) => !due.includes(item) && !wrong.includes(item) && !unseen.includes(item))
-  const first = due.length ? due : wrong.length ? wrong : unseen.length ? unseen : learned
+  const unseen = pool.filter((item) => !due.includes(item) && !(stat(item).correct || 0) && !(stat(item).wrong || 0))
+  const wrong = pool.filter((item) => !due.includes(item) && !unseen.includes(item) && (stat(item).wrong || 0) > 0)
+  const learned = pool.filter((item) => !due.includes(item) && !unseen.includes(item) && !wrong.includes(item))
+  const first = due.length ? due : unseen.length ? unseen : wrong.length ? wrong : learned
   return shuffle(first)[0] || items[0]
 }
 
@@ -95,6 +95,10 @@ export function chooseEnglishStudyItem(params = {}) {
 function wordBase(word) {
   return { domain: 'english', itemKey: `enw:${word.id}`, answerWord: { text: word.english }, practiceEnglish: word.speak, explain: `${word.english} は「${word.japanese}」だよ` }
 }
+function displayEnglish(word) {
+  const same = ENGLISH_WORDS.filter((entry) => entry.english === word.english)
+  return same.length > 1 ? `${word.english}（${ENGLISH_CATEGORIES[word.category]}）` : word.english
+}
 
 function listeningQuestion(word, pool, params) {
   return { ...wordBase(word), type: 'choice', form: 'listen-picture', visual: { kind: 'bigtext', text: '🔊 Listen!' }, instruction: 'きいて、ただしい えを えらぼう', speak: 'えいごを きいて、ただしい えを えらぼう。', promptEnglishAudio: word.speak, autoPlayPrompt: true, choices: makeChoices(word, pool, { emoji: true, count: params.choiceCount || 4 }), answerId: word.id }
@@ -103,47 +107,70 @@ function pictureQuestion(word, pool, params) {
   return { ...wordBase(word), type: 'choice', form: 'picture-word', visual: { kind: 'emoji', emoji: word.emoji }, instruction: 'えに あう えいごを えらぼう', speak: 'この えは、えいごで なんて いう？', choices: makeChoices(word, pool, { label: 'english', count: params.choiceCount || 4 }), answerId: word.id }
 }
 function meaningQuestion(word, pool, params) {
-  return { ...wordBase(word), type: 'choice', form: 'word-meaning', visual: { kind: 'word', text: word.english }, instruction: 'いみを えらぼう', speak: 'えいごの いみを えらぼう。', choices: makeChoices(word, pool, { label: 'japanese', count: params.choiceCount || 4 }), answerId: word.id }
+  return { ...wordBase(word), type: 'choice', form: 'word-meaning', visual: { kind: 'word', text: displayEnglish(word) }, instruction: 'いみを えらぼう', speak: 'えいごの いみを えらぼう。', choices: makeChoices(word, pool, { label: 'japanese', count: params.choiceCount || 4 }), answerId: word.id }
 }
 function japaneseQuestion(word, pool, params) {
   return { ...wordBase(word), type: 'choice', form: 'japanese-word', visual: { kind: 'bigtext', text: word.japanese }, instruction: 'えいごを えらぼう', speak: `${word.japanese} は どの えいご？`, choices: makeChoices(word, pool, { label: 'english', count: params.choiceCount || 4 }), answerId: word.id }
 }
 function spellingQuestion(word) {
-  const letters = [...word.english.replace(/[^a-z]/gi, '')]
-  const index = Math.max(0, Math.floor(letters.length / 2))
-  const answer = letters[index].toLowerCase()
+  const letterIndexes = [...word.english].map((letter, index) => /[a-z]/i.test(letter) ? index : -1).filter((index) => index >= 0)
+  const index = letterIndexes[Math.floor(letterIndexes.length / 2)]
+  const answer = word.english[index].toLowerCase()
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const options = shuffle([answer, ...shuffle(alphabet.filter((letter) => letter !== answer)).slice(0, 3)])
-  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${letters.slice(0, index).join('')} _ ${letters.slice(index + 1).join('')}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
+  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
 }
-function alphabetQuestion(word) {
+function alphabetQuestion(params = {}) {
   const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
-  const base = order[Math.floor(Math.random() * 22)]
+  const seen = new Set((params.seenItemKeys || []).map(baseKey))
+  const bases = order.slice(0, 22).filter((letter) => !seen.has(`ena:${letter}-${order[order.indexOf(letter) + 1]}`))
+  const base = (bases.length ? bases : order.slice(0, 22))[Math.floor(Math.random() * (bases.length || 22))]
   const index = order.indexOf(base)
   const answer = order[index + 1]
   const options = shuffle([answer, ...shuffle(order.filter((letter) => letter !== answer)).slice(0, 3)])
-  return { ...wordBase(word), type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${base} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, explain: `${base} の つぎは ${answer} だよ` }
+  return { domain: 'english', itemKey: `ena:${base}-${answer}`, type: 'choice', form: 'alphabet', visual: { kind: 'bigtext', text: `${base} → ?` }, instruction: 'つぎの アルファベットを えらぼう', speak: 'つぎの アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: answer }, explain: `${base} の つぎは ${answer} だよ` }
 }
 function phraseQuestion(phrase, params) {
-  const pool = eligiblePhrases(params)
   const response = { id: phrase.id, response: phrase.response }
-  const choices = makeChoices(response, pool.map((item) => ({ id: item.id, response: item.response })), { label: 'response', count: params.choiceCount || 4 })
+  // 会話の誤答は、ほかの会話の「たまたま自然な返答」を混ぜない。全表現で
+  // 正解は一つだけに固定し、表示用IDも会話項目のIDと分離する。
+  const distractors = ['I am sorry.', 'Please wait.', 'I do not know.']
+    .filter((text) => text !== phrase.response)
+    .map((response, index) => ({ id: `wrong:${phrase.id}:${index}`, response }))
+  const choices = shuffle([response, ...distractors]).map((item) => ({ id: item.id, label: item.response }))
   return { domain: 'english', type: 'choice', form: 'conversation', itemKey: `enp:${phrase.id}`, visual: { kind: 'word', text: phrase.english }, instruction: 'ぴったりの へんじを えらぼう', speak: 'ぴったりの へんじを えらぼう。', promptEnglishAudio: phrase.english, autoPlayPrompt: true, practiceEnglish: phrase.response, choices, answerId: phrase.id, answerWord: { text: phrase.response }, explain: `${phrase.english} には「${phrase.response}」と こたえられるよ` }
 }
 function orderQuestion(phrase) {
-  const tokens = phrase.response.replace(/[.!?]/g, '').split(/\s+/).filter(Boolean)
+  const tokens = phrase.english.replace(/[.!?]/g, '').split(/\s+/).filter(Boolean)
   if (tokens.length < 2) return null
   const items = shuffle(tokens.map((label, index) => ({ id: `w${index}`, label })))
   const correctOrder = tokens.map((_, index) => `w${index}`)
-  return { domain: 'english', type: 'order', form: 'word-order', itemKey: `enp:${phrase.id}`, visual: { kind: 'bigtext', text: phrase.japanese }, instruction: 'えいごの じゅんばんに ならべよう', orderInstruction: 'ひだりから じゅんに タッチしてね', speak: 'えいごの じゅんばんに ならべよう。', items, correctOrder, answerId: correctOrder.join('|'), answerWord: { text: phrase.response }, practiceEnglish: phrase.response, explain: `${phrase.japanese} は「${phrase.response}」だよ` }
+  return { domain: 'english', type: 'order', form: 'word-order', itemKey: `enp:${phrase.id}`, visual: { kind: 'bigtext', text: phrase.japanese }, instruction: 'えいごの じゅんばんに ならべよう', orderInstruction: 'ひだりから じゅんに タッチしてね', speak: 'えいごの じゅんばんに ならべよう。', items, correctOrder, answerId: correctOrder.join('|'), answerWord: { text: phrase.english }, practiceEnglish: phrase.english, explain: `${phrase.japanese} は「${phrase.english}」だよ` }
+}
+
+export function englishTaskForms(grade = 0, englishAudioAvailable = false) {
+  if (englishAudioAvailable) {
+    if (grade <= 0) return ['listen-picture', 'listen-picture', 'picture-word', 'alphabet']
+    if (grade <= 2) return ['listen-picture', 'picture-word', 'word-meaning', 'spelling']
+    if (grade <= 4) return ['listen-picture', 'picture-word', 'conversation', 'word-meaning']
+    return ['listen-picture', 'word-meaning', 'word-order', 'spelling']
+  }
+  if (grade <= 0) return ['picture-word', 'alphabet', 'picture-word', 'alphabet']
+  if (grade <= 2) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
+  if (grade <= 4) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
+  return ['picture-word', 'word-meaning', 'word-order', 'spelling']
 }
 
 export function generateEnglishQuestion(params = {}, reviewKey) {
   const grade = params.grade ?? 0
-  const requestedForm = params.forceForm
+  let requestedForm = params.forceForm || params.taskForm
+  // テスト・復習から形式を明示しても、再生できない音声を必要とする問題は作らない。
+  if (params.englishAudioAvailable === false && ['listen-picture', 'conversation'].includes(requestedForm)) {
+    requestedForm = grade >= 5 ? 'word-order' : 'picture-word'
+  }
   const forcedItemPool = requestedForm
     ? (requestedForm === 'word-order'
-      ? eligiblePhrases(params).filter((phrase) => phrase.response.replace(/[.!?]/g, '').trim().split(/\s+/).length >= 2)
+      ? eligiblePhrases(params).filter((phrase) => phrase.english.replace(/[.!?]/g, '').trim().split(/\s+/).length >= 2)
       : requestedForm === 'conversation' ? eligiblePhrases(params) : eligibleWords(params))
     : null
   const forcedStats = requestedForm === 'conversation' || requestedForm === 'word-order' ? params.englishPhraseStats : params.englishWordStats
@@ -166,7 +193,7 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
   if (mode === 'picture') return pictureQuestion(word, pool, params)
   if (mode === 'meaning') return meaningQuestion(word, pool, params)
   if (mode === 'japanese') return japaneseQuestion(word, pool, params)
-  if (mode === 'alphabet') return alphabetQuestion(word)
+  if (mode === 'alphabet') return alphabetQuestion(params)
   return spellingQuestion(word)
 }
 

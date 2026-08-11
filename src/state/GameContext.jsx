@@ -129,6 +129,7 @@ function createInitialState() {
     // 英語は「別の日に思い出せた」ことを可視化する。録音そのものでは上げない。
     englishWordStats: {},
     englishPhraseStats: {},
+    englishAlphabetStats: {},
     // { domainId: { reviewKey: question } }。誤答した問題を同じ形で復習するための保存。
     reviewQuestions: {},
     weapons: ['w01'], // 持っている武器のid（さいしょの1本）
@@ -201,7 +202,7 @@ function normalizeProfileSaved(saved) {
       settings: settingsForCurrentVersion(saved.settings),
       skills: saved.skills && saved.skills[0] ? saved.skills : { 0: freshSkills() },
       srs: saved.srs || migrateMissed(saved.missed),
-      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}, englishPhraseStats: saved.englishPhraseStats || {}
+      reviewQuestions: saved.reviewQuestions || {}, englishWordStats: saved.englishWordStats || {}, englishPhraseStats: saved.englishPhraseStats || {}, englishAlphabetStats: saved.englishAlphabetStats || {}
     }
   } else if (saved && (saved.version === 1 || saved.version === 2)) {
     base = migrateOld(saved)
@@ -246,6 +247,21 @@ function normalizeProfileSaved(saved) {
   }
   if (!base.englishWordStats || typeof base.englishWordStats !== 'object') base = { ...base, englishWordStats: {} }
   if (!base.englishPhraseStats || typeof base.englishPhraseStats !== 'object') base = { ...base, englishPhraseStats: {} }
+  if (!base.englishAlphabetStats || typeof base.englishAlphabetStats !== 'object') base = { ...base, englishAlphabetStats: {} }
+  // 旧 ew173 は「shape の star」だった。教材上は同じ star を二重に覚えさせないため
+  // ew137（自然の star）へ統合し、すでに積んだ進捗は高い方を残す。
+  if (base.englishWordStats.ew173) {
+    const oldStar = base.englishWordStats.ew173
+    const currentStar = base.englishWordStats.ew137 || {}
+    const { ew173, ...withoutOldStar } = base.englishWordStats
+    base = {
+      ...base,
+      englishWordStats: {
+        ...withoutOldStar,
+        ew137: (currentStar.stage || 0) >= (oldStar.stage || 0) ? currentStar : oldStar
+      }
+    }
+  }
   if (base.missed) {
     // 旧形式は取り込み済みなので落とす（保存サイズを増やさない）
     const { missed, ...rest } = base
@@ -446,15 +462,18 @@ function reduceProfile(state, action) {
       // 英語単語は 1→3→7→14日。日をまたがない連打では段階を進めない。
       let englishWordStats = state.englishWordStats || {}
       let englishPhraseStats = state.englishPhraseStats || {}
+      let englishAlphabetStats = state.englishAlphabetStats || {}
       if (domainId === 'english' && itemKey) {
         const rawKey = String(itemKey).split('#')[0]
         const isPhrase = rawKey.startsWith('enp:')
-        const key = rawKey.replace(/^en[wp]?:/, '')
-        const stats = isPhrase ? englishPhraseStats : englishWordStats
+        const isAlphabet = rawKey.startsWith('ena:')
+        const key = rawKey.replace(/^en[wap]?:/, '')
+        const stats = isAlphabet ? englishAlphabetStats : isPhrase ? englishPhraseStats : englishWordStats
         const prevStat = stats[key] || emptyEnglishProgress(dayNumber())
         const todayDay = dayNumber()
         const next = advanceEnglishProgress(prevStat, correct, todayDay)
-        if (isPhrase) englishPhraseStats = { ...englishPhraseStats, [key]: next }
+        if (isAlphabet) englishAlphabetStats = { ...englishAlphabetStats, [key]: next }
+        else if (isPhrase) englishPhraseStats = { ...englishPhraseStats, [key]: next }
         else englishWordStats = { ...englishWordStats, [key]: next }
       }
 
@@ -477,6 +496,7 @@ function reduceProfile(state, action) {
         srs,
         englishWordStats,
         englishPhraseStats,
+        englishAlphabetStats,
         reviewQuestions,
         conquered,
         daily: {
@@ -490,6 +510,7 @@ function reduceProfile(state, action) {
 
     case 'ENGLISH_SPEAKING_DONE': {
       const rawKey = String(action.itemKey || '').split('#')[0]
+      if (rawKey.startsWith('ena:')) return state
       const isPhrase = rawKey.startsWith('enp:')
       const key = rawKey.replace(/^en[wp]?:/, '')
       if (!key) return state

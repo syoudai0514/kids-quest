@@ -35,6 +35,24 @@ let stopActiveNarratorPlayback = null
 // ONNX Runtime Webのrun()は途中キャンセルできない。古い読み上げを止めて
 // すぐ別のボタンを押した場合も、推論だけは重ならないよう必ず1本に直列化する。
 let narratorInferenceQueue = Promise.resolve()
+const englishVoiceListeners = new Set()
+let englishVoiceEventsBound = false
+
+function notifyEnglishVoices() {
+  const ready = hasEnglishVoice()
+  englishVoiceListeners.forEach((listener) => listener(ready))
+}
+
+/** 初回は空配列になり得るiOS/Safariでも、voiceschanged後の状態を画面へ伝える。 */
+export function subscribeEnglishVoice(listener) {
+  englishVoiceListeners.add(listener)
+  if (typeof window !== 'undefined' && window.speechSynthesis && !englishVoiceEventsBound) {
+    englishVoiceEventsBound = true
+    window.speechSynthesis.addEventListener?.('voiceschanged', notifyEnglishVoices)
+  }
+  listener(hasEnglishVoice())
+  return () => englishVoiceListeners.delete(listener)
+}
 
 // --- 端末内のニューラル音声モデル ---
 let narrator = null

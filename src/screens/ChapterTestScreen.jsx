@@ -12,7 +12,7 @@ import { gradeOf, MAX_GRADE } from '../data/grades.js'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
 import { AppHeader, Starfield, Confetti, ProgressDots } from '../components/common.jsx'
-import { speak, cancelSpeak, hasEnglishVoice, speakEnglish } from '../engine/tts.js'
+import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 import { reviewKeyFor, snapshotQuestion } from '../engine/reviewKey.js'
 
@@ -26,7 +26,7 @@ function shuffle(items) {
 }
 
 // その学年の教科を偏らせず、選択式5問＋書く1問を作る。
-function makeTrialQuestions(state, grade) {
+function makeTrialQuestions(state, grade, englishAudioAvailable) {
   const domains = domainsForGrade(grade)
   const choiceDomains = domains.filter((d) => d.id !== 'kaku')
   const list = []
@@ -35,7 +35,7 @@ function makeTrialQuestions(state, grade) {
   // 年長は選択できる教科が4つなので、1つだけ2問にして5問にする。
   for (let i = 0; i < STAR_TRIAL_QUESTIONS - 1; i++) {
     const d = order[i % order.length]
-    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade, englishAudioAvailable: d.id === 'english' ? hasEnglishVoice() : true }
+    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade, englishAudioAvailable: d.id === 'english' ? englishAudioAvailable : true }
     let question = null
     for (let tries = 0; tries < 8 && !question; tries++) {
       const candidate = d.generateQuestion(params, null)
@@ -54,7 +54,7 @@ function makeTrialQuestions(state, grade) {
   // 書く問題を作れないコンテンツでも、必ず6問になるよう選択式で補完する。
   while (list.length < STAR_TRIAL_QUESTIONS && choiceDomains.length) {
     const d = choiceDomains[list.length % choiceDomains.length]
-    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade, englishAudioAvailable: d.id === 'english' ? hasEnglishVoice() : true }
+    const params = { ...difficultyParams(state.skills?.[grade]?.[d.id] || {}), grade, englishAudioAvailable: d.id === 'english' ? englishAudioAvailable : true }
     const question = d.generateQuestion(params, null)
     if (question?.type === 'choice' && question.choices?.length) list.push({ ...question, _domainId: d.id })
   }
@@ -64,8 +64,12 @@ function makeTrialQuestions(state, grade) {
 export default function ChapterTestScreen({ onBack }) {
   const { state, dispatch } = useGame()
   const grade = state.grade
+  const [, setEnglishVoiceReady] = useState(() => hasEnglishVoice())
+  useEffect(() => subscribeEnglishVoice(setEnglishVoiceReady), [])
+  // 試練を開いた瞬間の構成を固定する。voiceschangedで途中の問題を入れ替えない。
+  const englishAudioAvailable = useRef(Boolean(state.settings?.tts && hasEnglishVoice())).current
   const trialInfo = starTrialInfo(state, grade)
-  const questions = useMemo(() => makeTrialQuestions(state, grade), [grade])
+  const questions = useMemo(() => makeTrialQuestions(state, grade, englishAudioAvailable), [grade, englishAudioAvailable])
   const [idx, setIdx] = useState(0)
   const [chosen, setChosen] = useState(null)
   const [done, setDone] = useState(false)

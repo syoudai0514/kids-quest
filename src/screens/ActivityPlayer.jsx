@@ -17,7 +17,8 @@ import { pickLesson, hasLesson } from '../data/lessons.js'
 import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
-import { speak, cancelSpeak, hasEnglishVoice } from '../engine/tts.js'
+import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
+import { englishTaskForms } from '../data/content/english.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion } from '../engine/reviewKey.js'
 import { sfx } from '../engine/sfx.js'
 import { AppHeader, Starfield, ProgressDots, Burst } from '../components/common.jsx'
@@ -25,7 +26,6 @@ import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
 import QuestionInteraction from '../components/QuestionInteraction.jsx'
 import TracingCanvas from '../components/TracingCanvas.jsx'
 import EnglishSpeakingPractice from '../components/EnglishSpeakingPractice.jsx'
-import { speakEnglish } from '../engine/tts.js'
 
 // 「才能」ではなく、思い出す・数え直すなど再現できる行動をほめる。
 const PRAISE = [
@@ -66,6 +66,7 @@ export default function ActivityPlayer({ task, onDone }) {
     })()
   ).current
   const [inLesson, setInLesson] = useState(!!lessonPlan)
+  const [, setEnglishVoiceReady] = useState(() => hasEnglishVoice())
 
   const [qIndex, setQIndex] = useState(0)
   const [question, setQuestion] = useState(null)
@@ -76,6 +77,10 @@ export default function ActivityPlayer({ task, onDone }) {
   const [feedback, setFeedback] = useState(null)
   const [supportHint, setSupportHint] = useState(false)
   const [reinforcementCount, setReinforcementCount] = useState(0)
+  // タスクを始めた時点の音声可否と4問計画を固定する。途中で音声一覧が更新されても、
+  // 子どもが回答中の問題は差し替えない。
+  const englishAudioForTask = useRef(Boolean(state.settings?.tts && hasEnglishVoice())).current
+  const englishFormPlan = useRef(englishTaskForms(state.grade, englishAudioForTask)).current
   const baseQuestionCount = isReviewTask ? task.plan.length : task.questionCount
   const questionCount = baseQuestionCount + reinforcementCount
   // 正誤演出の setTimeout は古い render の関数を持つため、直前に増やした
@@ -96,6 +101,8 @@ export default function ActivityPlayer({ task, onDone }) {
   const domainIdRef = useRef(task.domainId)
   const stateRef = useRef(state)
   stateRef.current = state
+
+  useEffect(() => subscribeEnglishVoice(setEnglishVoiceReady), [])
 
   // このタスクの「ちゃんと解いたか」の記録（追加問題のチケット判定に使う）
   const tallyRef = useRef({ correct: 0, total: 0, fastWrong: 0 })
@@ -119,7 +126,10 @@ export default function ActivityPlayer({ task, onDone }) {
     const params = {
       ...difficultyParams(skillOf(stateRef.current, domainId)),
       grade: stateRef.current.grade,
-      englishAudioAvailable: domainId === 'english' ? hasEnglishVoice() : true,
+      englishAudioAvailable: domainId === 'english' ? englishAudioForTask : true,
+      taskForm: domainId === 'english' && !isReviewTask && !task.focusWordId && !reinforcementQueueRef.current.some((entry) => entry.after <= qIndex)
+        ? englishFormPlan[Math.min(qIndex, englishFormPlan.length - 1)]
+        : undefined,
       englishWordStats: stateRef.current.englishWordStats,
       englishPhraseStats: stateRef.current.englishPhraseStats,
       today: dayNumber(),
