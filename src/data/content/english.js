@@ -27,7 +27,12 @@ const rawWords = [
   ['extra','big','おおきい','🐘',1],['extra','small','ちいさい','🐜',1],['extra','new','あたらしい','✨',2],['extra','old','ふるい','🏚️',2],['extra','fast','はやい','💨',2],['extra','slow','ゆっくり','🐢',2],['extra','friend','ともだち','🧑‍🤝‍🧑',1],['extra','love','だいすき','❤️',2],['extra','robot','ロボット','🤖',1],['extra','rocket','ロケット','🚀',1]
 ]
 
-export const ENGLISH_WORDS = rawWords.map(([category, english, japanese, emoji, minGrade], i) => ({ id: `ew${String(i + 1).padStart(3, '0')}`, category, english, japanese, emoji, minGrade, speak: english }))
+// 絵を使えるかは「重複していないか」ではなく教材として明示する。連想絵は false。
+const PICTURE_INELIGIBLE = new Set(['jump', 'eraser', 'summer', 'small', 'slow'])
+export const ENGLISH_WORDS = rawWords.map(([category, english, japanese, emoji, minGrade], i) => ({
+  id: `ew${String(i + 1).padStart(3, '0')}`, category, english, japanese, emoji, minGrade, speak: english,
+  pictureEligible: category !== 'time' && !PICTURE_INELIGIBLE.has(english)
+}))
 
 const phraseRows = [
  ['Hello.','こんにちは。','あいさつ','Hi!'],['Good morning.','おはよう。','あいさつ','Good morning!'],['Good night.','おやすみ。','あいさつ','Good night!'],['How are you?','げんき？','あいさつ','I am fine.'],['I am fine.','げんきだよ。','あいさつ','That is good!'],['Thank you.','ありがとう。','あいさつ','You are welcome.'],['You are welcome.','どういたしまして。','あいさつ','Thank you.'],['Nice to meet you.','はじめまして。','あいさつ','Nice to meet you, too.'],['What is your name?','なまえは なに？','自己紹介','My name is Kai.'],['My name is Kai.','わたしの なまえは カイです。','自己紹介','Nice to meet you.'],
@@ -36,7 +41,16 @@ const phraseRows = [
  ['I am hungry.','おなかがすいた。','気持ち','Let us eat.'],['I am thirsty.','のどがかわいた。','気持ち','Here is water.'],['Please help me.','たすけてください。','お願い','Okay.'],['Can I have water?','みずを もらえますか？','お願い','Here you are.'],['Here you are.','どうぞ。','やりとり','Thank you.'],['Excuse me.','すみません。','やりとり','Yes?'],['I am sorry.','ごめんなさい。','やりとり','That is okay.'],['See you tomorrow.','また あした。','別れ','See you!'],['See you later.','また あとでね。','別れ','See you!'],['Have a nice day.','よい いちにちを。','あいさつ','Thank you!'],
  ['Where is the ball?','ボールは どこ？','場所','It is here.'],['It is here.','ここに あるよ。','場所','Thank you.'],['I can run.','わたしは はしれる。','できること','Great!'],['I can swim.','わたしは およげる。','できること','Great!'],['Open the door.','ドアを あけて。','指示','Okay.'],['Close the door.','ドアを しめて。','指示','Okay.'],['Please sit down.','すわってください。','教室','Okay.'],['Please stand up.','たってください。','教室','Okay.'],['What is this?','これは なに？','質問','It is a book.'],['It is a book.','これは ほんです。','もの紹介','Nice!']
 ]
-export const ENGLISH_PHRASES = phraseRows.map(([english, japanese, scene, response], i) => ({ id: `ep${String(i + 1).padStart(3, '0')}`, english, japanese, scene, response, minGrade: i < 20 ? 0 : i < 38 ? 2 : 4, speak: english }))
+// 文脈によって自然に成立する返事を「まちがい」にしない。会話ごとの専用候補は、
+// 意味が明確にずれる文だけに限定する（全項目で固定3択を使わない）。
+const PHRASE_DISTRACTORS = [
+  ['I am sorry.', 'It is blue.', 'I have two cats.'], ['It is rainy.', 'I am hungry.', 'It is seven.'], ['I am thirsty.', 'It is red.', 'I can swim.'], ['It is three.', 'It is sunny.', 'I have a dog.'], ['It is here.', 'I am happy.', 'It is Monday.']
+]
+export const ENGLISH_PHRASES = phraseRows.map(([english, japanese, scene, response], i) => ({
+  id: `ep${String(i + 1).padStart(3, '0')}`, english, japanese, scene, response,
+  distractors: PHRASE_DISTRACTORS[i % PHRASE_DISTRACTORS.length].filter((x) => x !== response),
+  minGrade: i < 20 ? 0 : i < 38 ? 2 : 4, speak: english
+}))
 
 export const ENGLISH_CATEGORIES = {
   greeting: 'あいさつ', animal: 'どうぶつ', food: 'たべもの・のみもの', color: 'いろ', number: 'かず', body: 'からだ', family: 'かぞく', school: '学校・もちもの', home: '家・身のまわり', action: 'うごき', feeling: '気持ち', weather: '天気・季節', time: '曜日・時間', nature: 'しぜん', place: 'ばしょ', vehicle: 'のりもの', clothes: 'ふく・もちもの', shape: 'かたち', computer: 'コンピューター', extra: 'そのほか'
@@ -102,7 +116,7 @@ function wordBase(word) {
 // 「聞く」「絵から英語」を出すのは、教材全体でその絵が一つの意味だけを表す語に
 // 限定する。曜日は記号ではなく文字の問題で学ぶ。
 function hasUnambiguousPicture(word) {
-  return word.category !== 'time' && ENGLISH_WORDS.filter((entry) => entry.emoji === word.emoji).length === 1
+  return !!word.pictureEligible && ENGLISH_WORDS.filter((entry) => entry.emoji === word.emoji).length === 1
 }
 
 function pictureSafeWords(params) {
@@ -149,7 +163,7 @@ function phraseQuestion(phrase, params) {
   const response = { id: phrase.id, response: phrase.response }
   // 会話の誤答は、ほかの会話の「たまたま自然な返答」を混ぜない。全表現で
   // 正解は一つだけに固定し、表示用IDも会話項目のIDと分離する。
-  const distractors = ['I am sorry.', 'Please wait.', 'I do not know.']
+  const distractors = phrase.distractors
     .filter((text) => text !== phrase.response)
     .map((response, index) => ({ id: `wrong:${phrase.id}:${index}`, response }))
   const choices = shuffle([response, ...distractors]).map((item) => ({ id: item.id, label: item.response }))
@@ -179,11 +193,14 @@ export function englishTaskForms(grade = 0, englishAudioAvailable = false) {
 export function generateEnglishQuestion(params = {}, reviewKey) {
   const grade = params.grade ?? 0
   let requestedForm = params.forceForm || params.taskForm
+  // 図鑑・期限復習・誤答補強は形式より項目を優先する。対象が絵に不向きなら
+  // 同じ項目の文字問題へ切り替える（別単語にはしない）。
+  const requestedItem = itemFromKey(reviewKey || params.reviewKey || params.focusWordId)
   // テスト・復習から形式を明示しても、再生できない音声を必要とする問題は作らない。
   if (params.englishAudioAvailable === false && ['listen-picture', 'conversation'].includes(requestedForm)) {
     requestedForm = grade >= 5 ? 'word-order' : 'picture-word'
   }
-  const forcedItemPool = requestedForm
+  const forcedItemPool = !requestedItem && requestedForm
     ? (requestedForm === 'listen-picture' || requestedForm === 'picture-word'
       ? pictureSafeWords(params)
       : requestedForm === 'word-order'
@@ -191,9 +208,9 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
       : requestedForm === 'conversation' ? eligiblePhrases(params) : eligibleWords(params))
     : null
   const forcedStats = requestedForm === 'conversation' || requestedForm === 'word-order' ? params.englishPhraseStats : params.englishWordStats
-  const item = forcedItemPool
+  const item = requestedItem || (forcedItemPool
     ? selectByStudyOrder(forcedItemPool, forcedStats, new Set((params.seenItemKeys || []).map(baseKey)), params.today ?? localDayNumber())
-    : chooseEnglishStudyItem({ ...params, reviewKey })
+    : chooseEnglishStudyItem({ ...params, reviewKey }))
   const word = ENGLISH_WORDS.find((entry) => entry.id === item.id)
   if (!word) {
     const phrase = item

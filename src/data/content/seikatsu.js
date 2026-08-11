@@ -393,3 +393,8 @@ export const SEIKATSU_LABELS = {
   daysInMonth: '月の日数', clockRead: 'とけい（なんじ）', clockMinutes: 'とけい（なんぷん）',
   clockBefore: '○分まえ', clockAfter: '○分あと', amPm: 'ごぜん・ごご'
 }
+export const SEIKATSU_KINDS_BY_GRADE = {
+  0: ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday'],
+  1: ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday', 'holidayName', 'clockMinutes', 'daysInMonth', 'monthEvent', 'amPm'],
+  2: ['relativeDay', 'clockRead', 'clockMinutes', 'holiday', 'holidayName', 'daysInMonth', 'season', 'amPm', 'todayDate', 'todayWeek', 'clockBefore', 'clockAfter', 'monthOrder']
+}

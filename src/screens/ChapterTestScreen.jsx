@@ -15,7 +15,7 @@ import { AppHeader, Starfield, Confetti, ProgressDots } from '../components/comm
 import { speak, cancelSpeak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 import { reviewKeyFor, snapshotQuestion } from '../engine/reviewKey.js'
-import { trialUnlocked, withLearningUnit } from '../engine/learningUnits.js'
+import { trialUnlocked, withLearningUnit, promotionResult } from '../engine/learningUnits.js'
 
 function shuffle(items) {
   const list = [...items]
@@ -98,11 +98,8 @@ export default function ChapterTestScreen({ onBack }) {
 
   const finish = () => {
     const correct = resultsRef.current.filter((r) => r.correct).length
-    const old = trialInfo.rounds.slice(-1)
-    const combined = [...old, { correct, total }]
-    const combinedCorrect = combined.reduce((sum, r) => sum + r.correct, 0)
-    const combinedTotal = combined.reduce((sum, r) => sum + r.total, 0)
-    const passed = combinedTotal === STAR_TRIAL_QUESTIONS * 2 && combinedCorrect >= STAR_TRIAL_PASS_CORRECT
+    const result = promotionResult(state, grade, { correct, total })
+    const { correct: combinedCorrect, total: combinedTotal, passed } = result
     setDone(true)
     dispatch({ type: 'STAR_TRIAL_RESULT', grade, correct, total, results: resultsRef.current })
 
@@ -170,10 +167,8 @@ export default function ChapterTestScreen({ onBack }) {
 
   if (done) {
     const correct = resultsRef.current.filter((r) => r.correct).length
-    const combined = [...trialInfo.rounds.slice(-1), { correct, total }]
-    const combinedCorrect = combined.reduce((sum, r) => sum + r.correct, 0)
-    const combinedTotal = combined.reduce((sum, r) => sum + r.total, 0)
-    const passed = combinedTotal === STAR_TRIAL_QUESTIONS * 2 && combinedCorrect >= STAR_TRIAL_PASS_CORRECT
+    const result = promotionResult(state, grade, { correct, total })
+    const { correct: combinedCorrect, total: combinedTotal, passed } = result
     const missing = Math.max(0, STAR_TRIAL_PASS_CORRECT - combinedCorrect)
     return (
       <div className="screen fade-in">
@@ -190,7 +185,7 @@ export default function ChapterTestScreen({ onBack }) {
             ) : (
               <div className="muted" style={{ fontWeight: 800, marginTop: 10 }}>2かいで {combinedCorrect} / {combinedTotal}こ。クリアまで あと {missing}こ！</div>
             )}
-            {!passed && <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>まちがえた もんだいは「とっくん」に はいったよ。<br />おぼえてから、また ちょうせんしよう！</div>}
+            {!passed && <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>{result.scorePassed && result.missingUnits.length ? <>しれんの もんだいは できたよ！<br />あと {result.missingUnits.length}この たんげんを、べつの日にも とっくんしよう。</> : <>まちがえた もんだいは「とっくん」に はいったよ。<br />おぼえてから、また ちょうせんしよう！</>}</div>}
             {passed && grade < MAX_GRADE && <div className="pill" style={{ marginTop: 12, background: 'var(--good)', color: '#10231c', border: 'none' }}>🔓 {gradeOf(grade + 1).short} が あいた！</div>}
           </div>
           <button className="btn btn--primary btn--big" onClick={onBack}>🏠 もどる</button>

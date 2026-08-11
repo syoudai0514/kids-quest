@@ -13,14 +13,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useGame, skillOf, needsReviewLesson } from '../state/GameContext.jsx'
 import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
-import { pickLesson, hasLesson } from '../data/lessons.js'
 import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
 import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish } from '../engine/tts.js'
 import { englishTaskForms } from '../data/content/english.js'
 import { reviewKeyFor, savedReviewQuestion, snapshotQuestion } from '../engine/reviewKey.js'
-import { nextLearningUnit, unitStatsFor, withLearningUnit } from '../engine/learningUnits.js'
+import { nextLearningUnit, unitStatsFor, withLearningUnit, lessonForUnit } from '../engine/learningUnits.js'
 import { sfx } from '../engine/sfx.js'
 import { AppHeader, Starfield, ProgressDots, Burst } from '../components/common.jsx'
 import QuestionVisual, { CountGrid } from '../components/QuestionVisual.jsx'
@@ -80,12 +79,13 @@ export default function ActivityPlayer({ task, onDone }) {
       if (isReviewTask || task.kind !== 'core') return null
       const g = state.grade
       const dId = task.domainId
-      if (!hasLesson(dId, g)) return null
       const seen = state.lessonSeen?.[`${g}:${dId}`] || 0
       const review = needsReviewLesson(state, dId, g)
       const unitSeen = unitStatsFor(state, g, dId)[focusUnitRef.current]
       if (unitSeen?.attempts > 0 && seen > 0 && !review) return null
-      return { lesson: pickLesson(dId, g, review ? seen : 0), isReview: review && seen > 0, domainId: dId, grade: g }
+      // 既存レッスンを seed=0 で流用すると、分数の前にわり算を教える。
+      // 単元専用が無い場合も、別単元の説明ではなくこの単元の導入を表示する。
+      return { lesson: lessonForUnit(focusUnitRef.current), isReview: review && seen > 0, domainId: dId, grade: g }
     })()
   ).current
   const [inLesson, setInLesson] = useState(!!lessonPlan)
@@ -187,7 +187,17 @@ export default function ActivityPlayer({ task, onDone }) {
     const targetUnit = !review && !isReviewTask
       ? (qIndex < 2 ? focusUnitRef.current : learnedUnits[0] || focusUnitRef.current)
       : null
-    const generated = saved || questionForUnit(dom, params, targetUnit)
+    // review は「出したい問題」と「記録する問題」を同じキーで束ねる。
+    // ここで渡さないと、moon を指定して別の単語を出し moon に記録する事故になる。
+    const generated = saved || (domainId === 'english'
+      ? dom.generateQuestion({ ...params, reviewKey: review }, review)
+      : questionForUnit(dom, { ...params, unitId: targetUnit }, targetUnit))
+    // 指定復習を作れない場合は、別問題へすり替えて採点しない。次回に残す。
+    if (!generated || (review && domainId === 'english' && String(generated.itemKey || '').split('#')[0] !== String(review).split('#')[0])) {
+      setQuestion(null)
+      setFeedback({ good: false, word: 'この もんだいを じゅんび中だよ。あとで もういちど やろう。' })
+      return setTimeout(advance, 900)
+    }
     // 旧セーブの「種類だけ」の復習キーも、そのまま復習として扱えるようにする。
     let q = withLearningUnit(review && !generated.reviewKey ? { ...generated, reviewKey: review } : generated, params.grade)
     // 未経験の書字は必ずお手本つき。別日に成功してから自由書きへ進む。
@@ -375,7 +385,7 @@ export default function ActivityPlayer({ task, onDone }) {
       setChosenId(answerId)
       // 発音は年齢や問題番号で止めない。毎回出すが、スキップできるので
       // 年長から高学年まで本人の気分で取り組める。
-      const needsSpeaking = isEnglish && question.practiceEnglish
+      const needsSpeaking = isEnglish && englishAudioForTask && question.practiceEnglish
       setPhase(needsSpeaking ? 'practice' : 'feedback')
       phaseRef.current = needsSpeaking ? 'practice' : 'feedback'
       comboRef.current += 1
@@ -494,7 +504,7 @@ export default function ActivityPlayer({ task, onDone }) {
         ) : (
           <>
             <QuestionVisual question={question} />
-            {isEnglish && phase === 'practice' && question.practiceEnglish && (
+            {isEnglish && englishAudioForTask && phase === 'practice' && question.practiceEnglish && (
               <EnglishSpeakingPractice
                 text={question.practiceEnglish}
                 onDone={() => {
@@ -504,7 +514,7 @@ export default function ActivityPlayer({ task, onDone }) {
                 onSkip={finishSpeakingPractice}
               />
             )}
-            {isEnglish && question.promptEnglishAudio && (
+            {isEnglish && englishAudioForTask && question.promptEnglishAudio && (
               <button
                 className="btn btn--ghost english-audio-replay"
                 type="button"
