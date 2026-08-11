@@ -22,7 +22,8 @@ import { dayNumber, isDue, scheduleNext, dueCount, migrateMissed } from '../engi
 import { DEFAULT_TTS_RATE, migrateTtsRate } from '../config/ttsRates.js'
 import { snapshotQuestion } from '../engine/reviewKey.js'
 import { advanceEnglishProgress, emptyEnglishProgress } from '../engine/englishProgress.js'
-import { recordUnitResult, requiredUnitIds } from '../engine/learningUnits.js'
+import { recordUnitResult, promotionResult } from '../engine/learningUnits.js'
+import { migrateEnglishWordStats } from '../engine/englishMigration.js'
 
 const BATTLE_DAILY_LIMIT = 1 // 1日1戦は自由。追加戦は学習した教科で解放する。
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
@@ -251,19 +252,11 @@ function normalizeProfileSaved(saved) {
   if (!base.englishPhraseStats || typeof base.englishPhraseStats !== 'object') base = { ...base, englishPhraseStats: {} }
   if (!base.englishAlphabetStats || typeof base.englishAlphabetStats !== 'object') base = { ...base, englishAlphabetStats: {} }
   if (!base.unitStats || typeof base.unitStats !== 'object') base = { ...base, unitStats: {} }
-  // 旧 ew173 は「shape の star」だった。教材上は同じ star を二重に覚えさせないため
-  // ew137（自然の star）へ統合し、すでに積んだ進捗は高い方を残す。
-  if (base.englishWordStats.ew173) {
-    const oldStar = base.englishWordStats.ew173
-    const currentStar = base.englishWordStats.ew137 || {}
-    const { ew173, ...withoutOldStar } = base.englishWordStats
-    base = {
-      ...base,
-      englishWordStats: {
-        ...withoutOldStar,
-        ew137: (currentStar.stage || 0) >= (oldStar.stage || 0) ? currentStar : oldStar
-      }
-    }
+  // 旧コンテンツ版だけで ew173 は star だった。現行では diamond なので、
+  // 現行保存を毎回 star に移し替えて消すことは絶対にしない。
+  if ((saved?.contentVersion || 0) > 0 && (saved?.contentVersion || 0) < 13 && base.englishWordStats.ew173) {
+    base = { ...base, englishWordStats: migrateEnglishWordStats(base.englishWordStats, saved.contentVersion) }
+    base = { ...base, englishMigrationVersion: 1 }
   }
   if (base.missed) {
     // 旧形式は取り込み済みなので落とす（保存サイズを増やさない）
@@ -433,7 +426,7 @@ function reduceProfile(state, action) {
       //   期限の来た問題に正解 → 次に会う日を のばす（1→3→7→14→30日）
       //   最高boxに到達 → 「完全に自分のものになった」= conquered
       let srs = state.srs
-      const unitStats = recordUnitResult(state.unitStats, grade, domainId, unitId, correct, dayNumber())
+      const unitStats = recordUnitResult(state.unitStats, grade, domainId, unitId, correct, dayNumber(), itemKey)
       let reviewQuestions = state.reviewQuestions || {}
       let conquered = state.conquered
       let xpGain = correct ? 2 : 0
@@ -760,11 +753,8 @@ function reduceProfile(state, action) {
       }
       const oldRounds = state.starTrials?.[g]?.rounds || []
       const rounds = [...oldRounds, round].slice(-STAR_TRIAL_ROUNDS)
-      const correct = rounds.reduce((sum, r) => sum + r.correct, 0)
-      const total = rounds.reduce((sum, r) => sum + r.total, 0)
-      const requiredDomains = new Set(requiredUnitIds(g).map((id) => id.startsWith('reading:') ? 'yomu' : id.startsWith('writing:') ? 'kaku' : id.startsWith('math:') ? 'suuji' : id.startsWith('life:') ? 'seikatsu' : id.startsWith('science:') ? 'rika' : 'shakai'))
-      const correctDomains = new Set(rounds.flatMap((r) => r.correctDomains || []))
-      const passed = total >= STAR_TRIAL_QUESTIONS * STAR_TRIAL_ROUNDS && correct >= STAR_TRIAL_PASS_CORRECT && [...requiredDomains].every((id) => correctDomains.has(id))
+      const result = promotionResult({ ...state, starTrials: { ...state.starTrials, [g]: { rounds: oldRounds.slice(-1) } } }, g, round)
+      const { correct, total, passed } = result
       const starTrials = { ...state.starTrials, [g]: { rounds } }
 
       let testPassed = state.testPassed
