@@ -124,6 +124,35 @@ function verifyNoLengthTell(label, questions, generate, prefix) {
 verifyNoLengthTell('りか', RIKA_QUESTIONS, generateRikaQuestion, 'r:')
 verifyNoLengthTell('しゃかい', SHAKAI_QUESTIONS, generateShakaiQuestion, 'c:')
 
+// 計画書§6.1「正解が常に最長／最短になっていない（全問題で分布を検査）」。
+// 1問ずつの上限（上の verifyNoLengthTell）だけでは、1〜3文字の差が
+// 積み重なった偏りを見逃す。実際、教材を増やしたときに しゃかいの
+// 新規60問は50%が「正解が単独最長」になっていた（4択の偶然は約25%）。
+// 「いちばん長い選択肢を選ぶ」だけで正答率が偶然を超える状態を禁じる。
+function verifyLengthDistribution(label, questions, generate, prefix, maxRate = 0.3, maxGap = 3) {
+  let total = 0
+  let uniquelyLongest = 0
+  for (const question of questions) {
+    const item = generate({ grade: 6, level: 12, choiceCount: 4 }, `${prefix}${question}`)
+    const choices = item?.choices ?? []
+    const answer = choices.find((choice) => choice.id === item.answerId)
+    if (!answer || choices.length < 3) continue
+    total++
+    const lengths = choices.map((choice) => String(choice.label ?? choice.id).replace(/\s/g, '').length)
+    const answerLength = String(answer.label ?? answer.id).replace(/\s/g, '').length
+    const longest = Math.max(...lengths)
+    if (answerLength === longest && lengths.filter((l) => l === longest).length === 1) uniquelyLongest++
+    const wrongLengths = choices.filter((choice) => choice.id !== item.answerId).map((choice) => String(choice.label ?? choice.id).replace(/\s/g, '').length)
+    const gap = answerLength - Math.max(...wrongLengths)
+    requireValue(gap <= maxGap, `${label}: 正解が全誤答より${gap}文字長く、見ただけで選べる: 「${question}」`)
+  }
+  if (!total) return
+  const rate = uniquelyLongest / total
+  requireValue(rate <= maxRate, `${label}: 正解が単独で最長になる割合が${Math.round(rate * 100)}%（4択の偶然は約25%、上限${Math.round(maxRate * 100)}%）。長い選択肢を選ぶだけで当たってしまう`)
+}
+verifyLengthDistribution('りか', RIKA_QUESTIONS, generateRikaQuestion, 'r:')
+verifyLengthDistribution('しゃかい', SHAKAI_QUESTIONS, generateShakaiQuestion, 'c:')
+
 // WP1: 学年別漢字配当表（2020年度〜, 計1026字）との完全一致を固定する。
 // 実際の配当表突合は生成時に政府公式データ（文化庁 常用漢字表本表）で
 // 実施済み。ここでは回帰防止として、字数・重複・学年配置・書き順・
