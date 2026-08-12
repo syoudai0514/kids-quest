@@ -261,24 +261,12 @@ export default function ActivityPlayer({ task, onDone }) {
     cancelSpeak()
   }, [])
 
-  // ---- 授業（勉強ターン）----
-  if (inLesson && lessonPlan?.lesson) {
-    return (
-      <LessonScreen
-        lesson={lessonPlan.lesson}
-        domainId={lessonPlan.domainId}
-        grade={lessonPlan.grade}
-        isReview={lessonPlan.isReview}
-        onDone={() => {
-          dispatch({ type: 'LESSON_SEEN', domainId: lessonPlan.domainId, grade: lessonPlan.grade })
-          setInLesson(false)
-        }}
-      />
-    )
-  }
-
-  if (!question) return null
-
+  // question より前に定義する: makeQuestion() は「指定復習を作れない」場合、
+  // 初回レンダー（question=null で早期returnする前）の effect からでも
+  // advance を直接呼ぶ（218行目）。question の後ろで定義すると、その
+  // 初回レンダーの実行では advance の宣言に到達せず、TDZ で
+  // 「Cannot access 'advance' before initialization」のまま画面が
+  // 真っ白になっていた（実機のとっくんで再現・修正）。
   const advance = () => {
     if (qIndex + 1 < questionCountRef.current) {
       setQIndex(qIndex + 1)
@@ -308,6 +296,24 @@ export default function ActivityPlayer({ task, onDone }) {
       })
     }
   }
+
+  // ---- 授業（勉強ターン）----
+  if (inLesson && lessonPlan?.lesson) {
+    return (
+      <LessonScreen
+        lesson={lessonPlan.lesson}
+        domainId={lessonPlan.domainId}
+        grade={lessonPlan.grade}
+        isReview={lessonPlan.isReview}
+        onDone={() => {
+          dispatch({ type: 'LESSON_SEEN', domainId: lessonPlan.domainId, grade: lessonPlan.grade })
+          setInLesson(false)
+        }}
+      />
+    )
+  }
+
+  if (!question) return null
 
   const advanceAfterFeedback = (line, { english = '', rate: feedbackRate, minVisibleMs = 900 } = {}) => {
     const speechId = ++feedbackSpeechRef.current

@@ -950,6 +950,305 @@ const BUILDERS = {
       answer: ans, cc: p.cc, spread: 2, say: `${ans}`,
       explain: `${a}も ${b}も わりきれる いちばん おおきい かずは ${ans}`
     })
+  },
+  // ---- WP3: 小4「角度・垂直平行・変わる量・計算のきまり」----
+  angle(p) {
+    const a = rng(20, 160)
+    const ans = 180 - a
+    return numQ('angle', {
+      visual: { kind: 'bigtext', text: `一直線は 180°\n${a}° と ❓° で 180°` },
+      instruction: `一直線は 180°。もう一方の角は？`,
+      speak: `一直線に ならぶ 2つの角の 一方が ${a}度。もう一方は 何度？`,
+      answer: ans, cc: p.cc, spread: 10, say: `${ans}ど`,
+      explain: `一直線は 180°。180から ${a}を ひくと ${ans}°`
+    })
+  },
+  perpendicular(p) {
+    const items = [
+      { deg: 90, word: '垂直' },
+      { deg: 0, word: '平行' }
+    ]
+    const item = pick(items)
+    const dummies = ['垂直', '平行', '対称', '合同'].filter((w) => w !== item.word)
+    const q = item.deg === 90 ? '2本の直線が 90°で 交わっているとき、この関係を 何という？' : 'どこまで のばしても 交わらない 2本の直線の 関係を 何という？'
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:perpendicular',
+      visual: { kind: 'sentence', text: q },
+      instruction: '何という関係？',
+      speak: q,
+      answerId: item.word,
+      choices: stringChoices(item.word, dummies, p.cc),
+      answerWord: { text: item.word },
+      explain: item.deg === 90 ? '交わる角が 90°の 2本の直線は「垂直」というよ' : '交わらずに ずっと 同じ はばで のびる 2本の直線は「平行」というよ'
+    }
+  },
+  lineGraph(p) {
+    const days = ['げつ', 'か', 'すい', 'もく', 'きん']
+    const temps = Array.from({ length: 5 }, () => rng(8, 28))
+    const maxIndex = temps.indexOf(Math.max(...temps))
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:lineGraph',
+      visual: { kind: 'bigtext', text: days.map((d, i) => `${d}: ${temps[i]}℃`).join('\n') },
+      instruction: 'いちばん 気温が 高かった 日は？',
+      speak: `${days.map((d, i) => `${d}曜日は ${temps[i]}度`).join('、')}。いちばん 気温が 高かったのは 何曜日？`,
+      answerId: days[maxIndex],
+      choices: shuffle(days).map((d) => ({ id: d, label: `${d}曜日` })),
+      answerWord: { text: `${days[maxIndex]}曜日` },
+      explain: `折れ線グラフは 線が いちばん 高い（上にある）ところが いちばん 大きい値。${days[maxIndex]}曜日の ${temps[maxIndex]}℃が いちばん 高いね`
+    }
+  },
+  changePattern(p) {
+    const unit = pick([60, 80, 100, 120])
+    const n = rng(4, 8)
+    const ans = unit * n
+    return numQ('changePattern', {
+      visual: { kind: 'bigtext', text: `1本${unit}円の えんぴつ\n${n}本の 代金 ＝ ❓円` },
+      instruction: `代金は？`,
+      speak: `1本 ${unit}円の えんぴつを ${n}本 買うと、代金は 何円？`,
+      answer: ans, cc: p.cc, spread: unit, say: `${ans}えん`,
+      explain: `本数が 増えると 代金も 同じ わりあいで 増える。${unit}かける${n}で ${ans}円`
+    })
+  },
+  fracAddSame(p) {
+    const denom = pick([4, 5, 6, 7, 8])
+    const a = rng(1, denom - 2)
+    const b = rng(1, denom - a - 1)
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:fracAddSame',
+      visual: { kind: 'bigtext', text: `${denom}分の${a} ＋ ${denom}分の${b}\n＝ ❓` },
+      instruction: '答えを えらぼう',
+      speak: `${denom}ぶんの${a} たす ${denom}ぶんの${b}は？`,
+      answerId: `${a + b}/${denom}`,
+      choices: stringChoices(`${a + b}/${denom}`, [`${a + b + 1}/${denom}`, `${a + b}/${denom * 2}`, `${a + b - 1 || 1}/${denom}`, `${a}/${denom}`], p.cc),
+      answerWord: { text: `${denom}分の${a + b}` },
+      explain: `分母（下の数）が 同じ 分数どうしの たし算は、分子（上の数）だけ たす。${a}たす${b}で ${a + b}。答えは ${denom}分の${a + b}`
+    }
+  },
+  calcRule(p) {
+    const a = rng(2, 8), b = rng(2, 8), c = rng(2, 8)
+    const useParen = Math.random() < 0.5
+    const ans = useParen ? (a + b) * c : a + b * c
+    return numQ('calcRule', {
+      visual: { kind: 'bigtext', text: useParen ? `(${a} ＋ ${b}) × ${c} ＝ ❓` : `${a} ＋ ${b} × ${c} ＝ ❓` },
+      instruction: `計算のきまりに 気をつけて 答えよう`,
+      speak: useParen ? `${a}たす${b}、ぜんぶを かっこで くくって、それに ${c}を かけると？` : `${a}たす、${b}かける${c}は？`,
+      answer: ans, cc: p.cc, spread: Math.max(a, b, c), say: `${ans}`,
+      explain: useParen ? `（）の 中を 先に 計算する。${a}たす${b}で ${a + b}、それに ${c}を かけて ${ans}` : `たし算より かけ算を 先に 計算する。${b}かける${c}で ${b * c}、それに ${a}を たして ${ans}`
+    })
+  },
+  // ---- WP3: 小5「単位量あたり・多角形・円周・グラフ・倍数約数」----
+  unitAmount(p) {
+    const per = rng(2, 6)
+    const liters = per * rng(2, 5)
+    const fish = liters / per
+    return numQ('unitAmount', {
+      visual: { kind: 'bigtext', text: `${liters}Lに 魚が ${fish}ひき\n1Lあたり ＝ ❓ひき` },
+      instruction: `1Lあたり 何びき？`,
+      speak: `${liters}リットルの 水そうに 魚が ${fish}ひき います。1リットルあたり 何びきに なる？`,
+      answer: per, cc: p.cc, spread: 2, say: `${per}ひき`,
+      explain: `1Lあたりの 数は、ひきすう わる リットル。${fish}わる${liters}で ${per}ひき`
+    })
+  },
+  shapeAngle(p) {
+    const shapes = [
+      { name: '三角形', n: 3 }, { name: '四角形', n: 4 }, { name: '五角形', n: 5 }, { name: '六角形', n: 6 }
+    ]
+    const s = pick(shapes)
+    const ans = (s.n - 2) * 180
+    return numQ('shapeAngle', {
+      visual: { kind: 'bigtext', text: `${s.name}の\n内角の和 ＝ ❓°` },
+      instruction: `内角の和は？`,
+      speak: `${s.name}の 内角の 和は 何度？`,
+      answer: ans, cc: p.cc, spread: 90, say: `${ans}ど`,
+      explain: `多角形の 内角の和は（辺の数－2）×180°。${s.name}は 辺が${s.n}本だから、（${s.n}－2）×180で ${ans}°`
+    })
+  },
+  congruent(p) {
+    const questions = [
+      { q: '形も 大きさも ぴったり 同じ 図形どうしの関係を 何という？', ans: '合同', dummies: ['対称', '相似', '平行'] },
+      { q: '合同な 2つの三角形で、対応する辺の長さは どうなる？', ans: '等しい', dummies: ['2倍になる', '半分になる', 'ばらばら'] }
+    ]
+    const item = pick(questions)
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:congruent',
+      visual: { kind: 'sentence', text: item.q },
+      instruction: '答えを えらぼう',
+      speak: item.q,
+      answerId: item.ans,
+      choices: stringChoices(item.ans, item.dummies, p.cc),
+      answerWord: { text: item.ans },
+      explain: `形と大きさが ぴったり重なる図形を「合同」という。合同な図形は 対応する辺の長さも 角の大きさも すべて等しいよ`
+    }
+  },
+  polygonCircle(p) {
+    const questions = [
+      { q: 'すべての辺の長さと 角の大きさが 等しい 多角形を 何という？', ans: '正多角形', dummies: ['合同図形', '対称図形', '相似形'] },
+      { q: '正六角形の 辺の数は？', ans: '6', dummies: ['5', '7', '8'] },
+      { q: '正八角形の 辺の数は？', ans: '8', dummies: ['6', '7', '9'] }
+    ]
+    const item = pick(questions)
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:polygonCircle',
+      visual: { kind: 'sentence', text: item.q },
+      instruction: '答えを えらぼう',
+      speak: item.q,
+      answerId: item.ans,
+      choices: stringChoices(item.ans, item.dummies, p.cc),
+      answerWord: { text: item.ans },
+      explain: `辺の長さと角の大きさが すべて等しい多角形を「正多角形」という。正○角形の名前の数と 辺の数は 同じだよ`
+    }
+  },
+  circumference(p) {
+    const r = pick([2, 3, 4, 5, 6, 7, 8])
+    const d = r * 2
+    const ans = Math.round(d * 3.14 * 10) / 10
+    return numQ('circumference', {
+      visual: { kind: 'bigtext', text: `直径${d}cmの円\n円周 ＝ ❓cm` },
+      instruction: `円周は？（円周率3.14）`,
+      speak: `直径${d}センチの 円の 円周は 何センチ？ 円周率は 3.14で 計算しよう`,
+      answer: ans, cc: p.cc, spread: d, say: `${ans}センチ`,
+      explain: `円周は 直径 かける 円周率(3.14)。${d}かける3.14で ${ans}cm`,
+      explainColumn: columnBlock(d, '3.14', '×', ans)
+    })
+  },
+  bandGraph(p) {
+    const total = 100
+    const part = pick([10, 20, 25, 30, 40])
+    return numQ('bandGraph', {
+      visual: { kind: 'bigtext', text: `全体${total}人中 ${part}人が すき\nわりあい ＝ ❓%` },
+      instruction: `わりあいは？`,
+      speak: `全体${total}人のうち ${part}人が すきと 答えました。帯グラフでは 何パーセントに あたる？`,
+      answer: part, cc: p.cc, spread: 10, say: `${part}パーセント`,
+      explain: `わりあい(%)は 部分 わる 全体 かける100。${part}わる${total}かける100で ${part}％`
+    })
+  },
+  multiples(p) {
+    const base = pick([3, 4, 6, 7])
+    const nth = pick([3, 4, 5])
+    const ans = base * nth
+    return numQ('multiples', {
+      visual: { kind: 'bigtext', text: `${base}の倍数\n小さい方から${nth}番目 ＝ ❓` },
+      instruction: `${nth}番目の数は？`,
+      speak: `${base}の倍数を 小さい順に ならべたとき、${nth}番目の数は？`,
+      answer: ans, cc: p.cc, spread: base, say: `${ans}`,
+      explain: `${base}の倍数は ${base}、${base * 2}、${base * 3}…と ${base}ずつ ふえていく。${nth}番目は ${base}かける${nth}で ${ans}`
+    })
+  },
+  divisors(p) {
+    const nums = { 12: [1, 2, 3, 4, 6, 12], 18: [1, 2, 3, 6, 9, 18], 16: [1, 2, 4, 8, 16], 20: [1, 2, 4, 5, 10, 20], 24: [1, 2, 3, 4, 6, 8, 12, 24] }
+    const key = Number(pick(Object.keys(nums)))
+    const ans = nums[key].length
+    return numQ('divisors', {
+      visual: { kind: 'bigtext', text: `${key}の約数は 何個ある？` },
+      instruction: `約数の個数は？`,
+      speak: `${key}の 約数は ぜんぶで 何個ある？`,
+      answer: ans, cc: p.cc, spread: 2, say: `${ans}こ`,
+      explain: `${key}を わりきれる数を ぜんぶ さがすと「${nums[key].join('、')}」で ${ans}個`
+    })
+  },
+  // ---- WP3: 小6「円の面積・角柱の体積・対称・比例反比例・場合の数・度数・縮図」----
+  circleArea(p) {
+    const r = pick([2, 3, 4, 5, 6])
+    const ans = Math.round(r * r * 3.14 * 10) / 10
+    return numQ('circleArea', {
+      visual: { kind: 'bigtext', text: `半径${r}cmの円\n面積 ＝ ❓cm²` },
+      instruction: `面積は？（円周率3.14）`,
+      speak: `半径${r}センチの円の 面積は 何平方センチ？ 円周率は 3.14で 計算しよう`,
+      answer: ans, cc: p.cc, spread: r * 3, say: `${ans}へいほうセンチ`,
+      explain: `円の面積は 半径 かける 半径 かける 円周率(3.14)。${r}かける${r}かける3.14で ${ans}cm²`
+    })
+  },
+  prismVolume(p) {
+    const base = pick([10, 12, 15, 20, 24])
+    const h = rng(3, 8)
+    const ans = base * h
+    return numQ('prismVolume', {
+      visual: { kind: 'bigtext', text: `底面積${base}cm² 高さ${h}cm\n体積 ＝ ❓cm³` },
+      instruction: `体積は？`,
+      speak: `底面積が ${base}平方センチ、高さが ${h}センチの 角柱の 体積は 何立方センチ？`,
+      answer: ans, cc: p.cc, spread: base, say: `${ans}りっぽうセンチ`,
+      explain: `角柱・円柱の体積は 底面積 かける 高さ。${base}かける${h}で ${ans}cm³`
+    })
+  },
+  symmetry(p) {
+    const questions = [
+      { q: '折ったときに ぴったり重なる図形を 何という？', ans: '線対称', dummies: ['点対称', '合同', '相似'] },
+      { q: '180°回転させると もとの形に ぴったり重なる図形を 何という？', ans: '点対称', dummies: ['線対称', '合同', '相似'] }
+    ]
+    const item = pick(questions)
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:symmetry',
+      visual: { kind: 'sentence', text: item.q },
+      instruction: '答えを えらぼう',
+      speak: item.q,
+      answerId: item.ans,
+      choices: stringChoices(item.ans, item.dummies, p.cc),
+      answerWord: { text: item.ans },
+      explain: item.ans === '線対称' ? '折り目の線で 折ったとき ぴったり重なる図形を「線対称」というよ' : '真ん中の点を中心に 180°回すと もとの形に ぴったり重なる図形を「点対称」というよ'
+    }
+  },
+  proportion(p) {
+    const rate = pick([100, 120, 150, 200])
+    const n1 = rng(2, 4)
+    const n2 = n1 + rng(1, 3)
+    const ans = rate * n2
+    return numQ('proportion', {
+      visual: { kind: 'bigtext', text: `1個${rate}円\n${n1}個で${rate * n1}円 → ${n2}個は❓円` },
+      instruction: `代金は？`,
+      speak: `1個${rate}円の りんごが ${n1}個で ${rate * n1}円のとき、${n2}個では 何円？`,
+      answer: ans, cc: p.cc, spread: rate, say: `${ans}えん`,
+      explain: `個数と代金は 比例する（個数が2倍、3倍になると 代金も2倍、3倍になる）。1個${rate}円 かける${n2}個で ${ans}円`
+    })
+  },
+  inverseProportion(p) {
+    const areaVal = pick([12, 18, 24, 36, 48])
+    const tate = pick([2, 3, 4, 6].filter((x) => areaVal % x === 0))
+    const ans = areaVal / tate
+    return numQ('inverseProportion', {
+      visual: { kind: 'bigtext', text: `面積${areaVal}cm²の長方形\nたて${tate}cm よこ ＝ ❓cm` },
+      instruction: `よこの長さは？`,
+      speak: `面積が ${areaVal}平方センチの長方形で、たてが ${tate}センチのとき、よこは 何センチ？`,
+      answer: ans, cc: p.cc, spread: tate, say: `${ans}センチ`,
+      explain: `たて かける よこ ＝ 面積（決まった数）なので、たてが増えると よこは減る「反比例」の関係。${areaVal}わる${tate}で ${ans}cm`
+    })
+  },
+  caseCount(p) {
+    const questions = [
+      { q: 'A、B、Cの 3人が 1列に ならぶ ならび方は 何通り？', ans: 6, spread: 2 },
+      { q: '赤・青・黄の 3色から 2色 えらぶ えらび方は 何通り？', ans: 3, spread: 2 },
+      { q: 'A、B、C、Dの 4人から 2人 えらぶ えらび方は 何通り？', ans: 6, spread: 2 }
+    ]
+    const item = pick(questions)
+    return numQ('caseCount', {
+      visual: { kind: 'sentence', text: item.q },
+      instruction: `何通り？`,
+      speak: item.q,
+      answer: item.ans, cc: p.cc, spread: item.spread, say: `${item.ans}とおり`,
+      explain: `場合の数は、もれなく・重複なく すべての組み合わせを 書き出して数える。答えは ${item.ans}通り`
+    })
+  },
+  frequencyTable(p) {
+    const a = rng(2, 6), b = rng(2, 6)
+    const ans = a + b
+    return numQ('frequencyTable', {
+      visual: { kind: 'bigtext', text: `6〜7点：${a}人\n8〜9点：${b}人\n6点以上 ＝ ❓人` },
+      instruction: `合計人数は？`,
+      speak: `6から7点の階級に ${a}人、8から9点の階級に ${b}人 います。6点以上の 合計人数は？`,
+      answer: ans, cc: p.cc, spread: 2, say: `${ans}にん`,
+      explain: `度数分布表では、知りたい階級の人数を たし合わせる。${a}たす${b}で ${ans}人`
+    })
+  },
+  scaleDrawing(p) {
+    const realM = pick([20, 30, 50, 80, 100])
+    const scale = pick([500, 1000])
+    const ans = Math.round((realM * 100) / scale * 10) / 10
+    return numQ('scaleDrawing', {
+      visual: { kind: 'bigtext', text: `実際${realM}m\n${scale}分の1の縮図 ＝ ❓cm` },
+      instruction: `縮図での長さは？`,
+      speak: `実際の長さ ${realM}メートルを、${scale}分の1の縮図で表すと、何センチになる？`,
+      answer: ans, cc: p.cc, spread: 5, say: `${ans}センチ`,
+      explain: `${realM}mは ${realM * 100}cm。縮図では 実際の長さを ${scale}でわる。${realM * 100}わる${scale}で ${ans}cm`
+    })
   }
 }
 
@@ -960,9 +1259,9 @@ export const NUMBERS_KINDS_BY_GRADE = {
   1: ['add10', 'make10', 'sub10', 'addCarry', 'sequence', 'holeAdd', 'moneyAdd', 'tens', 'subBorrow', 'compareNum', 'add3nums'],
   2: ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'sequence', 'holeSub', 'double', 'half', 'mul10', 'evenOdd', 'moneyChange', 'clockPlus', 'lengthConv', 'countMoney100', 'compareNum'],
   3: ['kuku', 'div', 'add3digit', 'mul2x1', 'holeMul', 'tensMul', 'unitPrice', 'divRemainder', 'fracCompareSame', 'perimeter', 'timeCalc', 'kgConv', 'literConv'],
-  4: ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub', 'bigNumbers', 'roundNum', 'roundTen', 'area'],
-  5: ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average', 'percent', 'fracCompareDiff', 'area', 'triangleArea'],
-  6: ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'fracDiv', 'ratio', 'average', 'discount', 'lcm', 'gcdKind', 'speed', 'speedTime', 'fracCompareDiff', 'volume']
+  4: ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub', 'bigNumbers', 'roundNum', 'roundTen', 'area', 'angle', 'perpendicular', 'lineGraph', 'changePattern', 'fracAddSame', 'calcRule'],
+  5: ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average', 'percent', 'fracCompareDiff', 'area', 'triangleArea', 'unitAmount', 'shapeAngle', 'congruent', 'polygonCircle', 'circumference', 'bandGraph', 'multiples', 'divisors'],
+  6: ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'fracDiv', 'ratio', 'average', 'discount', 'lcm', 'gcdKind', 'speed', 'speedTime', 'fracCompareDiff', 'volume', 'circleArea', 'prismVolume', 'symmetry', 'proportion', 'inverseProportion', 'caseCount', 'frequencyTable', 'scaleDrawing']
 }
 
 // 出題タイプ→はじめて出てくる学年。復習キュー（SRS）は「まちがえた」から
@@ -1010,17 +1309,17 @@ function kindsForGrade(grade, level) {
   }
   if (grade === 4) {
     const k = ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub']
-    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'div3digit', 'roundNum', 'roundTen', 'area')
+    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'div3digit', 'roundNum', 'roundTen', 'area', 'angle', 'perpendicular', 'lineGraph', 'changePattern', 'fracAddSame', 'calcRule')
     return k
   }
   if (grade === 5) {
     const k = ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average']
-    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'decimalDiv', 'fracCompareDiff', 'area', 'triangleArea')
+    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'decimalDiv', 'fracCompareDiff', 'area', 'triangleArea', 'unitAmount', 'shapeAngle', 'congruent', 'polygonCircle', 'circumference', 'bandGraph', 'multiples', 'divisors')
     return k
   }
   // 小6
   const k = ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'fracDiv', 'ratio', 'average', 'discount', 'lcm', 'gcdKind']
-  if (level >= 3) k.push('speed', 'ratio', 'fracMul', 'fracDiv', 'speedTime', 'fracCompareDiff', 'volume')
+  if (level >= 3) k.push('speed', 'ratio', 'fracMul', 'fracDiv', 'speedTime', 'fracCompareDiff', 'volume', 'circleArea', 'prismVolume', 'symmetry', 'proportion', 'inverseProportion', 'caseCount', 'frequencyTable', 'scaleDrawing')
   return k
 }
 
@@ -1064,5 +1363,13 @@ export const KIND_LABELS = {
   discount: 'ねびき', speedTime: 'じかんをもとめる',
   tens: '10のまとまり', mul10: '×10', countMoney100: '100だまのおかね',
   unitPrice: 'ねだんの計算', roundTen: 'がいすう(十)', triangleArea: 'さんかくのめんせき',
-  volume: 'たいせき', lcm: 'さいしょうこうばいすう', gcdKind: 'さいだいこうやくすう'
+  volume: 'たいせき', lcm: 'さいしょうこうばいすう', gcdKind: 'さいだいこうやくすう',
+  angle: 'かくど', perpendicular: 'すいちょく・へいこう', lineGraph: 'おれせんグラフ',
+  changePattern: 'ともなってかわる量', fracAddSame: 'ぶんすう＋(同分母)', calcRule: '計算のきまり',
+  unitAmount: 'たんいりょうあたり', shapeAngle: '多角形の内角', congruent: '合同',
+  polygonCircle: '正多角形と円', circumference: '円周', bandGraph: '帯グラフ',
+  multiples: 'ばいすう', divisors: 'やくすう',
+  circleArea: '円のめんせき', prismVolume: '角柱の体積', symmetry: '対称な図形',
+  proportion: '比例', inverseProportion: '反比例', caseCount: '場合の数',
+  frequencyTable: '度数分布表', scaleDrawing: '縮図と拡大図'
 }
