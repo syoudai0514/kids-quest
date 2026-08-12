@@ -291,6 +291,77 @@ for (const grade of [0, 3, 6]) {
   verifyUnseenPriorityCoverage(`どうとく(小${grade})`, generateDoutokuQuestion, { grade, choiceCount: 3, showLifeEndTopics: true })
 }
 
+// ---- 「長さで正解が分かる」問題を、教科をまたいで体系的に検出する ----
+// 既存の verifyNoLengthTell は りか・しゃかい の固定リストだけを見ていたため、
+// どうとく・せいかつ・よむ に同じ欠陥が入っても素通りしていた（実際に
+// どうとく9件・よむ6件が公開まで到達した）。ここでは出題タイプごとに
+// 「正解が唯一の最長／唯一の最短になる割合」を測り、偶然ではなく
+// 構造的に当てられるものだけを落とす。
+function verifySystematicLengthTell(label, generate, grades, draws = 900) {
+  const stats = new Map()
+  for (const grade of grades) {
+    for (let i = 0; i < draws; i++) {
+      let question
+      try { question = generate({ grade, level: (i % 12) + 1, choiceCount: 3 }) } catch { continue }
+      const choices = question?.choices ?? []
+      if (choices.length < 3) continue
+      const answer = choices.find((choice) => choice.id === question.answerId)
+      if (!answer) continue
+      const lengths = choices.map((choice) => String(choice.label ?? choice.id).replace(/\s/g, '').length)
+      const answerLength = String(answer.label ?? answer.id).replace(/\s/g, '').length
+      const longest = Math.max(...lengths)
+      const shortest = Math.min(...lengths)
+      const entry = stats.get(question.itemKey) || { n: 0, long: 0, short: 0, sample: '' }
+      entry.n++
+      if (answerLength === longest && lengths.filter((l) => l === longest).length === 1) entry.long++
+      if (answerLength === shortest && lengths.filter((l) => l === shortest).length === 1) entry.short++
+      entry.sample = choices.map((choice) => choice.label).join(' / ')
+      stats.set(question.itemKey, entry)
+    }
+  }
+  for (const [itemKey, entry] of stats) {
+    if (entry.n < 20) continue
+    const longRate = entry.long / entry.n
+    const shortRate = entry.short / entry.n
+    requireValue(longRate < 0.9, `${label}: 正解がほぼ毎回いちばん長く、長さだけで当てられる: ${itemKey}（${entry.sample}）`)
+    requireValue(shortRate < 0.9, `${label}: 正解がほぼ毎回いちばん短く、長さだけで当てられる: ${itemKey}（${entry.sample}）`)
+  }
+}
+verifySystematicLengthTell('どうとく', generateDoutokuQuestion, [0, 1, 2, 3, 4, 5, 6])
+verifySystematicLengthTell('せいかつ', generateSeikatsuQuestion, [0, 1, 2])
+verifySystematicLengthTell('よむ', generateReadingQuestion, [1, 2, 3, 4, 5, 6])
+
+// ---- 算数: 円周率をつかう式を、丸めずに検算する ----
+// 直径×3.14 は必ず小数第2位までの値になる。1位で丸めると
+// 4×3.14=12.6 のように「算数として誤った答え」を正解にしてしまい、
+// 正しく計算した子ほど不正解になる（実際に公開まで到達した）。
+for (let i = 0; i < 400; i++) {
+  const circumference = generateNumbersQuestion({ grade: 5, level: 12, choiceCount: 4 }, 'n:circumference')
+  if (circumference?.itemKey === 'n:circumference') {
+    const diameter = Number(String(circumference.visual.text).match(/直径(\d+)cm/)[1])
+    const expected = Math.round(diameter * 3.14 * 100) / 100
+    requireValue(Number(circumference.answerId) === expected, `さんすう 円周の正解が誤り: 直径${diameter}cm → ${circumference.answerId}（正しくは ${expected}）`)
+  }
+  const circleArea = generateNumbersQuestion({ grade: 6, level: 12, choiceCount: 4 }, 'n:circleArea')
+  if (circleArea?.itemKey === 'n:circleArea') {
+    const radius = Number(String(circleArea.visual.text).match(/半径(\d+)cm/)[1])
+    const expected = Math.round(radius * radius * 3.14 * 100) / 100
+    requireValue(Number(circleArea.answerId) === expected, `さんすう 円の面積の正解が誤り: 半径${radius}cm → ${circleArea.answerId}（正しくは ${expected}）`)
+  }
+}
+
+// ---- 算数: 選択肢に浮動小数の誤差を出さない ----
+// 小数の答えに整数を足してダミーを作ると 16.560000000000002 のような
+// 表示になる。子どもには意味不明なので、桁をそろえてから出す。
+for (let grade = 0; grade <= 6; grade++) {
+  for (let i = 0; i < 400; i++) {
+    const question = generateNumbersQuestion({ grade, level: (i % 12) + 1, choiceCount: 4 })
+    for (const choice of question?.choices ?? []) {
+      requireValue(!/\d\.\d{3,}/.test(String(choice.label)), `さんすう 選択肢に浮動小数の誤差: ${question.itemKey} → ${choice.label}`)
+    }
+  }
+}
+
 if (errors.length) {
   console.error(`コンテンツ検証失敗 (${errors.length}件)`)
   for (const error of errors.slice(0, 30)) console.error(`- ${error}`)

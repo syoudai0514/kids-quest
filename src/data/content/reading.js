@@ -324,15 +324,30 @@ function pickUnseenFirst(pool, everSeen, keyOf) {
 // 正解と「文字も絵文字も」かぶらないダミーを選ぶ
 function pickDistinct(pool, n, exclude) {
   const seenEmoji = new Set([exclude.emoji])
-  const out = []
+  const candidates = []
   for (const w of shuffle(pool)) {
-    if (out.length >= n - 1) break
     if (w.text === exclude.text) continue
     if (seenEmoji.has(w.emoji)) continue
     seenEmoji.add(w.emoji)
-    out.push(w)
+    candidates.push(w)
   }
-  return out
+  return balancedByLength(candidates, exclude.text, (w) => w.text, n - 1)
+}
+
+// ダミーを「答えと文字数が近い順」に選びつつ、答えと同じか それより長い
+// ものを必ず1つ混ぜる。短いものばかり並ぶと、絵も意味も見ずに
+// 「いちばん長いものを選べば当たる」問題になってしまうため。
+function balancedByLength(candidates, answerText, textOf, need) {
+  const target = answerText.length
+  const byNearest = (a, b) => Math.abs(textOf(a).length - target) - Math.abs(textOf(b).length - target)
+  const out = []
+  const notShorter = candidates.filter((c) => textOf(c).length >= target).sort(byNearest)
+  if (notShorter.length) out.push(notShorter[0])
+  for (const c of [...candidates].sort(byNearest)) {
+    if (out.length >= need) break
+    if (!out.includes(c)) out.push(c)
+  }
+  return out.slice(0, need)
 }
 
 const THEME_LABEL = {
@@ -409,13 +424,15 @@ function jukugoQuestion(answer, params) {
   const { choiceCount } = params
   const pool = jukugoPoolForGrade(Math.max(1, params.grade || 1))
   const seen = new Set([answer.yomi])
-  const distractors = []
+  // 「ちょうしょく」のような長い読みに短い読みばかり並ぶと、意味を知らなくても
+  // 「いちばん長いものを選べば当たる」問題になってしまう。
+  const candidates = []
   for (const j of shuffle(pool)) {
-    if (distractors.length >= choiceCount - 1) break
     if (seen.has(j.yomi)) continue
     seen.add(j.yomi)
-    distractors.push(j)
+    candidates.push(j)
   }
+  const distractors = balancedByLength(candidates, answer.yomi, (j) => j.yomi, choiceCount - 1)
   const options = shuffle([answer, ...distractors])
   return {
     domain: 'yomu',

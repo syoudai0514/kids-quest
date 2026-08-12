@@ -372,7 +372,7 @@ const BUILDERS = {
       instruction: `アサガオは「${cur}」の つぎに 何が 出る？`,
       speak: `アサガオは「${cur}」の つぎに 何が 出るかな？`,
       answer: next, dummies: dummyMap[next], cc: p.cc,
-      explain: `植物は「たね→め→は→つぼみ→はな」の じゅんばんで そだつ。「${cur}」の つぎは「${next}」だよ`
+      explain: `しょくぶつは「たね→め→は→つぼみ→はな」の じゅんばんで そだつ。「${cur}」の つぎは「${next}」だよ`
     })
   },
   seasonFlower(p) {
@@ -396,40 +396,40 @@ const BUILDERS = {
     ]
     const b = pick(bugs)
     return sq('seasonBug', {
-      visual: { kind: 'bigtext', text: `🐛 ${b.name}が 多いのは？` },
+      visual: { kind: 'bigtext', text: `🐛 ${b.name}が おおいのは？` },
       instruction: `${b.name}を よく 見かけるのは どの きせつ？`,
       speak: `${b.name}を よく 見かけるのは どの きせつかな？`,
       answer: b.season, dummies: SEASONS.map((s) => s.name).filter((s) => s !== b.season), cc: p.cc,
-      explain: `${b.name}は ${b.season}に よく 見られる 生き物だよ`
+      explain: `${b.name}は ${b.season}に よく 見られる いきものだよ`
     })
   },
   hibernate(p) {
     const answerAnimal = 'クマ'
     const dummyAnimals = ['イヌ', 'ネコ', 'ニワトリ']
     return sq('hibernate', {
-      visual: { kind: 'bigtext', text: 'ふゆに あなの中で\nじっと すごす どうぶつは？' },
-      instruction: 'ふゆに あなの中で じっと すごす どうぶつは どれ？',
-      speak: 'ふゆのあいだ、あなの中で じっと すごす どうぶつは どれかな？',
+      visual: { kind: 'bigtext', text: 'ふゆに あなの なかで\nじっと すごす どうぶつは？' },
+      instruction: 'ふゆに あなの なかで じっと すごす どうぶつは どれ？',
+      speak: 'ふゆのあいだ、あなの なかで じっと すごす どうぶつは どれかな？',
       answer: answerAnimal, dummies: dummyAnimals, cc: p.cc,
-      explain: `${answerAnimal}などの どうぶつは、さむい ふゆの あいだ「とうみん」して、あなの中で じっと すごすよ`
+      explain: `${answerAnimal}などの どうぶつは、さむい ふゆの あいだ「とうみん」して、あなの なかで じっと すごすよ`
     })
   },
   leafChange(p) {
     return sq('leafChange', {
-      visual: { kind: 'bigtext', text: 'あきに はっぱが\nみどりから 赤や 黄いろに\nかわること' },
+      visual: { kind: 'bigtext', text: 'あきに はっぱが\nみどりから 赤や きいろに\nかわること' },
       instruction: 'あきに はっぱの いろが かわることを 何と いう？',
-      speak: 'あきに はっぱの いろが みどりから 赤や 黄いろに かわることを 何と いうかな？',
+      speak: 'あきに はっぱの いろが みどりから 赤や きいろに かわることを 何と いうかな？',
       answer: 'こうよう', dummies: ['たなばた', 'せつぶん', 'はつしも'], cc: p.cc,
-      explain: 'あきに 気温が さがると、はっぱの いろが 赤や 黄いろに かわる。これを「こうよう（紅葉）」と いうよ'
+      explain: 'あきに さむく なると、はっぱの いろが 赤や きいろに かわる。これを「こうよう」と いうよ'
     })
   },
   autumnNuts(p) {
     return sq('autumnNuts', {
-      visual: { kind: 'bigtext', text: 'あきに 木の下に\nよく おちている みは？' },
-      instruction: 'あきに 木の下に よく おちている みは どれ？',
-      speak: 'あきに 木の下で よく 見つかる みは どれかな？',
+      visual: { kind: 'bigtext', text: 'あきに きの したに\nよく おちている みは？' },
+      instruction: 'あきに きの したに よく おちている みは どれ？',
+      speak: 'あきに きの したで よく 見つかる みは どれかな？',
       answer: 'どんぐり', dummies: ['さくらんぼ', 'まつかさ', 'メロンパン'], cc: p.cc,
-      explain: 'どんぐりは、あきに カシや クヌギなどの 木から おちる みだよ'
+      explain: 'どんぐりは、あきに カシや クヌギなどの きから おちる みだよ'
     })
   },
   rainCreature(p) {
@@ -438,25 +438,25 @@ const BUILDERS = {
       instruction: 'あめが ふった 日に、よく 見つかる いきものは？',
       speak: 'あめが ふった 日に、よく 見つかる いきものは どれかな？',
       answer: 'かたつむり', dummies: ['かぶとむし', 'すずめばち', 'あげはちょう'], cc: p.cc,
-      explain: 'かたつむりは しめった ところが すきなので、あめの日や つゆの 時期に よく 見つかるよ'
+      explain: 'かたつむりは しめった ところが すきなので、あめの ひや つゆの ころに よく 見つかるよ'
     })
   },
   springCreature(p) {
     return sq('springCreature', {
-      visual: { kind: 'bigtext', text: 'はるに たまごから かえって\n水の中で およぐ いきものの\n赤ちゃんは？' },
-      instruction: 'はるに たまごから かえって、水の中で およぐ いきものの 赤ちゃんは？',
-      speak: 'はるに たまごから かえって、水の中で およぐ いきものの 赤ちゃんは 何かな？',
+      visual: { kind: 'bigtext', text: 'はるに たまごから かえって\n水の なかで およぐ いきものの\n赤ちゃんは？' },
+      instruction: 'はるに たまごから かえって、水の なかで およぐ いきものの 赤ちゃんは？',
+      speak: 'はるに たまごから かえって、水の なかで およぐ いきものの 赤ちゃんは 何かな？',
       answer: 'おたまじゃくし', dummies: ['にわとりのこども', 'うさぎのこども', 'ぞうのあかちゃん'], cc: p.cc,
-      explain: 'カエルは はるに たまごを うみ、たまごから「おたまじゃくし」が うまれて 水の中で およぐよ'
+      explain: 'カエルは はるに たまごを うみ、たまごから「おたまじゃくし」が うまれて 水の なかで およぐよ'
     })
   },
   plantPart(p) {
     return sq('plantPart', {
-      visual: { kind: 'bigtext', text: '植物が 土の中から\n水を すいこむ ところは？' },
-      instruction: '植物が 土の中から 水を すいこむ ところは どこ？',
-      speak: '植物が 土の中から 水を すいこむ ところは、根・くき・はの うち どこかな？',
-      answer: '根', dummies: ['くき', 'は'], cc: 3,
-      explain: '植物は 土の中に のびた「根」から 水を すいこみ、くきを 通って はまで はこぶよ'
+      visual: { kind: 'bigtext', text: 'しょくぶつが つちの なかから\n水を すいこむ ところは？' },
+      instruction: 'しょくぶつが つちの なかから 水を すいこむ ところは どこ？',
+      speak: 'しょくぶつが つちの なかから 水を すいこむ ところは、ね・くき・はの うち どこかな？',
+      answer: 'ね', dummies: ['くき', 'は'], cc: 3,
+      explain: 'しょくぶつは つちの なかに のびた「ね」から 水を すいこみ、くきを とおって はまで はこぶよ'
     })
   },
   seasonalClothes(p) {

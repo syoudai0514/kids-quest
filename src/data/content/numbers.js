@@ -36,15 +36,20 @@ function gcd(a, b) {
 
 // 数値の選択肢（近い数のダミー）
 function numberChoices(answer, count, spread = 3) {
+  // 小数の答えでは answer + delta がそのままだと 16.560000000000002 のような
+  // 浮動小数の誤差を画面に出してしまう。答えと同じ小数桁にそろえて防ぐ。
+  const decimals = (String(answer).split('.')[1] || '').length
+  const unit = 10 ** decimals
+  const tidy = (v) => (decimals ? Math.round(v * unit) / unit : v)
   const set = new Set([answer])
   let guard = 0
   while (set.size < count && guard++ < 80) {
     const delta = rng(1, spread) * (Math.random() < 0.5 ? -1 : 1)
-    const cand = answer + delta
+    const cand = tidy(answer + delta)
     if (cand >= 0) set.add(cand)
   }
   let n = 1
-  while (set.size < count && guard++ < 120) set.add(answer + n++)
+  while (set.size < count && guard++ < 120) set.add(tidy(answer + n++))
   return shuffle([...set]).map((v) => ({ id: String(v), label: String(v), speak: `${v}` }))
 }
 
@@ -1101,7 +1106,9 @@ const BUILDERS = {
   circumference(p) {
     const r = pick([2, 3, 4, 5, 6, 7, 8])
     const d = r * 2
-    const ans = Math.round(d * 3.14 * 10) / 10
+    // 直径(整数) × 3.14 は必ず小数第2位までの値になる。1位で丸めると
+    // 4×3.14=12.6 のような「算数として誤った答え」になるので丸めない。
+    const ans = Math.round(d * 3.14 * 100) / 100
     return numQ('circumference', {
       visual: { kind: 'bigtext', text: `直径${d}cmの円\n円周 ＝ ❓cm` },
       instruction: `円周は？（円周率3.14）`,
@@ -1149,7 +1156,8 @@ const BUILDERS = {
   // ---- WP3: 小6「円の面積・角柱の体積・対称・比例反比例・場合の数・度数・縮図」----
   circleArea(p) {
     const r = pick([2, 3, 4, 5, 6])
-    const ans = Math.round(r * r * 3.14 * 10) / 10
+    // 円周と同じ理由で小数第2位まで残す（2×2×3.14=12.56 を 12.6 にしない）。
+    const ans = Math.round(r * r * 3.14 * 100) / 100
     return numQ('circleArea', {
       visual: { kind: 'bigtext', text: `半径${r}cmの円\n面積 ＝ ❓cm²` },
       instruction: `面積は？（円周率3.14）`,
