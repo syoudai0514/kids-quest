@@ -353,6 +353,124 @@ const BUILDERS = {
       answer: c.ans, dummies: ['ごぜん', 'ごご'], cc: 2,
       explain: 'よるの 12じから おひるの 12じまでが ごぜん。そのあとが ごご'
     })
+  },
+  // ---- WP8: 自然観察（植物の育ち・生き物さがし・季節の変化）----
+  plantGrowth(p) {
+    const stages = ['たね', 'め', 'は', 'つぼみ', 'はな']
+    const i = rng(0, stages.length - 2)
+    const cur = stages[i]
+    const next = stages[i + 1]
+    // ダミーは こたえと 同じくらいの 文字数に そろえて、文字数だけで こたえが わからないようにする
+    const dummyMap = {
+      'め': ['は', 'つぼみ', 'はな'],
+      'は': ['たね', 'つぼみ', 'はな'],
+      'つぼみ': ['ふたば', 'はっぱ'],
+      'はな': ['たね', 'くき']
+    }
+    return sq('plantGrowth', {
+      visual: { kind: 'bigtext', text: `アサガオ：${cur}の つぎは？` },
+      instruction: `アサガオは「${cur}」の つぎに 何が 出る？`,
+      speak: `アサガオは「${cur}」の つぎに 何が 出るかな？`,
+      answer: next, dummies: dummyMap[next], cc: p.cc,
+      explain: `植物は「たね→め→は→つぼみ→はな」の じゅんばんで そだつ。「${cur}」の つぎは「${next}」だよ`
+    })
+  },
+  seasonFlower(p) {
+    const flowers = [
+      { name: 'サクラ', season: 'はる' }, { name: 'アサガオ', season: 'なつ' },
+      { name: 'コスモス', season: 'あき' }, { name: 'ツバキ', season: 'ふゆ' }
+    ]
+    const f = pick(flowers)
+    return sq('seasonFlower', {
+      visual: { kind: 'bigtext', text: `🌼 ${f.name}が さくのは？` },
+      instruction: `${f.name}が さくのは どの きせつ？`,
+      speak: `${f.name}が さくのは どの きせつかな？`,
+      answer: f.season, dummies: SEASONS.map((s) => s.name).filter((s) => s !== f.season), cc: p.cc,
+      explain: `${f.name}は ${f.season}に さく はなだよ`
+    })
+  },
+  seasonBug(p) {
+    const bugs = [
+      { name: 'セミ', season: 'なつ' }, { name: 'テントウムシ', season: 'はる' },
+      { name: 'スズムシ', season: 'あき' }, { name: 'トンボ', season: 'あき' }
+    ]
+    const b = pick(bugs)
+    return sq('seasonBug', {
+      visual: { kind: 'bigtext', text: `🐛 ${b.name}が 多いのは？` },
+      instruction: `${b.name}を よく 見かけるのは どの きせつ？`,
+      speak: `${b.name}を よく 見かけるのは どの きせつかな？`,
+      answer: b.season, dummies: SEASONS.map((s) => s.name).filter((s) => s !== b.season), cc: p.cc,
+      explain: `${b.name}は ${b.season}に よく 見られる 生き物だよ`
+    })
+  },
+  hibernate(p) {
+    const answerAnimal = 'クマ'
+    const dummyAnimals = ['イヌ', 'ネコ', 'ニワトリ']
+    return sq('hibernate', {
+      visual: { kind: 'bigtext', text: 'ふゆに あなの中で\nじっと すごす どうぶつは？' },
+      instruction: 'ふゆに あなの中で じっと すごす どうぶつは どれ？',
+      speak: 'ふゆのあいだ、あなの中で じっと すごす どうぶつは どれかな？',
+      answer: answerAnimal, dummies: dummyAnimals, cc: p.cc,
+      explain: `${answerAnimal}などの どうぶつは、さむい ふゆの あいだ「とうみん」して、あなの中で じっと すごすよ`
+    })
+  },
+  leafChange(p) {
+    return sq('leafChange', {
+      visual: { kind: 'bigtext', text: 'あきに はっぱが\nみどりから 赤や 黄いろに\nかわること' },
+      instruction: 'あきに はっぱの いろが かわることを 何と いう？',
+      speak: 'あきに はっぱの いろが みどりから 赤や 黄いろに かわることを 何と いうかな？',
+      answer: 'こうよう', dummies: ['たなばた', 'せつぶん', 'はつしも'], cc: p.cc,
+      explain: 'あきに 気温が さがると、はっぱの いろが 赤や 黄いろに かわる。これを「こうよう（紅葉）」と いうよ'
+    })
+  },
+  autumnNuts(p) {
+    return sq('autumnNuts', {
+      visual: { kind: 'bigtext', text: 'あきに 木の下に\nよく おちている みは？' },
+      instruction: 'あきに 木の下に よく おちている みは どれ？',
+      speak: 'あきに 木の下で よく 見つかる みは どれかな？',
+      answer: 'どんぐり', dummies: ['さくらんぼ', 'まつかさ', 'メロンパン'], cc: p.cc,
+      explain: 'どんぐりは、あきに カシや クヌギなどの 木から おちる みだよ'
+    })
+  },
+  rainCreature(p) {
+    return sq('rainCreature', {
+      visual: { kind: 'bigtext', text: 'あめの 日に\nよく 見つかる いきものは？' },
+      instruction: 'あめが ふった 日に、よく 見つかる いきものは？',
+      speak: 'あめが ふった 日に、よく 見つかる いきものは どれかな？',
+      answer: 'かたつむり', dummies: ['かぶとむし', 'すずめばち', 'あげはちょう'], cc: p.cc,
+      explain: 'かたつむりは しめった ところが すきなので、あめの日や つゆの 時期に よく 見つかるよ'
+    })
+  },
+  springCreature(p) {
+    return sq('springCreature', {
+      visual: { kind: 'bigtext', text: 'はるに たまごから かえって\n水の中で およぐ いきものの\n赤ちゃんは？' },
+      instruction: 'はるに たまごから かえって、水の中で およぐ いきものの 赤ちゃんは？',
+      speak: 'はるに たまごから かえって、水の中で およぐ いきものの 赤ちゃんは 何かな？',
+      answer: 'おたまじゃくし', dummies: ['にわとりのこども', 'うさぎのこども', 'ぞうのあかちゃん'], cc: p.cc,
+      explain: 'カエルは はるに たまごを うみ、たまごから「おたまじゃくし」が うまれて 水の中で およぐよ'
+    })
+  },
+  plantPart(p) {
+    return sq('plantPart', {
+      visual: { kind: 'bigtext', text: '植物が 土の中から\n水を すいこむ ところは？' },
+      instruction: '植物が 土の中から 水を すいこむ ところは どこ？',
+      speak: '植物が 土の中から 水を すいこむ ところは、根・くき・はの うち どこかな？',
+      answer: '根', dummies: ['くき', 'は'], cc: 3,
+      explain: '植物は 土の中に のびた「根」から 水を すいこみ、くきを 通って はまで はこぶよ'
+    })
+  },
+  seasonalClothes(p) {
+    const cases = [
+      { season: 'なつ', ans: 'はんそで' }, { season: 'ふゆ', ans: 'コート' }
+    ]
+    const c = pick(cases)
+    return sq('seasonalClothes', {
+      visual: { kind: 'bigtext', text: `${c.season}に よく きる ふくは？` },
+      instruction: `${c.season}に よく きる ふくは どれ？`,
+      speak: `${c.season}に よく きる ふくは どれかな？`,
+      answer: c.ans, dummies: ['はんそで', 'コート', 'マフラー', 'てぶくろ'].filter((x) => x !== c.ans), cc: p.cc,
+      explain: c.season === 'なつ' ? 'あついなつは、すずしく すごせる はんそでの ふくを きることが おおいよ' : 'さむいふゆは、あたたかい コートを きたり、マフラーを まいたり するよ'
+    })
   }
 }
 
@@ -361,17 +479,20 @@ export const SEIKATSU_KINDS = Object.keys(BUILDERS)
 // 学年ごとの出題タイプ
 function kindsForGrade(grade, level) {
   if (grade <= 0) {
-    const k = ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'monthEvent']
-    if (level >= 2) k.push('clockRead', 'holiday', 'relativeDay', 'todayWeek')
+    const k = ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'monthEvent',
+      'plantGrowth', 'seasonFlower', 'seasonBug', 'hibernate', 'autumnNuts', 'rainCreature', 'springCreature', 'seasonalClothes']
+    if (level >= 2) k.push('clockRead', 'holiday', 'relativeDay', 'todayWeek', 'leafChange')
     return k
   }
   if (grade === 1) {
-    const k = ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday', 'holidayName']
-    if (level >= 3) k.push('clockMinutes', 'daysInMonth', 'monthEvent', 'amPm')
+    const k = ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday', 'holidayName',
+      'plantGrowth', 'seasonFlower', 'seasonBug', 'hibernate', 'leafChange', 'autumnNuts', 'rainCreature', 'springCreature', 'seasonalClothes']
+    if (level >= 3) k.push('clockMinutes', 'daysInMonth', 'monthEvent', 'amPm', 'plantPart')
     return k
   }
   // 小2以上: 時計の応用まで
-  const k = ['relativeDay', 'clockRead', 'clockMinutes', 'holiday', 'holidayName', 'daysInMonth', 'season', 'amPm', 'todayDate', 'todayWeek']
+  const k = ['relativeDay', 'clockRead', 'clockMinutes', 'holiday', 'holidayName', 'daysInMonth', 'season', 'amPm', 'todayDate', 'todayWeek',
+    'plantGrowth', 'seasonFlower', 'seasonBug', 'hibernate', 'leafChange', 'autumnNuts', 'rainCreature', 'springCreature', 'seasonalClothes', 'plantPart']
   if (level >= 2) k.push('clockBefore', 'clockAfter', 'clockMinutes', 'monthOrder')
   return k
 }
@@ -392,7 +513,7 @@ export function generateSeikatsuQuestion(params, reviewKey = null) {
     'life:calendar': ['todayDate', 'relativeDay', 'monthOrder', 'daysInMonth', 'monthEvent', 'holiday', 'holidayName'],
     'life:weekday': ['todayWeek', 'weekOrder'],
     'life:clock': ['clockRead', 'clockMinutes', 'clockBefore', 'clockAfter', 'amPm'],
-    'life:season': ['season']
+    'life:season': ['season', 'plantGrowth', 'seasonFlower', 'seasonBug', 'hibernate', 'leafChange', 'autumnNuts', 'rainCreature', 'springCreature', 'plantPart', 'seasonalClothes']
   }
   if (params.unitId && byUnit[params.unitId]) {
     const allowed = new Set(kindsForGrade(grade, params.level || 1))
@@ -407,10 +528,17 @@ export const SEIKATSU_LABELS = {
   weekOrder: '曜日のならび', monthOrder: '月のならび', season: 'きせつ',
   monthEvent: '行事の月', holiday: 'しゅくじつの日', holidayName: 'しゅくじつの名前',
   daysInMonth: '月の日数', clockRead: 'とけい（なんじ）', clockMinutes: 'とけい（なんぷん）',
-  clockBefore: '○分まえ', clockAfter: '○分あと', amPm: 'ごぜん・ごご'
+  clockBefore: '○分まえ', clockAfter: '○分あと', amPm: 'ごぜん・ごご',
+  plantGrowth: '植物の育ち', seasonFlower: '季節の花', seasonBug: '季節の生き物',
+  hibernate: 'とうみん', leafChange: '紅葉', autumnNuts: '秋の実',
+  rainCreature: '雨の日の生き物', springCreature: '春の生き物', plantPart: '植物のからだ',
+  seasonalClothes: '季節の服'
 }
 export const SEIKATSU_KINDS_BY_GRADE = {
-  0: ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday'],
-  1: ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday', 'holidayName', 'clockMinutes', 'daysInMonth', 'monthEvent', 'amPm'],
-  2: ['relativeDay', 'clockRead', 'clockMinutes', 'holiday', 'holidayName', 'daysInMonth', 'season', 'amPm', 'todayDate', 'todayWeek', 'clockBefore', 'clockAfter', 'monthOrder']
+  0: ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday',
+    'plantGrowth', 'seasonFlower', 'seasonBug', 'hibernate', 'autumnNuts', 'rainCreature', 'springCreature', 'seasonalClothes', 'leafChange'],
+  1: ['todayDate', 'todayWeek', 'relativeDay', 'weekOrder', 'monthOrder', 'season', 'clockRead', 'holiday', 'holidayName', 'clockMinutes', 'daysInMonth', 'monthEvent', 'amPm',
+    'plantGrowth', 'seasonFlower', 'seasonBug', 'hibernate', 'leafChange', 'autumnNuts', 'rainCreature', 'springCreature', 'seasonalClothes', 'plantPart'],
+  2: ['relativeDay', 'clockRead', 'clockMinutes', 'holiday', 'holidayName', 'daysInMonth', 'season', 'amPm', 'todayDate', 'todayWeek', 'clockBefore', 'clockAfter', 'monthOrder',
+    'plantGrowth', 'seasonFlower', 'seasonBug', 'hibernate', 'leafChange', 'autumnNuts', 'rainCreature', 'springCreature', 'seasonalClothes', 'plantPart']
 }
