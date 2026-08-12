@@ -474,6 +474,24 @@ const BUILDERS = {
       explainColumn: columnBlock(a, b, '×', mk(ans))
     }
   },
+  decimalDiv(p) {
+    const b = rng(2, 9)
+    const ans = rng(2, 99) / 10
+    const a = Math.round(ans * b * 10) / 10
+    const mk = (v) => String(Math.round(v * 10) / 10)
+    const dummies = [mk(ans + 0.1), mk(ans - 0.1), mk(ans * b), mk(ans + 1)]
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:decimalDiv',
+      visual: { kind: 'bigtext', text: `${mk(a)} ÷ ${b} ＝ ❓` },
+      instruction: `${mk(a)} ÷ ${b} ＝ ？`,
+      speak: `しょうすうの わりざんだよ`,
+      answerId: mk(ans),
+      choices: stringChoices(mk(ans), dummies, p.cc),
+      answerWord: { text: mk(ans) },
+      explain: `わられる数を10ばいして${Math.round(a * 10)}÷${b}の せいすうの わりざんにして、こたえの てんを ひとつ もどそう。こたえは ${mk(ans)}`,
+      explainColumn: columnBlock(mk(a), b, '÷', mk(ans))
+    }
+  },
   fracAddDiff(p) {
     // 通分が1回でできる、きれいな組み合わせ
     const pairs = [[1, 2, 1, 4], [1, 2, 1, 6], [1, 3, 1, 6], [1, 2, 1, 8], [1, 4, 1, 8], [2, 3, 1, 6], [1, 3, 1, 9]]
@@ -519,6 +537,25 @@ const BUILDERS = {
       answer: ans, cc: p.cc, spread: 2, say: `こたえは ${ans}`,
       explain: `うえの かずに ${m}を かけて ${num}/${b}。やくぶんすると ${ans}`
     })
+  },
+  fracDiv(p) {
+    // 分数÷整数＝分母にその整数をかける（きれいに約分できる組み合わせ）
+    const pairs = [[2, 3, 2], [4, 5, 2], [1, 2, 3], [3, 4, 3], [2, 3, 4], [6, 7, 2], [3, 5, 2], [5, 6, 5]]
+    const [a, b, m] = pick(pairs)
+    const denom = b * m
+    const g = gcd(a, denom)
+    const ans = `${a / g}/${denom / g}`
+    const dummies = [`${a}/${denom}`, `${a}/${b}`, `${a * m}/${b}`, `${a / g + 1}/${denom / g}`].filter((x) => x !== ans)
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:fracDiv',
+      visual: { kind: 'bigtext', text: `${a}/${b} ÷ ${m} ＝ ❓` },
+      instruction: `${a}/${b} ÷ ${m} ＝ ？`,
+      speak: `ぶんすうを せいすうで わるよ`,
+      answerId: ans,
+      choices: stringChoices(ans, dummies, p.cc),
+      answerWord: { text: ans },
+      explain: `せいすうで わるときは、ぶんぼに その かずを かけよう。${b}×${m}＝${denom}なので ${a}/${denom}。やくぶんすると ${ans}`
+    }
   },
   ratio(p) {
     const a = rng(2, 6), b = rng(2, 6), k = rng(2, 5)
@@ -918,8 +955,8 @@ export const NUMBERS_KINDS_BY_GRADE = {
   2: ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'sequence', 'holeSub', 'double', 'half', 'mul10', 'evenOdd', 'moneyChange', 'clockPlus', 'lengthConv', 'countMoney100', 'compareNum'],
   3: ['kuku', 'div', 'add3digit', 'mul2x1', 'holeMul', 'tensMul', 'unitPrice', 'divRemainder', 'fracCompareSame', 'perimeter', 'timeCalc', 'kgConv', 'literConv'],
   4: ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub', 'bigNumbers', 'roundNum', 'roundTen', 'area'],
-  5: ['div3digit', 'decimalAdd', 'decimalMul', 'fracAddDiff', 'decimalSub', 'average', 'percent', 'fracCompareDiff', 'area', 'triangleArea'],
-  6: ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio', 'average', 'discount', 'lcm', 'gcdKind', 'speed', 'speedTime', 'fracCompareDiff', 'volume']
+  5: ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average', 'percent', 'fracCompareDiff', 'area', 'triangleArea'],
+  6: ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'fracDiv', 'ratio', 'average', 'discount', 'lcm', 'gcdKind', 'speed', 'speedTime', 'fracCompareDiff', 'volume']
 }
 
 // 出題タイプ→はじめて出てくる学年。復習キュー（SRS）は「まちがえた」から
@@ -971,13 +1008,13 @@ function kindsForGrade(grade, level) {
     return k
   }
   if (grade === 5) {
-    const k = ['div3digit', 'decimalAdd', 'decimalMul', 'fracAddDiff', 'decimalSub', 'average']
-    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'fracCompareDiff', 'area', 'triangleArea')
+    const k = ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average']
+    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'decimalDiv', 'fracCompareDiff', 'area', 'triangleArea')
     return k
   }
   // 小6
-  const k = ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'ratio', 'average', 'discount', 'lcm', 'gcdKind']
-  if (level >= 3) k.push('speed', 'ratio', 'fracMul', 'speedTime', 'fracCompareDiff', 'volume')
+  const k = ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'fracDiv', 'ratio', 'average', 'discount', 'lcm', 'gcdKind']
+  if (level >= 3) k.push('speed', 'ratio', 'fracMul', 'fracDiv', 'speedTime', 'fracCompareDiff', 'volume')
   return k
 }
 
@@ -1009,8 +1046,8 @@ export const KIND_LABELS = {
   sub2digit: '2けたのひきざん', kuku: '九九', div: 'わり算', divRemainder: 'あまりのわり算',
   add3digit: '3けたのたしざん', mul2x1: '2けた×1けた', fracCompareSame: 'ぶんすうくらべ',
   div3digit: 'わり算(大)', decimalAdd: 'しょうすう＋', bigNumbers: 'おおきなかず',
-  decimalMul: 'しょうすう×', fracAddDiff: 'ぶんすう＋', percent: 'パーセント',
-  fracMul: 'ぶんすう×', ratio: 'ひ', speed: 'はやさ',
+  decimalMul: 'しょうすう×', decimalDiv: 'しょうすう÷', fracAddDiff: 'ぶんすう＋', percent: 'パーセント',
+  fracMul: 'ぶんすう×', fracDiv: 'ぶんすう÷', ratio: 'ひ', speed: 'はやさ',
   holeAdd: '□のたしざん', holeSub: '□のひきざん', holeMul: '□のかけざん',
   double: '2ばい', half: 'はんぶん', evenOdd: 'ぐうすう・きすう',
   moneyAdd: 'おかね', moneyChange: 'おつり', clockPlus: 'とけい',
