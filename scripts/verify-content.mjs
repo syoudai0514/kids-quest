@@ -6,9 +6,12 @@ import { generateNumbersQuestion, NUMBERS_KINDS } from '../src/data/content/numb
 import { generateSeikatsuQuestion, SEIKATSU_KINDS } from '../src/data/content/seikatsu.js'
 import { generateRikaQuestion, RIKA_QUESTIONS, RIKA_UNIT_EXPECTATIONS } from '../src/data/content/rika.js'
 import { generateShakaiQuestion, SHAKAI_QUESTIONS, SHAKAI_UNIT_EXPECTATIONS } from '../src/data/content/shakai.js'
+import { generateDoutokuQuestion } from '../src/data/content/doutoku.js'
+import { generateReadingQuestion } from '../src/data/content/reading.js'
 import { KANJI_BY_GRADE, JUKUGO_BY_GRADE } from '../src/data/kanjiByGrade.js'
 import { hasStrokeData } from '../src/data/strokeOrder.js'
-import { WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
+import { generateWritingQuestion, WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
+import { questionIds } from '../src/engine/reviewKey.js'
 
 const errors = []
 const SAMPLE_COUNT = 24
@@ -134,6 +137,46 @@ for (const [year, month, day] of [[2024, 1, 29], [2025, 1, 28], [2025, 0, 31], [
   }
 }
 globalThis.Date = RealDate
+
+// Step1: 「未出（everSeenKnowledge）優先」が実際に機能し、新規教材が既出の
+// ランダム再出題に埋もれず到達できることを固定する。固定バンク教科（りか・
+// しゃかい・どうとく・よむ・かく）は、everSeenKnowledge を正しく渡すと
+// 「そのグレードの実プール件数ぶん、一度も重複せずに新規知識へ到達する」
+// はず。まず優先なしの大量サンプルで実プール件数の下限を推定し、優先ありで
+// 同じ回数だけ引いても重複が出ないことを確認する（出れば、未出優先が
+// 機能していないか、キー形式（knowledgeId）がずれている回帰）。
+function verifyUnseenPriorityCoverage(label, generate, baseParams, baselineDraws = 600) {
+  const baselineSeen = new Set()
+  for (let i = 0; i < baselineDraws; i++) {
+    const q = generate(baseParams)
+    baselineSeen.add(questionIds(q).knowledgeId)
+  }
+  const lowerBound = baselineSeen.size
+  if (lowerBound < 2) return // 極小プールは対象外（生成不能などは他の検証で捕まる）
+
+  const seen = new Set()
+  for (let i = 0; i < lowerBound; i++) {
+    const q = generate({ ...baseParams, everSeenKnowledge: seen })
+    const { knowledgeId } = questionIds(q)
+    requireValue(
+      !seen.has(knowledgeId),
+      `${label}: 未出優先のはずが ${i + 1}/${lowerBound}回目で既出「${knowledgeId}」が再出題された（実プールは${lowerBound}件以上あるはず）`
+    )
+    seen.add(knowledgeId)
+  }
+}
+
+for (const grade of [3, 4, 5, 6]) {
+  verifyUnseenPriorityCoverage(`りか(小${grade})`, generateRikaQuestion, { grade, level: 12, choiceCount: 4 })
+  verifyUnseenPriorityCoverage(`しゃかい(小${grade})`, generateShakaiQuestion, { grade, level: 12, choiceCount: 4 })
+}
+for (const grade of [0, 3, 6]) {
+  verifyUnseenPriorityCoverage(`どうとく(小${grade})`, generateDoutokuQuestion, { grade, level: 12, choiceCount: 3 })
+  verifyUnseenPriorityCoverage(`よむ(小${grade})`, generateReadingQuestion, { grade, level: 12, choiceCount: 4, allowKatakana: true, allowHard: true })
+}
+for (const grade of [2, 4, 6]) {
+  verifyUnseenPriorityCoverage(`かく(小${grade})`, generateWritingQuestion, { grade, level: 12 }, 1200)
+}
 
 if (errors.length) {
   console.error(`コンテンツ検証失敗 (${errors.length}件)`)

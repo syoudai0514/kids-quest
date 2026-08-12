@@ -306,6 +306,17 @@ function shuffle(arr) {
   return a
 }
 
+// 一度も出したことのない項目を最優先する（未出優先）。everSeen は
+// ActivityPlayer が state.srs['yomu'] の既存キーから渡す「既出」集合。
+// 全部見たことがあれば従来どおり完全ランダムに戻る。
+function pickUnseenFirst(pool, everSeen, keyOf) {
+  if (everSeen) {
+    const unseen = pool.filter((item) => !everSeen.has(keyOf(item)))
+    if (unseen.length) return shuffle(unseen)[0]
+  }
+  return shuffle(pool)[0]
+}
+
 // 正解と「文字も絵文字も」かぶらないダミーを選ぶ
 function pickDistinct(pool, n, exclude) {
   const seenEmoji = new Set([exclude.emoji])
@@ -439,25 +450,37 @@ export function generateReadingQuestion(params, reviewKey = null) {
     }
   }
 
+  const everSeen = params.everSeenKnowledge
+
   // 単元導入・しれんでは、指定された読みの種類から外さない。
   if (String(params.unitId || '').endsWith(':kanji-words')) {
     const jpool = jukugoPoolForGrade(Math.max(1, params.grade || 1))
-    if (jpool.length) return jukugoQuestion(shuffle(jpool)[0], params)
+    if (jpool.length) return jukugoQuestion(pickUnseenFirst(jpool, everSeen, (j) => `j:${j.k}`), params)
   }
   if (String(params.unitId || '').endsWith(':kana-words')) {
     const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard, params.grade || 0)
     const safePool = pool.length >= params.choiceCount ? pool : WORDS
-    return wordQuestion(shuffle(safePool)[0], params)
+    return wordQuestion(pickUnseenFirst(safePool, everSeen, (w) => `w:${w.text}`), params)
   }
 
   // 漢字は必ず熟語で出す。裸の一字に語全体の読みを答えさせない。
   const grade = params.grade || 0
   const kanjiProb = grade >= 2 ? 0.65 : grade === 1 ? 0.45 : params.level >= 3 ? 0.35 : 0
-  if (Math.random() < kanjiProb) {
-    const jpool = jukugoPoolForGrade(grade)
-    if (grade >= 1 && jpool.length) return jukugoQuestion(shuffle(jpool)[0], params)
-  }
+  const jpool = grade >= 1 ? jukugoPoolForGrade(grade) : []
   const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard, grade)
   const safePool = pool.length >= params.choiceCount ? pool : WORDS
+
+  // 未出優先のときは、熟語・単語のどちらが先に「一巡」したかで出現確率
+  // (kanjiProb) を上書きしない。片方だけ未出が残っているなら、その未出を
+  // 優先する（そうしないと、先に一巡した側だけ既出の再出題が始まり、
+  // もう片方に未出があっても「未出優先」が守られない）。
+  if (everSeen) {
+    const jUnseen = jpool.filter((j) => !everSeen.has(`j:${j.k}`))
+    const wUnseen = safePool.filter((w) => !everSeen.has(`w:${w.text}`))
+    if (jUnseen.length && (!wUnseen.length || Math.random() < kanjiProb)) return jukugoQuestion(shuffle(jUnseen)[0], params)
+    if (wUnseen.length) return wordQuestion(shuffle(wUnseen)[0], params)
+    // 両方すでに一巡済み。ここから先は従来どおり確率で選ぶ通常運用。
+  }
+  if (Math.random() < kanjiProb && jpool.length) return jukugoQuestion(shuffle(jpool)[0], params)
   return wordQuestion(shuffle(safePool)[0], params)
 }

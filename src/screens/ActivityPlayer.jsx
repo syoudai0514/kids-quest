@@ -148,7 +148,12 @@ export default function ActivityPlayer({ task, onDone }) {
       englishAlphabetStats: stateRef.current.englishAlphabetStats,
       today: dayNumber(),
       questionIndex: qIndex,
-      seenItemKeys: domainId === 'english' ? shownEnglishItemsRef.current : undefined
+      seenItemKeys: domainId === 'english' ? shownEnglishItemsRef.current : undefined,
+      // 固定バンク教科（りか・しゃかい・どうとく・よむの語彙/漢字）向け:
+      // 一度でも出題したことがある knowledgeId の集合。srs は正誤に関わらず
+      // 毎回このドメインの itemKey で記録されるため、そのまま「既出」の
+      // 正になる（英語だけ別管理＝englishWordStats 等を別途渡している）。
+      everSeenKnowledge: domainId === 'english' ? undefined : new Set(Object.keys(stateRef.current.srs?.[domainId] || {}))
     }
     setSupportHint(params.hint >= 2)
 

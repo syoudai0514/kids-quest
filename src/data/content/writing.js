@@ -74,6 +74,17 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+// 一度も出したことのない文字を最優先する（未出優先）。everSeen は
+// ActivityPlayer が state.srs['kaku'] の既存キーから渡す「既出」集合。
+// kaku の knowledgeId は `char:学年:文字`（reviewKey.js の stableKnowledgeId）。
+function pickUnseenFirst(pool, everSeen, grade) {
+  if (everSeen) {
+    const unseen = pool.filter((ch) => !everSeen.has(`char:${grade}:${ch}`))
+    if (unseen.length) return pick(unseen)
+  }
+  return pick(pool)
+}
+
 function makeQuestion(target, stage, grade = 0) {
   return {
     domain: 'kaku',
@@ -110,5 +121,5 @@ export function generateWritingQuestion(params, reviewChar = null) {
 
   const freeChance = level <= 2 ? 0 : level <= 4 ? 0.25 : level <= 7 ? 0.5 : 0.7
   const stage = Math.random() < freeChance ? 'free' : 'trace'
-  return makeQuestion(pick(pool), stage, grade)
+  return makeQuestion(pickUnseenFirst(pool, params.everSeenKnowledge, grade), stage, grade)
 }

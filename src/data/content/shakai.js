@@ -107,10 +107,13 @@ function pick(arr) {
 // 単純な毎回ランダムだと 同じ問題が連続で出てしまうことがあった）
 let recentQs = []
 const RECENT_MAX = 3
-function pickFresh(pool) {
-  const avoid = new Set(recentQs)
-  const fresh = pool.filter((it) => !avoid.has(it.q))
-  const chosen = pick(fresh.length ? fresh : pool)
+// 一度も出したことのない設問を最優先する（未出優先）。everSeen は
+// ActivityPlayer が state.srs['shakai'] の既存キーから渡す「既出」集合で、
+// 全部見たことがあれば、直近に出した設問を避けるだけの従来ロジックへ戻る。
+function pickFresh(pool, everSeen) {
+  const unseen = everSeen ? pool.filter((it) => !everSeen.has(`c:${it.q}`)) : []
+  const source = unseen.length ? unseen : pool.filter((it) => !new Set(recentQs).has(it.q))
+  const chosen = pick(source.length ? source : pool)
   recentQs = [chosen.q, ...recentQs].slice(0, RECENT_MAX)
   return chosen
 }
@@ -149,10 +152,10 @@ export function generateShakaiQuestion(params, reviewKey = null) {
   }
   if (params.unitId) {
     const pool = ALL.filter((item) => item.unitId === params.unitId)
-    if (pool.length) return build(pickFresh(pool), cc)
+    if (pool.length) return build(pickFresh(pool, params.everSeenKnowledge), cc)
     return null
   }
-  return build(pickFresh(poolForGrade(params.grade || 3)), cc)
+  return build(pickFresh(poolForGrade(params.grade || 3), params.everSeenKnowledge), cc)
 }
 
 export const SHAKAI_COUNT = ALL.length
