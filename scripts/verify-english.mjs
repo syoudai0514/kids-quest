@@ -61,7 +61,15 @@ function verifyQuestion(q, grade, audioAvailable) {
 
 // 絵だけで意味が一つに決まらない語は、聞く／絵から英語の教材に混ぜない。
 // 例: 🌙=moon と Monday。曜日や重複絵文字は、文字と音で学ぶ。
-const pictureSafe = (word) => word.category !== 'time' && ENGLISH_WORDS.filter((other) => other.emoji === word.emoji).length === 1
+// 絵文字が一意でも、抽象語は絵から答えを決められない（💛→moral education）。
+// pictureEligible の判断まで含めて「絵問題に出してよい語」とする。
+const pictureSafe = (word) => word.pictureEligible && word.category !== 'time' && ENGLISH_WORDS.filter((other) => other.emoji === word.emoji).length === 1
+
+// 教科名・行事・職業の道具・日課・抽象名詞は絵問題に出さない。
+const NON_PICTURE_CATEGORIES = ['subject', 'schoolevent', 'routine', 'dream', 'schoolstep']
+for (const word of ENGLISH_WORDS.filter((w) => NON_PICTURE_CATEGORIES.includes(w.category))) {
+  must(!word.pictureEligible, `${word.english}: 抽象語を絵問題の対象にしている（${word.emoji}）`)
+}
 for (const weekday of ENGLISH_WORDS.filter((word) => word.category === 'time' && /day$/i.test(word.english))) {
   must(weekday.emoji === '📅', `${weekday.english}: 曜日を別の英単語と結び付ける絵で表示している`)
 }
