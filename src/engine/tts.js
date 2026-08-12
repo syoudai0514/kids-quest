@@ -585,6 +585,15 @@ export function cancelSpeak() {
   if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel()
 }
 
+// speak() 全体の保険タイムアウト。専用音声の再生そのものには
+// playNarratorResult 内に個別のwatchdogがあるが、それより前の段階
+// （モデルの動的import・IndexedDBからの読み込み・WASM推論、あるいは
+// 端末音声のonend/onerrorが実機で発火しない場合）には保護がなく、
+// 一度ハングすると narratorPromise がそのセッション中ずっと解決せず、
+// 以降の全ての問題が「フリーズしてホーム画面に戻るしかない」状態に
+// なっていた。学習の進行を音声の完了より優先し、必ずここで打ち切る。
+const SPEAK_WATCHDOG_MS = 12000
+
 /** 文章を、選んだナビ音声で読み上げる。 */
 export function speak(text, opts = {}) {
   return new Promise((resolve) => {
@@ -596,10 +605,16 @@ export function speak(text, opts = {}) {
     const selectedVoice = opts.voiceStyle === 'device' || opts.voiceStyle === 'neural'
       ? opts.voiceStyle
       : voiceStyle
+    let settled = false
+    const settle = () => {
+      if (settled) return
+      settled = true
+      resolve()
+    }
     const start = async () => {
       pendingTimer = null
       pendingResolve = null
-      if (id !== requestId || !enabled) return resolve()
+      if (id !== requestId || !enabled) return settle()
       try {
         if (selectedVoice === 'neural') await speakWithNarrator(said, id, opts)
         else {
@@ -623,11 +638,12 @@ export function speak(text, opts = {}) {
         if (id === requestId && enabled) await speakWithDevice(said, id, opts)
       }
       if (id === requestId) opts.onEnd?.()
-      resolve()
+      settle()
     }
     // Safari の cancel 直後の無音を避ける短い間隔。
-    pendingResolve = resolve
+    pendingResolve = settle
     pendingTimer = setTimeout(start, opts.interrupt === false ? 0 : 70)
+    setTimeout(settle, SPEAK_WATCHDOG_MS)
   })
 }
 
