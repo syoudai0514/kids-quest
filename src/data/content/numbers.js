@@ -192,7 +192,7 @@ const BUILDERS = {
     const correct = [...nums].sort((a, b) => a - b)
     const items = nums.map((n) => ({ id: String(n), label: String(n) }))
     return {
-      domain: 'suuji', type: 'order', itemKey: 'n:orderNumbers', visual: { kind: 'bigtext', text: '🔢 じゅんばんに ならべよう' },
+      domain: 'suuji', type: 'order', itemKey: 'n:orderNumbers', visual: { kind: 'sentence', text: '🔢 じゅんばんに ならべよう' },
       instruction: 'ちいさい じゅんに タッチ！',
       speak: 'かずを ちいさい じゅんに、ひとつずつ タッチして ならべよう',
       items, correctOrder: correct.map(String), answerId: correct.map(String).join('|'),
@@ -585,7 +585,7 @@ const BUILDERS = {
     const v = pick([30, 40, 50, 60, 80]), t = rng(2, 5)
     const ans = v * t
     return numQ('speed', {
-      visual: { kind: 'bigtext', text: `じそく ${v}km で ${t}じかん ＝ ❓ km` },
+      visual: { kind: 'sentence', text: `じそく ${v}km で ${t}じかん ＝ ❓ km` },
       instruction: `じそく${v}kmで ${t}じかん すすむと？`,
       speak: `じそく ${v}キロメートルで ${t}じかん はしると、なんキロ すすむ？`,
       answer: ans, cc: p.cc, spread: v / 2, say: `${ans}キロメートル`,
@@ -653,7 +653,7 @@ const BUILDERS = {
   moneyAdd(p) {
     const a = pick([10, 20, 30, 50]), b = pick([10, 20, 30, 50])
     return numQ('moneyAdd', {
-      visual: { kind: 'bigtext', text: `${a}えん ＋ ${b}えん ＝ ❓えん` },
+      visual: { kind: 'sentence', text: `${a}えん ＋ ${b}えん ＝ ❓えん` },
       instruction: `${a}えんと ${b}えんで いくら？`,
       speak: `${a}えんと ${b}えんを あわせると なんえん？`,
       answer: a + b, cc: p.cc, spread: 10, say: `${a + b}えん`,
@@ -663,7 +663,7 @@ const BUILDERS = {
   moneyChange(p) {
     const price = pick([30, 40, 60, 70, 80]), pay = 100
     return numQ('moneyChange', {
-      visual: { kind: 'bigtext', text: `100えん − ${price}えん ＝ ❓えん` },
+      visual: { kind: 'sentence', text: `100えん − ${price}えん ＝ ❓えん` },
       instruction: `${pay}えんで ${price}えんの おかし。おつりは？`,
       speak: `${pay}えんを だして ${price}えんの おかしを かったよ。おつりは なんえん？`,
       answer: pay - price, cc: p.cc, spread: 10, say: `おつりは ${pay - price}えん`,
@@ -679,7 +679,7 @@ const BUILDERS = {
       : [`${h}じ30ぷん`, `${h + 2}じ`, `${h}じ`]
     return {
       domain: 'suuji', type: 'choice', itemKey: 'n:clockPlus',
-      visual: { kind: 'bigtext', text: `${h}じ の ${addHalf ? '30ぷん' : '1じかん'}あと ＝ ❓` },
+      visual: { kind: 'sentence', text: `${h}じ の ${addHalf ? '30ぷん' : '1じかん'}あと ＝ ❓` },
       instruction: `${h}じの ${addHalf ? '30ぷん' : '1じかん'}あとは？`,
       speak: `${h}じの ${addHalf ? 'さんじゅっぷん' : 'いちじかん'}あとは なんじ？`,
       answerId: ans,
@@ -726,7 +726,7 @@ const BUILDERS = {
     const dummies = [asTime(Math.max(10, total - 10)), asTime(total + 10), `${total}ぷん`, '1じかん'].filter((d) => d !== ans)
     return {
       domain: 'suuji', type: 'choice', itemKey: 'n:timeCalc',
-      visual: { kind: 'bigtext', text: `${a}ぷん ＋ ${b}ぷん ＝ ❓` },
+      visual: { kind: 'sentence', text: `${a}ぷん ＋ ${b}ぷん ＝ ❓` },
       instruction: `${a}ぷんと ${b}ぷんで どれくらい？`,
       speak: `${a}ふんと ${b}ふんを あわせると どれくらいの じかん？`,
       answerId: ans,
@@ -758,7 +758,7 @@ const BUILDERS = {
   perimeter(p) {
     const a = rng(2, 8), b = rng(2, 8)
     return numQ('perimeter', {
-      visual: { kind: 'bigtext', text: `たて${a}cm よこ${b}cm の\nまわりの ながさ ＝ ❓cm` },
+      visual: { kind: 'sentence', text: `たて${a}cm よこ${b}cm の\nまわりの ながさ ＝ ❓cm` },
       instruction: `まわりの ながさは？`,
       speak: `たて${a}センチ、よこ${b}センチの しかくの まわりの ながさは？`,
       answer: (a + b) * 2, cc: p.cc, spread: 4, say: `${(a + b) * 2}センチ`,
@@ -818,7 +818,7 @@ const BUILDERS = {
     const d = rng(1, 3)
     const nums = [ans - d, ans, ans + d]
     return numQ('average', {
-      visual: { kind: 'bigtext', text: `${nums.join('、 ')} の へいきん ＝ ❓` },
+      visual: { kind: 'sentence', text: `${nums.join('、 ')} の へいきん ＝ ❓` },
       instruction: `${nums.join('と')}の へいきんは？`,
       speak: `${nums.join('と')}の へいきんは いくつ？`,
       answer: ans, cc: p.cc, spread: 2, say: `${ans}`,
@@ -845,7 +845,7 @@ const BUILDERS = {
     const pct = pick([10, 20, 50])
     const ans = base - (base * pct) / 100
     return numQ('discount', {
-      visual: { kind: 'bigtext', text: `${base}えんの ${pct}％びき ＝ ❓えん` },
+      visual: { kind: 'sentence', text: `${base}えんの ${pct}％びき ＝ ❓えん` },
       instruction: `${base}えんの ${pct}％びきは？`,
       speak: `${base}えんの しなものが ${pct}パーセントびき。いくらに なる？`,
       answer: ans, cc: p.cc, spread: base / 10, say: `${ans}えん`,
@@ -856,7 +856,7 @@ const BUILDERS = {
     const v = pick([30, 40, 50, 60]), t = rng(2, 4)
     const dist = v * t
     return numQ('speedTime', {
-      visual: { kind: 'bigtext', text: `${dist}km ÷ じそく${v}km ＝ ❓じかん` },
+      visual: { kind: 'sentence', text: `${dist}km ÷ じそく${v}km ＝ ❓じかん` },
       instruction: `${dist}kmを じそく${v}kmで いくと？`,
       speak: `${dist}キロの みちのりを じそく${v}キロで いくと なんじかん かかる？`,
       answer: t, cc: p.cc, spread: 1, say: `${t}じかん`,
@@ -887,7 +887,7 @@ const BUILDERS = {
   countMoney100(p) {
     const c = rng(2, 6)
     return numQ('countMoney100', {
-      visual: { kind: 'bigtext', text: `100えんが ${c}こで ＝ ❓えん` },
+      visual: { kind: 'sentence', text: `100えんが ${c}こで ＝ ❓えん` },
       instruction: `100えんだまが ${c}こで いくら？`,
       speak: `100えんだまが ${c}こ あると なんえん？`,
       answer: c * 100, cc: p.cc, spread: 100, say: `${c * 100}えん`,
@@ -897,7 +897,7 @@ const BUILDERS = {
   unitPrice(p) {
     const price = pick([20, 30, 50, 80, 100]), n = rng(2, 5)
     return numQ('unitPrice', {
-      visual: { kind: 'bigtext', text: `1こ${price}えんの あめ ${n}こ ＝ ❓えん` },
+      visual: { kind: 'sentence', text: `1こ${price}えんの あめ ${n}こ ＝ ❓えん` },
       instruction: `1こ${price}えんの あめを ${n}こ かうと？`,
       speak: `1こ ${price}えんの あめを ${n}こ かうと いくら？`,
       answer: price * n, cc: p.cc, spread: price, say: `${price * n}えん`,
@@ -919,7 +919,7 @@ const BUILDERS = {
     const base = rng(1, 4) * 2, h = rng(2, 8)
     const ans = (base * h) / 2
     return numQ('triangleArea', {
-      visual: { kind: 'bigtext', text: `そこへん${base}cm たかさ${h}cm の\nさんかく ＝ ❓cm²` },
+      visual: { kind: 'sentence', text: `そこへん${base}cm たかさ${h}cm の\nさんかく ＝ ❓cm²` },
       instruction: `さんかくの めんせきは？`,
       speak: `そこへん${base}センチ、たかさ${h}センチの さんかくの めんせきは？`,
       answer: ans, cc: p.cc, spread: base, say: `${ans}へいほうセンチ`,
@@ -929,7 +929,7 @@ const BUILDERS = {
   volume(p) {
     const a = rng(2, 6), b = rng(2, 6), c = rng(2, 5)
     return numQ('volume', {
-      visual: { kind: 'bigtext', text: `たて${a} よこ${b} たかさ${c} の\nたいせき ＝ ❓cm³` },
+      visual: { kind: 'sentence', text: `たて${a} よこ${b} たかさ${c} の\nたいせき ＝ ❓cm³` },
       instruction: `たいせきは？`,
       speak: `たて${a}、よこ${b}、たかさ${c}センチの はこの たいせきは？`,
       answer: a * b * c, cc: p.cc, spread: a * b, say: `${a * b * c}りっぽうセンチ`,
@@ -940,7 +940,7 @@ const BUILDERS = {
     const [a, b] = pick([[2, 3], [2, 5], [3, 4], [4, 6], [3, 6], [2, 6], [3, 5], [4, 8]])
     const ans = (a * b) / gcd(a, b)
     return numQ('lcm', {
-      visual: { kind: 'bigtext', text: `${a} と ${b} の\nさいしょうこうばいすう ＝ ❓` },
+      visual: { kind: 'sentence', text: `${a} と ${b} の\nさいしょうこうばいすう ＝ ❓` },
       instruction: `${a}と${b}の さいしょうこうばいすうは？`,
       speak: `${a}と${b}の さいしょうこうばいすうは いくつ？`,
       answer: ans, cc: p.cc, spread: Math.max(2, a), say: `${ans}`,
@@ -951,7 +951,7 @@ const BUILDERS = {
     const [a, b] = pick([[6, 8], [12, 8], [9, 6], [12, 18], [8, 12], [10, 15], [16, 12], [12, 9]])
     const ans = gcd(a, b)
     return numQ('gcdKind', {
-      visual: { kind: 'bigtext', text: `${a} と ${b} の\nさいだいこうやくすう ＝ ❓` },
+      visual: { kind: 'sentence', text: `${a} と ${b} の\nさいだいこうやくすう ＝ ❓` },
       instruction: `${a}と${b}の さいだいこうやくすうは？`,
       speak: `${a}と${b}の さいだいこうやくすうは いくつ？`,
       answer: ans, cc: p.cc, spread: 2, say: `${ans}`,
@@ -1124,7 +1124,7 @@ const BUILDERS = {
     const total = 100
     const part = pick([10, 20, 25, 30, 40])
     return numQ('bandGraph', {
-      visual: { kind: 'bigtext', text: `全体${total}人中 ${part}人が すき\nわりあい ＝ ❓%` },
+      visual: { kind: 'sentence', text: `全体${total}人中 ${part}人が すき\nわりあい ＝ ❓%` },
       instruction: `わりあいは？`,
       speak: `全体${total}人のうち ${part}人が すきと 答えました。帯グラフでは 何パーセントに あたる？`,
       answer: part, cc: p.cc, spread: 10, say: `${part}パーセント`,
@@ -1136,7 +1136,7 @@ const BUILDERS = {
     const nth = pick([3, 4, 5])
     const ans = base * nth
     return numQ('multiples', {
-      visual: { kind: 'bigtext', text: `${base}の倍数\n小さい方から${nth}番目 ＝ ❓` },
+      visual: { kind: 'sentence', text: `${base}の倍数\n小さい方から${nth}番目 ＝ ❓` },
       instruction: `${nth}番目の数は？`,
       speak: `${base}の倍数を 小さい順に ならべたとき、${nth}番目の数は？`,
       answer: ans, cc: p.cc, spread: base, say: `${ans}`,
@@ -1203,7 +1203,7 @@ const BUILDERS = {
     const n2 = n1 + rng(1, 3)
     const ans = rate * n2
     return numQ('proportion', {
-      visual: { kind: 'bigtext', text: `1個${rate}円\n${n1}個で${rate * n1}円 → ${n2}個は❓円` },
+      visual: { kind: 'sentence', text: `1個${rate}円\n${n1}個で${rate * n1}円 → ${n2}個は❓円` },
       instruction: `代金は？`,
       speak: `1個${rate}円の りんごが ${n1}個で ${rate * n1}円のとき、${n2}個では 何円？`,
       answer: ans, cc: p.cc, spread: rate, say: `${ans}えん`,
@@ -1215,7 +1215,7 @@ const BUILDERS = {
     const tate = pick([2, 3, 4, 6].filter((x) => areaVal % x === 0))
     const ans = areaVal / tate
     return numQ('inverseProportion', {
-      visual: { kind: 'bigtext', text: `面積${areaVal}cm²の長方形\nたて${tate}cm よこ ＝ ❓cm` },
+      visual: { kind: 'sentence', text: `面積${areaVal}cm²の長方形\nたて${tate}cm よこ ＝ ❓cm` },
       instruction: `よこの長さは？`,
       speak: `面積が ${areaVal}平方センチの長方形で、たてが ${tate}センチのとき、よこは 何センチ？`,
       answer: ans, cc: p.cc, spread: tate, say: `${ans}センチ`,
@@ -1253,7 +1253,7 @@ const BUILDERS = {
     const scale = pick([500, 1000])
     const ans = Math.round((realM * 100) / scale * 10) / 10
     return numQ('scaleDrawing', {
-      visual: { kind: 'bigtext', text: `実際${realM}m\n${scale}分の1の縮図 ＝ ❓cm` },
+      visual: { kind: 'sentence', text: `実際${realM}m\n${scale}分の1の縮図 ＝ ❓cm` },
       instruction: `縮図での長さは？`,
       speak: `実際の長さ ${realM}メートルを、${scale}分の1の縮図で表すと、何センチになる？`,
       answer: ans, cc: p.cc, spread: 5, say: `${ans}センチ`,
