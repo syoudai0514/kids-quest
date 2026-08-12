@@ -434,6 +434,34 @@ export default function ParentScreen({ onBack }) {
             </div>
           </div>
 
+          {/* どうとく: 生き物の「いのちの終わり」の話題（既定OFF・保護者設定必須） */}
+          <div>
+            <h3 style={{ margin: '4px 0 10px' }}>どうとく：いのちの おわりの 話題</h3>
+            <div className="card">
+              <p className="muted" style={{ fontSize: 13, lineHeight: 1.7, marginTop: 0 }}>
+                ONにすると、どうとくの「答えのない問い」の中に、虫・ペット・
+                植物など生き物の死をテーマにした話題（小5・小6のみ）が
+                まざるようになります。<br />
+                この話題は、正解・不正解を つけず、「かなしい」「ありがとう」
+                「よくわからない」など複数の感じ方を そのまま 認める形式です。
+                死のようすを 具体的に えがいたり、こわがらせたりする表現は
+                使いません。人の死は 扱いません。<br />
+                既定は OFFで、ONにしないかぎり 一切 出題されません。ご家庭の
+                お考えで 判断してください。
+              </p>
+              <label className="row" style={{ justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 800 }}>🕊️ 生き物の いのちの おわり</span>
+                <button
+                  className={'btn ' + (state.settings.showLifeEndTopics ? 'btn--primary' : 'btn--ghost')}
+                  style={{ minHeight: 52, padding: '8px 20px' }}
+                  onClick={() => toggle('showLifeEndTopics')}
+                >
+                  {state.settings.showLifeEndTopics ? 'ON' : 'OFF'}
+                </button>
+              </label>
+            </div>
+          </div>
+
           {/* 設定 */}
           <div>
             <h3 style={{ margin: '4px 0 10px' }}>せってい</h3>

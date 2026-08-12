@@ -6,7 +6,7 @@ import { generateNumbersQuestion, NUMBERS_KINDS } from '../src/data/content/numb
 import { generateSeikatsuQuestion, SEIKATSU_KINDS } from '../src/data/content/seikatsu.js'
 import { generateRikaQuestion, RIKA_QUESTIONS, RIKA_UNIT_EXPECTATIONS } from '../src/data/content/rika.js'
 import { generateShakaiQuestion, SHAKAI_QUESTIONS, SHAKAI_UNIT_EXPECTATIONS } from '../src/data/content/shakai.js'
-import { generateDoutokuQuestion } from '../src/data/content/doutoku.js'
+import { generateDoutokuQuestion, DOUTOKU_BANK_SIZES, DOUTOKU_LIFE_END_ITEM_KEYS } from '../src/data/content/doutoku.js'
 import { generateReadingQuestion } from '../src/data/content/reading.js'
 import { generateLanguageQuestion, generateDokkaiQuestion } from '../src/data/content/readingLanguage.js'
 import { KANJI_BY_GRADE, JUKUGO_BY_GRADE } from '../src/data/kanjiByGrade.js'
@@ -242,6 +242,53 @@ for (let grade = 3; grade <= 6; grade++) {
     const again = generateReadingQuestion({ grade, choiceCount: 4 }, original.itemKey)
     requireValue(again?.itemKey === original.itemKey, `よむ 指定復習が一致しない: 「${original.itemKey}」→「${again?.itemKey}」`)
   }
+}
+
+// WP6: どうとくの3段階化（各段階20問以上）と、D視点「生命の終わり」の
+// 保護者設定・学年ゲートを固定する。gradeMax ではなく grade で判定する
+// ことが必須要件（学年を戻した子に高学年向け話題を出さないため）。
+for (const [tier, size] of Object.entries(DOUTOKU_BANK_SIZES)) {
+  requireValue(size >= 20, `どうとく${tier}段階が20問未満: ${size}問`)
+}
+requireValue(DOUTOKU_LIFE_END_ITEM_KEYS.length > 0, 'どうとく: 生命の終わりの項目が1つも登録されていない')
+// 設定OFFなら、学年を問わず絶対に出ない。
+for (let grade = 0; grade <= 6; grade++) {
+  for (let n = 0; n < 400; n++) {
+    const q = generateDoutokuQuestion({ grade, choiceCount: 3, showLifeEndTopics: false })
+    requireValue(!DOUTOKU_LIFE_END_ITEM_KEYS.includes(q.itemKey), `小${grade}: 保護者設定OFFなのに生命の終わりの項目が出た「${q.itemKey}」`)
+  }
+}
+// 設定ONでも、学年が5未満（grade判定。gradeMaxは見ない）なら出ない。
+for (let grade = 0; grade <= 4; grade++) {
+  for (let n = 0; n < 400; n++) {
+    const q = generateDoutokuQuestion({ grade, choiceCount: 3, showLifeEndTopics: true })
+    requireValue(!DOUTOKU_LIFE_END_ITEM_KEYS.includes(q.itemKey), `小${grade}: 設定ONでも高学年未満なのに生命の終わりの項目が出た「${q.itemKey}」`)
+  }
+}
+// 設定ONかつ小5・小6なら、実際に生成候補へ入っている（機能していることの確認）。
+for (const grade of [5, 6]) {
+  const seenLifeEnd = new Set()
+  for (let n = 0; n < 3000; n++) {
+    const q = generateDoutokuQuestion({ grade, choiceCount: 3, showLifeEndTopics: true })
+    if (DOUTOKU_LIFE_END_ITEM_KEYS.includes(q.itemKey)) seenLifeEnd.add(q.itemKey)
+  }
+  requireValue(seenLifeEnd.size > 0, `小${grade}: 設定ONでも生命の終わりの項目が一度も出なかった`)
+}
+// D視点「答えのない問い」(type:'reflect') は、正誤の概念を一切持たない
+// 形であることをデータ構造レベルで固定する。
+for (let grade = 3; grade <= 6; grade++) {
+  for (let n = 0; n < 300; n++) {
+    const q = generateDoutokuQuestion({ grade, choiceCount: 3, showLifeEndTopics: true })
+    if (q.type !== 'reflect') continue
+    requireValue(q.answerId === undefined && q.choices === undefined, `どうとく 答えのない問いに正誤フィールドが混入: ${q.itemKey}`)
+    requireValue(Array.isArray(q.views) && q.views.length >= 3, `どうとく 答えのない問いの見方が不足: ${q.itemKey}`)
+    const labels = q.views.map((v) => v.label)
+    requireValue(new Set(labels).size === labels.length, `どうとく 答えのない問いの見方ラベルが重複: ${q.itemKey}`)
+    for (const v of q.views) requireValue(typeof v.note === 'string' && v.note.length > 8, `どうとく 答えのない問いの説明が短すぎる: ${q.itemKey}/${v.id}`)
+  }
+}
+for (const grade of [0, 3, 6]) {
+  verifyUnseenPriorityCoverage(`どうとく(小${grade})`, generateDoutokuQuestion, { grade, choiceCount: 3, showLifeEndTopics: true })
 }
 
 if (errors.length) {

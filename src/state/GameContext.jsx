@@ -141,7 +141,10 @@ function createInitialState() {
     daily: freshDailyMission(today, 0),
     battle: freshBattle(today),
     // neural は端末の声ではなく、アプリ内で動く女性ナビ音声。
-    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true },
+    // showLifeEndTopics: どうとくD視点で「生き物の死」を扱うかの保護者設定。
+    // 既定OFF。ONにしない限り、現在の学年（gradeMax ではなく grade）が
+    // 5未満のときも一切生成候補に入らない（doutoku.js 側で判定）。
+    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true, showLifeEndTopics: false },
     history: {},
     pendingCelebration: null
   }

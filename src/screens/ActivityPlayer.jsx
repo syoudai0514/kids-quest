@@ -153,7 +153,11 @@ export default function ActivityPlayer({ task, onDone }) {
       // 一度でも出題したことがある knowledgeId の集合。srs は正誤に関わらず
       // 毎回このドメインの itemKey で記録されるため、そのまま「既出」の
       // 正になる（英語だけ別管理＝englishWordStats 等を別途渡している）。
-      everSeenKnowledge: domainId === 'english' ? undefined : new Set(Object.keys(stateRef.current.srs?.[domainId] || {}))
+      everSeenKnowledge: domainId === 'english' ? undefined : new Set(Object.keys(stateRef.current.srs?.[domainId] || {})),
+      // どうとくD視点「生命の終わり」の判定用。保護者設定がONかつ現在の
+      // 学年（gradeMaxではなくgrade）が高学年のときだけ、doutoku.js側が
+      // 該当項目を生成候補に入れる。
+      showLifeEndTopics: stateRef.current.settings?.showLifeEndTopics === true
     }
     setSupportHint(params.hint >= 2)
 
@@ -509,6 +513,21 @@ export default function ActivityPlayer({ task, onDone }) {
     )
   }
 
+  // どうとくD視点「答えのない問い」（type:'reflect'）: 選んだ見方を
+  // 見せるだけで、正誤の演出・効果音・SRS・習熟度・進級のいずれにも
+  // 使わない（recordAnswer を呼ばない＝計画書WP6-aの必須事項）。
+  const handleReflectChoice = (viewId) => {
+    if (phase !== 'answering') return
+    const view = question.views?.find((v) => v.id === viewId)
+    if (!view) return
+    setChosenId(viewId)
+    setPhase('feedback')
+    phaseRef.current = 'feedback'
+    sfx.pop()
+    setFeedback({ good: true, word: 'そう かんじたんだね', explain: { text: view.note } })
+    advanceAfterFeedback(view.note, { minVisibleMs: 1400 })
+  }
+
   const choiceClass = (choice) => {
     let c = 'choice'
     if (phase === 'feedback' && choice.id === chosenId) c += ' choice--correct'
@@ -519,6 +538,7 @@ export default function ActivityPlayer({ task, onDone }) {
   }
 
   const isTrace = question.type === 'trace'
+  const isReflect = question.type === 'reflect'
   const isChoice = !question.type || question.type === 'choice'
   const isEnglish = domainIdRef.current === 'english'
   const grid =
@@ -581,7 +601,20 @@ export default function ActivityPlayer({ task, onDone }) {
                 }}
               />
             )}
-            {isChoice ? (
+            {isReflect ? (
+              <div className={grid}>
+                {question.views.map((view) => (
+                  <button
+                    key={view.id}
+                    className={'choice' + (phase === 'feedback' && view.id === chosenId ? ' choice--selected' : '')}
+                    disabled={phase !== 'answering'}
+                    onClick={() => handleReflectChoice(view.id)}
+                  >
+                    <span className="choice__label">{view.label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : isChoice ? (
               <div className={grid}>
                 {question.choices.map((choice) => (
                   <button
@@ -613,7 +646,7 @@ export default function ActivityPlayer({ task, onDone }) {
                 {explainReveal.text && <div className="explain-card__text">{explainReveal.text}</div>}
               </div>
             )}
-            {phase === 'answering' && (
+            {phase === 'answering' && !isReflect && (
               <button
                 className="btn btn--ghost dontknow-btn"
                 onClick={handleDontKnow}
