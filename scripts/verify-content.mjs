@@ -85,6 +85,26 @@ for (const q of SHAKAI_QUESTIONS) verifyQuestion(generateShakaiQuestion({ grade:
 for (const [grade, expected] of Object.entries(RIKA_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateRikaQuestion({ grade: Number(grade), choiceCount: 4 }, `r:${question}`).unitId === unitId, `理科単元IDが不正: ${question}`)
 for (const [grade, expected] of Object.entries(SHAKAI_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateShakaiQuestion({ grade: Number(grade), choiceCount: 4 }, `c:${question}`).unitId === unitId, `社会単元IDが不正: ${question}`)
 
+// 計画書§2-3: 正解だけが長いという見た目の手がかりを作らない。
+// 固定バンク教科は誤答も人手で書くため、正解だけが極端に長くなりやすい
+// （実測でりかは正解が単独最長になる割合が43%＝偶然の25%を大きく超えていた）。
+// 「いちばん長い選択肢を選ぶ」だけで正解できる状態を防ぐため、正解が
+// すべての誤答より6文字以上長い設問を禁止する。
+// 1〜2文字差は日本語では手がかりにならないため許容する。
+function verifyNoLengthTell(label, questions, generate, prefix) {
+  for (const question of questions) {
+    const item = generate({ grade: 6, level: 12, choiceCount: 4 }, `${prefix}${question}`)
+    const labels = (item?.choices ?? []).map((choice) => String(choice.label ?? choice.id))
+    const answer = String(item?.answerId ?? '')
+    const wrongs = labels.filter((text) => text !== answer)
+    if (!answer || !wrongs.length) continue
+    const gap = answer.length - Math.max(...wrongs.map((text) => text.length))
+    requireValue(gap < 6, `${label}: 正解が全誤答より${gap}文字長く、長さで正解が分かる: 「${question}」→「${answer}」`)
+  }
+}
+verifyNoLengthTell('りか', RIKA_QUESTIONS, generateRikaQuestion, 'r:')
+verifyNoLengthTell('しゃかい', SHAKAI_QUESTIONS, generateShakaiQuestion, 'c:')
+
 // WP1: 学年別漢字配当表（2020年度〜, 計1026字）との完全一致を固定する。
 // 実際の配当表突合は生成時に政府公式データ（文化庁 常用漢字表本表）で
 // 実施済み。ここでは回帰防止として、字数・重複・学年配置・書き順・
