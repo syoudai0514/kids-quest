@@ -219,6 +219,12 @@ function pictureSafeWords(params) {
   return eligibleWords(params).filter(hasUnambiguousPicture)
 }
 
+// P.E. のように英字が2文字以下の語は、1文字隠すと手掛かりが残らない
+// （「P. _ .」）。スペル問題の対象は3文字以上の語に限る。
+function spellableWords(params) {
+  return eligibleWords(params).filter((word) => [...word.english].filter((letter) => /[a-z]/i.test(letter)).length >= 3)
+}
+
 function displayEnglish(word) {
   const same = ENGLISH_WORDS.filter((entry) => entry.english === word.english)
   return same.length > 1 ? `${word.english}（${ENGLISH_CATEGORIES[word.category]}）` : word.english
@@ -335,7 +341,9 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
       ? pictureSafeWords(params)
       : requestedForm === 'word-order'
       ? eligiblePhrases(params).filter((phrase) => phrase.english.replace(/[.!?]/g, '').trim().split(/\s+/).length >= 2)
-      : requestedForm === 'conversation' ? eligiblePhrases(params) : eligibleWords(params))
+      : requestedForm === 'conversation'
+      ? eligiblePhrases(params)
+      : requestedForm === 'spelling' ? spellableWords(params) : eligibleWords(params))
     : null
   const forcedStats = requestedForm === 'conversation' || requestedForm === 'word-order' ? params.englishPhraseStats : params.englishWordStats
   const item = requestedItem || (forcedItemPool

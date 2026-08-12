@@ -5,6 +5,8 @@
 //   emoji    : 大きな絵ひとつ（よむ: これはなに？）
 //   word     : 大きなことば（よむ: おなじ絵をえらぶ）
 //   kanji    : 特大の漢字（よむ: なんてよむ？）
+//   sentence : 一文（よむ: 主語述語・同音異義語の文脈）
+//   passage  : 100〜200字の文章（よむ: 短文読解）
 //   bigtext  : 式や数列（すうじ）
 //   groups   : 絵のグループ（5個ずつの列で並ぶ。たしざんは「＋」で連結）
 //   tenframe : 10のフレーム（2×5マス）
@@ -112,6 +114,8 @@ export default function QuestionVisual({ question }) {
   if (v.kind === 'emoji') inner = <span className="q-emoji">{v.emoji}</span>
   else if (v.kind === 'word') inner = <span className="q-word">{v.text}</span>
   else if (v.kind === 'kanji') inner = <span className="q-kanji">{v.text}</span>
+  else if (v.kind === 'sentence') inner = <span className="q-sentence">{v.text}</span>
+  else if (v.kind === 'passage') inner = <span className="q-passage">{v.text}</span>
   else if (v.kind === 'bigtext') inner = <span className="q-bigtext">{v.text}</span>
   else if (v.kind === 'tenframe') inner = <TenFrame filled={v.filled} />
   else if (v.kind === 'clock') inner = <Clock h={v.h} m={v.m} />
@@ -138,8 +142,21 @@ export default function QuestionVisual({ question }) {
       void speakEnglish(question.promptEnglishAudio)
     } else speak(question.speak)
   }
+  const cardClass = 'qcard' + (v.kind === 'passage' ? ' qcard--passage' : v.kind === 'sentence' ? ' qcard--sentence' : '')
+  if (v.kind === 'passage') {
+    // 100〜200字の文章はカード内に収まりきらず、スクロールが必要になる。
+    // スクロールバーは端末によって見えないため、ヒントを文字で常に示す。
+    return (
+      <div className="qcard-passage-wrap">
+        <button className={cardClass} onClick={replay} aria-label="もういちどきく">
+          {inner}
+        </button>
+        <div className="qcard-passage-hint">🔽 したまで スクロールして よもう</div>
+      </div>
+    )
+  }
   return (
-    <button className="qcard" onClick={replay} aria-label="もういちどきく">
+    <button className={cardClass} onClick={replay} aria-label="もういちどきく">
       {inner}
     </button>
   )

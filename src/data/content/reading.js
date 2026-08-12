@@ -267,6 +267,10 @@ export const WORDS = [
 ]
 
 import { kanjiPoolForGrade, KANJI_BY_CHAR, jukugoPoolForGrade, JUKUGO_BY_WORD } from '../kanjiByGrade.js'
+import { generateLanguageQuestion, generateDokkaiQuestion } from './readingLanguage.js'
+
+// WP2: 語彙・文法系の新形式は itemKey の接頭辞で判別する。
+const LANGUAGE_PREFIXES = ['idiom:', 'proverb:', 'yoji:', 'anto:', 'syno:', 'homo:', 'bushu:', 'okuri:', 'bunpo:', 'keigo:']
 
 const WORD_BY_TEXT = Object.fromEntries(WORDS.map((w) => [w.text, w]))
 
@@ -430,7 +434,7 @@ function jukugoQuestion(answer, params) {
 /**
  * 「よむ」の問題を1問生成する。
  * @param {object} params 難易度パラメータ
- * @param {string|null} reviewKey 'w:ことば' | 'k:字'（復習したい項目）
+ * @param {string|null} reviewKey 'w:ことば' | 'k:字' | 'idiom:...' など（復習したい項目）
  */
 export function generateReadingQuestion(params, reviewKey = null) {
   // 復習キューからの再出題
@@ -447,12 +451,16 @@ export function generateReadingQuestion(params, reviewKey = null) {
     } else if (reviewKey.startsWith('w:')) {
       const w = WORD_BY_TEXT[reviewKey.slice(2)]
       if (w) return wordQuestion(w, params)
+    } else if (reviewKey.startsWith('dokkai:')) {
+      return generateDokkaiQuestion(params, reviewKey)
+    } else if (LANGUAGE_PREFIXES.some((prefix) => reviewKey.startsWith(prefix))) {
+      return generateLanguageQuestion(params, reviewKey)
     }
   }
 
   const everSeen = params.everSeenKnowledge
 
-  // 単元導入・しれんでは、指定された読みの種類から外さない。
+  // 単元導入・しれんでは、指定された種類から外さない。
   if (String(params.unitId || '').endsWith(':kanji-words')) {
     const jpool = jukugoPoolForGrade(Math.max(1, params.grade || 1))
     if (jpool.length) return jukugoQuestion(pickUnseenFirst(jpool, everSeen, (j) => `j:${j.k}`), params)
@@ -462,6 +470,8 @@ export function generateReadingQuestion(params, reviewKey = null) {
     const safePool = pool.length >= params.choiceCount ? pool : WORDS
     return wordQuestion(pickUnseenFirst(safePool, everSeen, (w) => `w:${w.text}`), params)
   }
+  if (String(params.unitId || '').endsWith(':language')) return generateLanguageQuestion(params)
+  if (String(params.unitId || '').endsWith(':dokkai')) return generateDokkaiQuestion(params)
 
   // 漢字は必ず熟語で出す。裸の一字に語全体の読みを答えさせない。
   const grade = params.grade || 0

@@ -8,6 +8,7 @@ import { generateRikaQuestion, RIKA_QUESTIONS, RIKA_UNIT_EXPECTATIONS } from '..
 import { generateShakaiQuestion, SHAKAI_QUESTIONS, SHAKAI_UNIT_EXPECTATIONS } from '../src/data/content/shakai.js'
 import { generateDoutokuQuestion } from '../src/data/content/doutoku.js'
 import { generateReadingQuestion } from '../src/data/content/reading.js'
+import { generateLanguageQuestion, generateDokkaiQuestion } from '../src/data/content/readingLanguage.js'
 import { KANJI_BY_GRADE, JUKUGO_BY_GRADE } from '../src/data/kanjiByGrade.js'
 import { hasStrokeData } from '../src/data/strokeOrder.js'
 import { generateWritingQuestion, WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
@@ -205,6 +206,42 @@ for (const grade of [0, 3, 6]) {
 }
 for (const grade of [2, 4, 6]) {
   verifyUnseenPriorityCoverage(`かく(小${grade})`, generateWritingQuestion, { grade, level: 12 }, 1200)
+}
+
+// WP2: こくご新形式10種。generateReadingQuestion は unitId で
+// reading:{grade}:language / :dokkai を明示したときだけこれらの形式に入る
+// （通常のミックス出題は unitLedger 経由の単元ターゲティングが担う）ため、
+// 全体ループの generateQuestion({grade, choiceCount, level}) だけでは
+// 一度も踏まれない。ここで直接その経路を検証する。
+const readingDomain = { id: 'yomu' }
+for (let grade = 2; grade <= 6; grade++) {
+  for (let n = 0; n < SAMPLE_COUNT; n++) {
+    verifyQuestion(generateReadingQuestion({ grade, choiceCount: 4, unitId: `reading:${grade}:language` }), grade, readingDomain, 4)
+  }
+}
+for (let grade = 3; grade <= 6; grade++) {
+  for (let n = 0; n < SAMPLE_COUNT; n++) {
+    const q = generateReadingQuestion({ grade, choiceCount: 4, unitId: `reading:${grade}:dokkai` })
+    verifyQuestion(q, grade, readingDomain, 4)
+    requireValue(q?.visual?.kind === 'passage' && q.visual.text.length >= 60, `小${grade} よむ 短文読解: 文章が短すぎる、または表示形式が不正`)
+  }
+}
+for (const grade of [2, 3, 4, 5, 6]) {
+  verifyUnseenPriorityCoverage(`よむ・ことばのきまり(小${grade})`, generateLanguageQuestion, { grade, choiceCount: 4 })
+}
+for (const grade of [3, 4, 5, 6]) {
+  verifyUnseenPriorityCoverage(`よむ・どっかい(小${grade})`, generateDokkaiQuestion, { grade, choiceCount: 4 }, 200)
+}
+// 指定復習（reviewKey）で同じ知識IDが再現できることを固定する。
+// keigo/bunpo は「1項目から複数の設問」を作れるため、往復不整合が
+// 起きやすい（実際に発生し、既出プールの展開漏れとして修正済み）。
+for (let grade = 3; grade <= 6; grade++) {
+  for (let n = 0; n < 40; n++) {
+    const original = generateReadingQuestion({ grade, choiceCount: 4, unitId: `reading:${grade}:language` })
+    if (!original) continue
+    const again = generateReadingQuestion({ grade, choiceCount: 4 }, original.itemKey)
+    requireValue(again?.itemKey === original.itemKey, `よむ 指定復習が一致しない: 「${original.itemKey}」→「${again?.itemKey}」`)
+  }
 }
 
 if (errors.length) {

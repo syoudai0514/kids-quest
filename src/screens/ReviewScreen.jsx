@@ -36,6 +36,18 @@ function labelOf(domainId, key) {
     if (baseKey.startsWith('j:')) return { big: baseKey.slice(2), sub: 'じゅくご' }
     if (baseKey.startsWith('k:')) return { big: baseKey.slice(2), sub: 'かんじ' }
     if (baseKey.startsWith('w:')) return { big: baseKey.slice(2), sub: 'ことば' }
+    // WP2: こくご新形式10種（itemKeyの接頭辞は計画書のものにそろえている）。
+    if (baseKey.startsWith('idiom:')) return { big: baseKey.slice(6), sub: 'かんようく' }
+    if (baseKey.startsWith('proverb:')) return { big: short(baseKey.slice(8)), sub: 'ことわざ' }
+    if (baseKey.startsWith('yoji:')) return { big: baseKey.slice(5), sub: 'よじじゅくご' }
+    if (baseKey.startsWith('anto:')) return { big: baseKey.slice(5), sub: 'たいぎご' }
+    if (baseKey.startsWith('syno:')) return { big: baseKey.slice(5), sub: 'るいぎご' }
+    if (baseKey.startsWith('homo:')) return { big: baseKey.split(':')[2] || baseKey.slice(5), sub: 'どうおんいぎご' }
+    if (baseKey.startsWith('bushu:')) return { big: baseKey.slice(6), sub: 'ぶしゅ' }
+    if (baseKey.startsWith('okuri:')) return { big: baseKey.slice(6), sub: 'おくりがな' }
+    if (baseKey.startsWith('bunpo:')) return { big: short(baseKey.split(':')[1] || ''), sub: 'ぶんのしくみ' }
+    if (baseKey.startsWith('keigo:')) return { big: baseKey.split(':')[1] || baseKey.slice(6), sub: 'けいご' }
+    if (baseKey.startsWith('dokkai:')) return { big: '📖', sub: 'どっかい' }
   }
   if (domainId === 'kaku') return { big: baseKey.startsWith('char:') ? baseKey.split(':').slice(2).join(':') : baseKey.replace(/^k:/, ''), sub: 'かく' }
   if (domainId === 'suuji' && baseKey.startsWith('skill:math:')) {

@@ -5,7 +5,14 @@ import { SEIKATSU_KINDS_BY_GRADE } from '../data/content/seikatsu.js'
 import { RIKA_LESSON_POINTS, RIKA_UNIT_IDS_BY_GRADE } from '../data/content/rika.js'
 import { SHAKAI_LESSON_POINTS, SHAKAI_UNIT_IDS_BY_GRADE } from '../data/content/shakai.js'
 import { WRITING_GROUPS_BY_GRADE } from '../data/content/writing.js'
+import { IDIOMS, PROVERBS, YOJI, ANTONYMS, SYNONYMS, HOMOPHONES, RADICALS, OKURIGANA, GRAMMAR, KEIGO, DOKKAI } from '../data/content/readingLanguage.js'
 import { dayNumber } from './srs.js'
+
+// WP2: 語彙・文法系の新形式は、その学年で対象データが1件以上あるときだけ
+// 単元として登場させる（登録前の学年に空の単元を作らない）。
+const LANGUAGE_POOLS = [IDIOMS, PROVERBS, YOJI, ANTONYMS, SYNONYMS, HOMOPHONES, RADICALS, OKURIGANA, GRAMMAR, KEIGO]
+const hasLanguageContentAt = (g) => LANGUAGE_POOLS.some((pool) => pool.some((item) => (item.minGrade ?? 0) <= g))
+const hasDokkaiContentAt = (g) => DOKKAI.some((item) => (item.minGrade ?? 0) <= g)
 
 function gradeId(grade) { return Math.max(0, Math.min(6, Number(grade) || 0)) }
 
@@ -38,7 +45,12 @@ export function withLearningUnit(question, grade = 0) {
   return unitId ? { ...question, unitId, skillId: unitId } : question
 }
 
-const readingUnits = (g) => g === 0 ? [`reading:${g}:kana-words`] : [`reading:${g}:kana-words`, `reading:${g}:kanji-words`]
+const readingUnits = (g) => {
+  const units = g === 0 ? [`reading:${g}:kana-words`] : [`reading:${g}:kana-words`, `reading:${g}:kanji-words`]
+  if (hasLanguageContentAt(g)) units.push(`reading:${g}:language`)
+  if (hasDokkaiContentAt(g)) units.push(`reading:${g}:dokkai`)
+  return units
+}
 const writingUnits = (g) => (WRITING_GROUPS_BY_GRADE[g] || []).map((entry) => `writing:${g}:${entry.id}`)
 const lifeUnits = (g) => [...new Set((SEIKATSU_KINDS_BY_GRADE[g] || []).map((kind) => unitIdFor({ domain: 'seikatsu', itemKey: `s:${kind}` }, g)))]
 
@@ -62,7 +74,12 @@ export function unitLabel(unitId) {
   const id = String(unitId || '')
   if (id.startsWith('math:')) return KIND_LABELS[id.slice(5)] || 'さんすう'
   if (id.startsWith('life:')) return ({ calendar: 'カレンダー', weekday: '曜日', clock: 'とけい', season: 'きせつ' })[id.slice(5)] || 'せいかつ'
-  if (id.startsWith('reading:')) return id.endsWith('kanji-words') ? 'かんじの ことば' : 'ことばを よむ'
+  if (id.startsWith('reading:')) {
+    if (id.endsWith(':kanji-words')) return 'かんじの ことば'
+    if (id.endsWith(':language')) return 'ことばの きまり'
+    if (id.endsWith(':dokkai')) return 'たんぶん どっかい'
+    return 'ことばを よむ'
+  }
   if (id.startsWith('writing:')) {
     const [, grade, groupId] = id.split(':')
     const group = (WRITING_GROUPS_BY_GRADE[Number(grade)] || []).find((entry) => entry.id === groupId)
@@ -111,9 +128,12 @@ export function lessonForUnit(unitId) {
     clock: ['短い針は時、長い針は分を表す', '長い針は数字一つで5分。6なら30分', '○分前と○分後は、60分をまたぐか確かめよう'],
     season: ['春・夏・秋・冬で、気温や生き物のようすが変わる', '同じ月でも場所で違うので、代表的な変化を覚えよう', '行事の月と季節をセットで考えよう']
   })[topic]
-  if (id.startsWith('reading:')) points = id.endsWith('kanji-words')
-    ? ['漢字一字ではなく、前後の文字を合わせた言葉として読む', '同じ漢字でも言葉によって読み方が変わる', '送りがなや二字熟語を最後まで見てから答えよう']
-    : ['文字を左から順に音へつなげて、一つの言葉として読む', '小さい「ゃ・ゅ・ょ」や「っ」は前後の音と合わせる', '絵だけで決めず、書かれた文字を最後まで見よう']
+  if (id.startsWith('reading:')) {
+    if (id.endsWith(':kanji-words')) points = ['漢字一字ではなく、前後の文字を合わせた言葉として読む', '同じ漢字でも言葉によって読み方が変わる', '送りがなや二字熟語を最後まで見てから答えよう']
+    else if (id.endsWith(':language')) points = ['慣用句・ことわざ・四字熟語は、言葉どおりの意味ではなく、たとえの意味を覚える', '対義語・類義語・同音異義語は、文の中でどう使われているかで見分ける', '部首・送りがな・主語述語は、漢字や文の形そのものに注目しよう']
+    else if (id.endsWith(':dokkai')) points = ['答えは文章の中に書かれている言葉を手がかりに探す', '「これ・それ」などの指示語は、直前の文を確かめる', '「しかし・だから」などの接続語の前後で、話がどうつながるか確かめよう']
+    else points = ['文字を左から順に音へつなげて、一つの言葉として読む', '小さい「ゃ・ゅ・ょ」や「っ」は前後の音と合わせる', '絵だけで決めず、書かれた文字を最後まで見よう']
+  }
   if (id.startsWith('writing:')) {
     const [, grade, groupId] = id.split(':')
     const chars = (WRITING_GROUPS_BY_GRADE[Number(grade)] || []).find((entry) => entry.id === groupId)?.chars || []
