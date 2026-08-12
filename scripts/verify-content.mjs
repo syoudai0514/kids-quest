@@ -6,6 +6,9 @@ import { generateNumbersQuestion, NUMBERS_KINDS } from '../src/data/content/numb
 import { generateSeikatsuQuestion, SEIKATSU_KINDS } from '../src/data/content/seikatsu.js'
 import { generateRikaQuestion, RIKA_QUESTIONS, RIKA_UNIT_EXPECTATIONS } from '../src/data/content/rika.js'
 import { generateShakaiQuestion, SHAKAI_QUESTIONS, SHAKAI_UNIT_EXPECTATIONS } from '../src/data/content/shakai.js'
+import { KANJI_BY_GRADE, JUKUGO_BY_GRADE } from '../src/data/kanjiByGrade.js'
+import { hasStrokeData } from '../src/data/strokeOrder.js'
+import { WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
 
 const errors = []
 const SAMPLE_COUNT = 24
@@ -69,6 +72,49 @@ const socialDomain = { id: 'shakai' }
 for (const q of SHAKAI_QUESTIONS) verifyQuestion(generateShakaiQuestion({ grade: 6, level: 12, choiceCount: 4 }, `c:${q}`), 6, socialDomain, 4)
 for (const [grade, expected] of Object.entries(RIKA_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateRikaQuestion({ grade: Number(grade), choiceCount: 4 }, `r:${question}`).unitId === unitId, `理科単元IDが不正: ${question}`)
 for (const [grade, expected] of Object.entries(SHAKAI_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateShakaiQuestion({ grade: Number(grade), choiceCount: 4 }, `c:${question}`).unitId === unitId, `社会単元IDが不正: ${question}`)
+
+// WP1: 学年別漢字配当表（2020年度〜, 計1026字）との完全一致を固定する。
+// 実際の配当表突合は生成時に政府公式データ（文化庁 常用漢字表本表）で
+// 実施済み。ここでは回帰防止として、字数・重複・学年配置・書き順・
+// 熟語の構成漢字が壊れていないことを検証する。
+const KANJI_TARGET_COUNT_BY_GRADE = { 1: 80, 2: 160, 3: 200, 4: 202, 5: 193, 6: 191 }
+const ALL_KANJI_LIST = []
+for (const [grade, target] of Object.entries(KANJI_TARGET_COUNT_BY_GRADE)) {
+  const list = KANJI_BY_GRADE[grade] ?? []
+  requireValue(list.length === target, `小${grade}の漢字数が配当表と不一致: ${list.length}/${target}`)
+  for (const entry of list) {
+    requireValue(typeof entry.yomi === 'string' && entry.yomi.length > 0, `漢字「${entry.k}」の読みが空`)
+    requireValue(hasStrokeData(entry.k), `漢字「${entry.k}」の書き順データがない（かきとりに出題できない）`)
+    ALL_KANJI_LIST.push(entry.k)
+  }
+}
+requireValue(ALL_KANJI_LIST.length === 1026, `教育漢字の総数が1026字ではない: ${ALL_KANJI_LIST.length}`)
+requireValue(new Set(ALL_KANJI_LIST).size === ALL_KANJI_LIST.length, '教育漢字に重複がある')
+
+// WP1: 熟語は最低60語/学年。構成漢字はその学年までの配当漢字だけであること。
+let cumulativeKanji = new Set()
+for (let grade = 1; grade <= 6; grade++) {
+  for (const entry of KANJI_BY_GRADE[grade]) cumulativeKanji.add(entry.k)
+  const words = JUKUGO_BY_GRADE[grade] ?? []
+  requireValue(words.length >= 60, `小${grade}の熟語が60語未満: ${words.length}`)
+  const seen = new Set()
+  for (const entry of words) {
+    requireValue(!seen.has(entry.k), `小${grade}の熟語「${entry.k}」が重複`)
+    seen.add(entry.k)
+    for (const ch of entry.k) {
+      requireValue(cumulativeKanji.has(ch), `小${grade}の熟語「${entry.k}」に未習の漢字「${ch}」を含む`)
+    }
+  }
+}
+
+// WP1: かきとり（書字）が全学年で配当漢字を網羅していることを確認する。
+for (let grade = 1; grade <= 6; grade++) {
+  const groups = WRITING_GROUPS_BY_GRADE[grade] ?? []
+  const writingChars = new Set(groups.flatMap((group) => group.chars))
+  const gradeKanji = KANJI_BY_GRADE[grade].map((entry) => entry.k)
+  const missing = gradeKanji.filter((k) => !writingChars.has(k))
+  requireValue(missing.length === 0, `小${grade}のかきとりに未収録の配当漢字: ${missing.join('')}`)
+}
 
 // 月末・うるう日の実在日付を決定論的に確認する。
 const RealDate = Date
