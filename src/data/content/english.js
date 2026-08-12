@@ -24,7 +24,22 @@ const rawWords = [
   ['shape','circle','まる','⭕',1],['shape','square','しかく','🟦',1],['shape','triangle','さんかく','🔺',1],['shape','heart','ハート','❤️',1],['shape','diamond','ひし形','🔶',1],['shape','line','せん','➖',2],
   ['computer','computer','コンピューター','💻',2],['computer','keyboard','キーボード','⌨️',2],['computer','mouse','マウス','🖱️',2],['computer','camera','カメラ','📷',2],['computer','game','ゲーム','🎮',1],['computer','music','おんがく','🎵',1],['computer','picture','え','🖼️',1],['computer','toy','おもちゃ','🧸',0],
   ['extra','day','日・昼間','🌞',1],['extra','week','しゅう','📆',2],['extra','year','とし','🎆',2],['extra','birthday','たんじょうび','🎂',1],['extra','party','パーティー','🎉',2],['extra','gift','プレゼント','🎁',1],['extra','question','しつもん','❓',2],['extra','answer','こたえ','💡',2],['extra','again','もういちど','🔁',1],['extra','stop','とまる','🛑',1],
-  ['extra','big','おおきい','🐘',1],['extra','small','ちいさい','🐜',1],['extra','new','あたらしい','✨',2],['extra','old','ふるい','🏚️',2],['extra','fast','はやい','💨',2],['extra','slow','ゆっくり','🐢',2],['extra','friend','ともだち','🧑‍🤝‍🧑',1],['extra','love','だいすき','❤️',2],['extra','robot','ロボット','🤖',1],['extra','rocket','ロケット','🚀',1]
+  ['extra','big','おおきい','🐘',1],['extra','small','ちいさい','🐜',1],['extra','new','あたらしい','✨',2],['extra','old','ふるい','🏚️',2],['extra','fast','はやい','💨',2],['extra','slow','ゆっくり','🐢',2],['extra','friend','ともだち','🧑‍🤝‍🧑',1],['extra','love','だいすき','❤️',2],['extra','robot','ロボット','🤖',1],['extra','rocket','ロケット','🚀',1],
+  // 小4: 教科・学校行事・学校の場所・持ち物（1カテゴリの語数はテーマ表示上限12に収める）
+  ['subject','japanese','こくご','📕',4],['subject','math','さんすう','🔢',4],['subject','science','りか','🧪',4],['subject','social studies','しゃかい','🌏',4],['subject','art','ずこう','🎨',4],['subject','P.E.','たいいく','🤸',4],['subject','English','えいご','🔤',4],['subject','moral education','どうとく','💛',4],['subject','home economics','かていか','🧵',4],['subject','calligraphy','しょどう','🖌️',4],
+  ['schoolevent','homework','しゅくだい','📝',4],['schoolevent','test','テスト','📄',4],['schoolevent','textbook','きょうかしょ','📗',4],['schoolevent','timetable','じかんわり','🗓️',4],['schoolevent','period','じかんめ','⏰',4],['schoolevent','lunch time','きゅうしょくの じかん','🍱',4],['schoolevent','recess','きゅうけいじかん','🔔',4],['schoolevent','sports day','うんどうかい','🏅',4],['schoolevent','field trip','えんそく','🗺️',4],['schoolevent','graduation','そつぎょうしき','🎓',4],['schoolevent','entrance ceremony','にゅうがくしき','🎌',4],['schoolevent','club activity','クラブかつどう','🏸',4],
+  ['schoolplace','gym','たいいくかん','🏟️',4],['schoolplace','announcement','ほうそう','📢',4],['schoolplace','locker','ロッカー','🗄️',4],['schoolplace','principal','こうちょう先生','🧑‍💼',4],['schoolplace','nurse\'s office','ほけんしつ','🩹',4],['schoolplace','playground','うんどうじょう','🛝',4],['schoolplace','staff room','しょくいんしつ','🗃️',4],['schoolplace','auditorium','こうどう','🎭',4],
+  ['supply','scissors','はさみ','✂️',4],['supply','calculator','けいさんき','🧮',4],['supply','paper clip','クリップ','📎',4],['supply','crayon','クレヨン','🖍️',4],['supply','tissue','ティッシュ','🧻',4],['supply','vacation','きゅうか','🏖️',4],['supply','glue','のり','🧴',4],['supply','pencil case','ふでばこ','🧳',4],
+  // 小5: 職業・日課・道案内
+  ['job','doctor','いしゃ','🩺',5],['job','nurse','かんごし','💉',5],['job','police officer','けいかん','👮',5],['job','firefighter','しょうぼうし','🧑‍🚒',5],['job','farmer','のうか','🚜',5],['job','cook','りょうりにん','👨‍🍳',5],['job','baker','パンや','🥖',5],['job','astronaut','うちゅうひこうし','👨‍🚀',5],['job','pilot','パイロット','🧑‍✈️',5],['job','singer','かしゅ','🎤',5],['job','artist','がか','👩‍🎨',5],['job','scientist','かがくしゃ','🧑‍🔬',5],
+  ['job2','vet','じゅういし','🐾',5],['job2','driver','うんてんしゅ','🚕',5],['job2','carpenter','だいく','🔨',5],['job2','fisherman','りょうし','🎣',5],['job2','designer','デザイナー','✒️',5],['job2','engineer (job)','エンジニア','🔧',5],
+  ['routine','wake up','おきる','🌄',5],['routine','brush teeth','はを みがく','🪥',5],['routine','wash face','かおを あらう','🧼',5],['routine','get dressed','ふくを きる','👚',5],['routine','go to bed','ねる じかん','🌜',5],['routine','take a bath','おふろに はいる','🛁',5],['routine','clean','そうじする','🧹',5],['routine','help','てつだう','🤝',5],['routine','water plants','みずやりする','🪴',5],
+  ['direction','straight','まっすぐ','⬆️',5],['direction','turn left','ひだりに まがる','⬅️',5],['direction','turn right','みぎに まがる','➡️',5],['direction','corner','かど','📍',5],['direction','bridge','はし','🌉',5],['direction','crosswalk','おうだんほどう','🚸',5],['direction','traffic light','しんごう','🚦',5],['direction','map','ちず','🧭',5],['direction','sign','かんばん','🪧',5],
+  // 小6: 国・文化・将来の夢
+  ['country','Japan','にほん','🇯🇵',6],['country','America','アメリカ','🇺🇸',6],['country','China','ちゅうごく','🇨🇳',6],['country','Korea','かんこく','🇰🇷',6],['country','England','イギリス','🇬🇧',6],['country','France','フランス','🇫🇷',6],['country','Australia','オーストラリア','🇦🇺',6],['country','India','インド','🇮🇳',6],['country','Brazil','ブラジル','🇧🇷',6],['country','Egypt','エジプト','🇪🇬',6],
+  ['culture','world','せかい','🌍',6],['culture','language','げんご','🗣️',6],['culture','tradition','でんとう','⛩️',6],['culture','festival','おまつり','🎏',6],['culture','kimono','きもの','👘',6],['culture','flag','こっき','🏳️',6],['culture','history','れきし','📜',6],
+  ['dream','future','みらい','🔮',6],['dream','dream','ゆめ','💭',6],['dream','hope','きぼう','🌠',6],['dream','engineer','ぎじゅつしゃ','⚙️',6],['dream','athlete','うんどう せんしゅ','🏆',6],['dream','musician','おんがくか','🎻',6],['dream','goal','もくひょう','🥅',6],['dream','effort','どりょく','💯',6],['dream','challenge','ちょうせん','🧗',6],
+  ['schoolstep','junior high school','ちゅうがっこう','🏢',6],['schoolstep','study abroad','りゅうがく','🛫',6],['schoolstep','graduate','そつぎょうする','🎊',6],['schoolstep','exam','じゅけん','🖋️',6],['schoolstep','target','もくてき','🎯',6]
 ]
 
 // 絵を使えるかは「重複していないか」ではなく教材として明示する。連想絵は false。
@@ -92,7 +107,10 @@ const RESPONSE_JAPANESE = {
 }
 
 export const ENGLISH_CATEGORIES = {
-  greeting: 'あいさつ', animal: 'どうぶつ', food: 'たべもの・のみもの', color: 'いろ', number: 'かず', body: 'からだ', family: 'かぞく', school: '学校・もちもの', home: '家・身のまわり', action: 'うごき', feeling: '気持ち', weather: '天気・季節', time: '曜日・時間', nature: 'しぜん', place: 'ばしょ', vehicle: 'のりもの', clothes: 'ふく・もちもの', shape: 'かたち', computer: 'コンピューター', extra: 'そのほか'
+  greeting: 'あいさつ', animal: 'どうぶつ', food: 'たべもの・のみもの', color: 'いろ', number: 'かず', body: 'からだ', family: 'かぞく', school: '学校・もちもの', home: '家・身のまわり', action: 'うごき', feeling: '気持ち', weather: '天気・季節', time: '曜日・時間', nature: 'しぜん', place: 'ばしょ', vehicle: 'のりもの', clothes: 'ふく・もちもの', shape: 'かたち', computer: 'コンピューター', extra: 'そのほか',
+  subject: '教科', schoolevent: '学校行事', schoolplace: '学校のばしょ', supply: 'がっこうの もちもの',
+  job: 'しごと', job2: 'しごと２', routine: '毎日の生活', direction: '道あんない',
+  country: '国', culture: '文化・世界', dream: 'ゆめ・目標', schoolstep: '中学校・進学'
 }
 
 function shuffle(values) { const a = [...values]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
@@ -115,7 +133,7 @@ function itemFromKey(key) {
 }
 
 // 初日に学年分の全単語へ飛ばず、8〜12語程度のテーマを順番に開く。
-const THEME_ORDER = ['greeting', 'color', 'number', 'animal', 'food', 'body', 'family', 'school', 'home', 'action', 'feeling', 'weather', 'nature', 'place', 'vehicle', 'clothes', 'shape', 'computer', 'time', 'extra']
+const THEME_ORDER = ['greeting', 'color', 'number', 'animal', 'food', 'body', 'family', 'school', 'home', 'action', 'feeling', 'weather', 'nature', 'place', 'vehicle', 'clothes', 'shape', 'computer', 'time', 'extra', 'subject', 'schoolevent', 'schoolplace', 'supply', 'job', 'job2', 'routine', 'direction', 'country', 'culture', 'dream', 'schoolstep']
 function currentThemeWords(params) {
   const all = eligibleWords(params)
   const stats = params.englishWordStats || {}
