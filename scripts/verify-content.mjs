@@ -153,6 +153,36 @@ function verifyLengthDistribution(label, questions, generate, prefix, maxRate = 
 verifyLengthDistribution('りか', RIKA_QUESTIONS, generateRikaQuestion, 'r:')
 verifyLengthDistribution('しゃかい', SHAKAI_QUESTIONS, generateShakaiQuestion, 'c:')
 
+// WP2の短文読解も、選択肢を1問ずつ手で書くため同じ偏りが出る
+// （実測で正解が単独最長になる割合が64%あった）。固定リストではなく
+// 実際の生成結果をまとめて測る。
+{
+  let total = 0
+  let uniquelyLongest = 0
+  let worstGap = { gap: 0, question: '' }
+  for (const grade of [3, 4, 5, 6]) {
+    for (let i = 0; i < 600; i++) {
+      const item = generateDokkaiQuestion({ grade, choiceCount: 4 })
+      const choices = item?.choices ?? []
+      const answer = choices.find((choice) => choice.id === item.answerId)
+      if (!answer || choices.length < 3) continue
+      total++
+      const lengths = choices.map((choice) => String(choice.label ?? choice.id).replace(/\s/g, '').length)
+      const answerLength = String(answer.label ?? answer.id).replace(/\s/g, '').length
+      const longest = Math.max(...lengths)
+      if (answerLength === longest && lengths.filter((l) => l === longest).length === 1) uniquelyLongest++
+      const wrongLengths = choices.filter((choice) => choice.id !== item.answerId).map((choice) => String(choice.label ?? choice.id).replace(/\s/g, '').length)
+      const gap = answerLength - Math.max(...wrongLengths)
+      if (gap > worstGap.gap) worstGap = { gap, question: item.instruction }
+    }
+  }
+  if (total) {
+    const rate = uniquelyLongest / total
+    requireValue(rate <= 0.35, `短文読解: 正解が単独で最長になる割合が${Math.round(rate * 100)}%（4択の偶然は約25%）。長い選択肢を選ぶだけで当たってしまう`)
+    requireValue(worstGap.gap <= 6, `短文読解: 正解が全誤答より${worstGap.gap}文字長い設問がある: 「${worstGap.question}」`)
+  }
+}
+
 // WP1: 学年別漢字配当表（2020年度〜, 計1026字）との完全一致を固定する。
 // 実際の配当表突合は生成時に政府公式データ（文化庁 常用漢字表本表）で
 // 実施済み。ここでは回帰防止として、字数・重複・学年配置・書き順・
