@@ -4,10 +4,11 @@ import { RIKA_UNIT_EXPECTATIONS } from '../src/data/content/rika.js'
 import { SHAKAI_UNIT_EXPECTATIONS } from '../src/data/content/shakai.js'
 import { WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
 import { DOMAIN_BY_ID } from '../src/engine/activities.js'
-import { unitLedger, requiredUnitIds, unitReady, recordUnitResult, promotionResult, lessonForUnit, selectPracticeUnit } from '../src/engine/learningUnits.js'
+import { unitLedger, requiredUnitIds, unitReady, recordUnitResult, promotionResult, lessonForUnit, selectPracticeUnit, withLearningUnit } from '../src/engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../src/engine/englishMigration.js'
 import { englishDueEntries } from '../src/engine/englishProgress.js'
-import { questionIds, withQuestionIds, persistentReviewSnapshot } from '../src/engine/reviewKey.js'
+import { generatorReviewKey, questionIds, withQuestionIds, persistentReviewSnapshot } from '../src/engine/reviewKey.js'
+import { activeReviewSrs, activeStatsDomainId } from '../src/engine/reviewMode.js'
 import { buildCoreMission } from '../src/engine/missions.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../src/engine/progressMigration.js'
 import { questionForUnit } from '../src/engine/unitQuestions.js'
@@ -35,6 +36,28 @@ for (let i = 0; i < 40 && mathB.questionInstanceId === mathA.questionInstanceId;
 must(mathA.knowledgeId === 'skill:math:add3digit' && mathB.knowledgeId === mathA.knowledgeId, '算数knowledgeIdがskillId単位でない')
 must(mathB.questionInstanceId !== mathA.questionInstanceId, '算数の異なる数値をquestionInstanceIdで分けられない')
 must(persistentReviewSnapshot('suuji', mathA, mathA.knowledgeId) === null, '算数SRSに同じ式のスナップショットを保存している')
+
+// hard算数のSRSは通常算数と混ぜず、保存したknowledgeIdから同じhard問題を
+// とっくんで再生成できる。反対モードの記録は消さず、一覧だけ切り替える。
+const hardState = {
+  grade: 5,
+  settings: { mode: 'hard' },
+  srs: {
+    suuji: { 'skill:math:decimalDiv': { due: 1 } },
+    'hard:suuji': { 'skill:hard:math:jrTsurukame': { due: 1 } },
+    rika: { 'r:通常理科': { due: 1 } }
+  }
+}
+must(activeStatsDomainId(hardState, 'suuji') === 'hard:suuji', '小5hard算数の習熟度を専用台帳から読めない')
+must(activeStatsDomainId(hardState, 'rika') === 'rika', 'hardモードで通常理科の難易度台帳まで切り替わった')
+must(generatorReviewKey('skill:hard:math:jrTsurukame') === 'hard:n:jrTsurukame', 'hard算数knowledgeIdを生成キーへ戻せない')
+const hardOriginal = withQuestionIds(withLearningUnit(DOMAIN_BY_ID.suuji.generateQuestion({ grade: 5, mode: 'hard', choiceCount: 4 }, 'hard:n:jrTsurukame'), 5))
+const hardAgain = withQuestionIds(withLearningUnit(DOMAIN_BY_ID.suuji.generateQuestion({ grade: 5, mode: 'hard', choiceCount: 4 }, generatorReviewKey(hardOriginal.knowledgeId)), 5))
+must(hardOriginal.knowledgeId === 'skill:hard:math:jrTsurukame' && hardAgain.knowledgeId === hardOriginal.knowledgeId, 'hard算数の期限復習が同じ技能へ戻らない')
+const hardReviewSrs = activeReviewSrs(hardState)
+must(!hardReviewSrs.suuji && hardReviewSrs['hard:suuji'] && hardReviewSrs.rika, 'hardモードのとっくん台帳を正しく選べない')
+const normalReviewSrs = activeReviewSrs({ ...hardState, settings: { mode: 'normal' } })
+must(normalReviewSrs.suuji && !normalReviewSrs['hard:suuji'] && normalReviewSrs.rika, 'normalモードのとっくんにhard算数が混入')
 
 // 英語キー・図鑑指定練習・アルファベット22項目。
 for (const [raw, normalized] of [['en:ew001', 'enw:ew001'], ['enw:ew001', 'enw:ew001'], ['enp:ep001', 'enp:ep001'], ['ena:A-B', 'ena:A-B']]) must(normalizeEnglishKey(raw) === normalized, `${raw}: 英語キーの正規化に失敗`)
@@ -64,8 +87,8 @@ for (const word of ENGLISH_WORDS) {
 }
 const phrase = ENGLISH_PHRASES[0]
 must(base(generateEnglishQuestion({ grade: 6, englishAudioAvailable: true, reviewKey: `en:${phrase.id}` }, `en:${phrase.id}`).itemKey) === `enp:${phrase.id}`, '会話指定復習が別項目へ化けた')
-const englishDue = englishDueEntries({ englishWordStats: { ew001: { correct: 1, wrong: 0, stage: 1, nextDue: 10 } }, englishPhraseStats: {}, englishAlphabetStats: {} }, 10)
-must(englishDue.length === 1 && englishDue[0].key === 'enw:ew001', '英語進捗だけから重複なしのとっくんを作れない')
+const englishDue = englishDueEntries({ englishWordStats: { ew001: { correct: 1, wrong: 0, stage: 1, nextDue: 10 } }, englishPhraseStats: { eg001: { correct: 1, wrong: 0, stage: 1, nextDue: 10 } }, englishAlphabetStats: {} }, 10)
+must(englishDue.length === 2 && englishDue.some((entry) => entry.key === 'enw:ew001') && englishDue.some((entry) => entry.key === 'eng:eg001'), '英単語・文法の進捗から重複なしのとっくんを作れない')
 
 // v13/v14保存を安定IDへ移し、プロフィール・報酬・当日進捗は保持する。
 const oldMathKey = 'n:add10#old-order'

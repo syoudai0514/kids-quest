@@ -99,7 +99,7 @@ export function unitLabel(unitId) {
     return `${kind}${number}（${(group?.chars || []).slice(0, 4).join('・')}）`
   }
   const science = { insects: 'こん虫', plants: '植物', 'light-shadow': '光とかげ', magnet: 'じしゃく', sound: '音', 'rubber-wind': 'ゴムと風', 'air-water': '空気と水', electricity: '電気', 'moon-stars': '月と星', heat: 'あたたまり方', 'water-states': '水のすがた', 'living-things': '生き物', 'germination-growth': '発芽と成長', medaka: 'メダカ', pendulum: 'ふりこ', electromagnet: '電磁石', 'running-water': '流れる水', weather: '天気', flowers: '花', combustion: '燃焼', 'plant-sunlight': '植物と日光', body: '人の体', lever: 'てこ', solutions: '水よう液', earth: '大地のつくり', weight: '物と重さ', circuit: '電気の通り道', 'sun-ground': '太陽と地面', 'body-movement': '体のつくりと運動', 'daily-weather': '気温の変化', rainwater: '雨水のゆくえ', dissolving: 'もののとけ方', ecosystem: '生物と環境', 'moon-sun': '月と太陽', 'electricity-use': '電気の利用' }
-  const social = { 'map-symbols': '地図記号', safety: '安全なくらし', shops: '店のしごと', 'old-tools': '昔のくらし', 'public-safety': '公共の安全', prefectures: '都道府県', 'waste-water': 'ごみと水', disasters: '自然災害', maps: '地図', land: '国土', agriculture: '農業', fishing: '水産業', industry: '工業', information: '情報', forests: '森林', history: '歴史', politics: '政治', constitution: '日本国憲法', international: '国際社会' }
+  const social = { 'map-symbols': '地図記号', safety: '安全なくらし', shops: '店のしごと', 'old-tools': '昔のくらし', 'public-safety': '公共の安全', 'city-observation': '市のようす', 'local-production': '地域の生産', prefectures: '都道府県', 'waste-water': 'ごみと水', disasters: '自然災害', maps: '地図', 'traditional-culture': '伝統文化', 'local-development': '地域の開発', land: '国土', agriculture: '農業', fishing: '水産業', industry: '工業', information: '情報', forests: '森林', trade: '貿易', environment: '環境', history: '歴史', politics: '政治', constitution: '日本国憲法', international: '国際社会' }
   const topic = id.split(':').at(-1) || 'この たんげん'
   return science[topic] || social[topic] || topic.replaceAll('-', ' ')
 }
@@ -128,7 +128,7 @@ const MATH_LESSON_GROUPS = [
   [['angle', 'perpendicular', 'shapeAngle'], ['一直線は180°、一周は360°', '90°で交わる直線は垂直、どこまでも交わらない直線は平行', '多角形の内角の和は（辺の数－2）×180°で求められる']],
   [['lineGraph', 'bandGraph', 'frequencyTable'], ['折れ線グラフは線の高さの変化、帯グラフ・円グラフは全体に対するわりあいを表す', '度数分布表は、決めた区切り（階級）ごとに人数などを数える', 'グラフや表のたてよこが何を表しているか、先にたしかめよう']],
   [['changePattern', 'calcRule'], ['ともなって変わる2つの量の関係に注目する', 'かけ算・わり算はたし算・ひき算より先に計算し、（）の中はさらに先に計算する', '計算の順番をまちがえていないか、見直そう']],
-  [['fracAddSame'], ['分母が同じ分数どうしのたし算は、分子だけをたす', '5分の2＋5分の1は、分子2＋1＝3で5分の3', '分母はそのまま変えないことに気をつけよう']],
+  [['fracAddSame', 'fracSubSame'], ['分母が同じ分数どうしのたし算・ひき算は、分子だけを計算する', '5分の3−5分の1は、分子3−1＝2で5分の2', '分母はそのまま変えないことに気をつけよう']],
   [['congruent', 'polygonCircle', 'symmetry'], ['合同は形も大きさも同じ図形、正多角形は辺と角がすべて等しい図形', '線対称は折るとぴったり重なる図形、点対称は180°回すとぴったり重なる図形', '図形の名前と特徴をセットで覚えよう']],
   [['caseCount'], ['場合の数は、もれなく・重複なく数え上げる', '3人が1列に並ぶ並び方は3×2×1で6通り', '書き出すときは順番を決めて、抜けや重なりがないか確かめよう']],
   [['scaleDrawing'], ['縮図・拡大図は、実際の長さを同じわりあいで縮めたり広げたりした図', '1000分の1の縮図なら、実際の長さをcmに直してから1000でわる', '単位をそろえてから計算しよう']]

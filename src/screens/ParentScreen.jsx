@@ -26,6 +26,7 @@ import { boxCounts, daysUntilNext, MAX_BOX } from '../engine/srs.js'
 import { getWeapon } from '../data/weapons.js'
 import { AppHeader } from '../components/common.jsx'
 import { trialUnlocked, unitLabel } from '../engine/learningUnits.js'
+import { activeReviewSrs } from '../engine/reviewMode.js'
 
 function downloadText(filename, text) {
   try {
@@ -219,6 +220,7 @@ function trendColor(label) {
 
 export default function ParentScreen({ onBack }) {
   const { state, dispatch } = useGame()
+  const reviewSrs = activeReviewSrs(state)
   const [narratorStatus, setNarratorStatus] = useState(getNarratorStatus)
   const d = state.daily
   const accuracy = d.attemptsToday ? Math.round((d.correctToday / d.attemptsToday) * 100) : 0
@@ -715,9 +717,9 @@ export default function ParentScreen({ onBack }) {
                 とりくみ日数: {activeDays}日 ／ 累計クリア: {state.totalClears}回
                 <br />
                 <b>定着状況（間隔反復）</b>: きょう復習 {missedCount(state)}問（英語を含む）／
-                おぼえかけ {boxCounts(state.srs).slice(0, MAX_BOX).reduce((a, b) => a + b, 0)}問 ／
-                定着ずみ {boxCounts(state.srs)[MAX_BOX]}問
-                {daysUntilNext(state.srs) ? `（次の復習は${daysUntilNext(state.srs)}日後）` : ''}
+                おぼえかけ {boxCounts(reviewSrs).slice(0, MAX_BOX).reduce((a, b) => a + b, 0)}問 ／
+                定着ずみ {boxCounts(reviewSrs)[MAX_BOX]}問
+                {daysUntilNext(reviewSrs) ? `（次の復習は${daysUntilNext(reviewSrs)}日後）` : ''}
                 <br />
                 ※まちがえた問題は 1→3→7→14→30日 と間隔をあけて再出題し、忘れる前に思い出させます。
                 <br />

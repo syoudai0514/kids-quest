@@ -5,6 +5,16 @@
 
 export function baseItemKey(key) { return String(key || '').split('#')[0] }
 
+// SRSは算数を技能単位（skill:*）で保存する一方、生成器は教材側の
+// reviewKey（n:* / hard:n:*）を受け取る。通常算数だけでなくhard算数も
+// 同じ知識へ戻せるよう、変換を一か所に集約する。
+export function generatorReviewKey(knowledgeId) {
+  const key = baseItemKey(knowledgeId)
+  if (key.startsWith('skill:hard:math:')) return `hard:n:${key.slice('skill:hard:math:'.length)}`
+  if (key.startsWith('skill:math:')) return `n:${key.slice('skill:math:'.length)}`
+  return key
+}
+
 function hash(text) {
   let value = 0x811c9dc5
   for (let i = 0; i < text.length; i++) { value ^= text.charCodeAt(i); value = Math.imul(value, 0x01000193) }

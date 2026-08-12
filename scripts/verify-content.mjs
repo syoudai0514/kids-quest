@@ -2,7 +2,7 @@
 // Luna のような軽量エージェントがデータだけを増やしても、壊れた設問を
 // 公開へ持ち込まないための最小ゲート。外部サービスや乱数シードは不要。
 import { domainsForGrade } from '../src/engine/activities.js'
-import { generateNumbersQuestion, NUMBERS_KINDS } from '../src/data/content/numbers.js'
+import { generateNumbersQuestion, NUMBERS_KINDS, NUMBERS_KINDS_BY_GRADE } from '../src/data/content/numbers.js'
 import { generateSeikatsuQuestion, SEIKATSU_KINDS } from '../src/data/content/seikatsu.js'
 import { generateRikaQuestion, RIKA_QUESTIONS, RIKA_UNIT_EXPECTATIONS } from '../src/data/content/rika.js'
 import { generateShakaiQuestion, SHAKAI_QUESTIONS, SHAKAI_UNIT_EXPECTATIONS } from '../src/data/content/shakai.js'
@@ -87,6 +87,22 @@ const socialDomain = { id: 'shakai' }
 for (const q of SHAKAI_QUESTIONS) verifyQuestion(generateShakaiQuestion({ grade: 6, level: 12, choiceCount: 4 }, `c:${q}`), 6, socialDomain, 4)
 for (const [grade, expected] of Object.entries(RIKA_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateRikaQuestion({ grade: Number(grade), choiceCount: 4 }, `r:${question}`).unitId === unitId, `理科単元IDが不正: ${question}`)
 for (const [grade, expected] of Object.entries(SHAKAI_UNIT_EXPECTATIONS)) for (const [question, unitId] of Object.entries(expected)) requireValue(generateShakaiQuestion({ grade: Number(grade), choiceCount: 4 }, `c:${question}`).unitId === unitId, `社会単元IDが不正: ${question}`)
+
+// WP4/WP5: 「単元名がある」だけでは完了にしない。各学年30問以上、
+// 各単元3問以上を要求し、計画書で明示された社会の未収録単元も固定する。
+function verifyFixedBankCoverage(label, expectations) {
+  for (const [grade, expected] of Object.entries(expectations)) {
+    const unitCounts = Object.values(expected).reduce((counts, unitId) => ({ ...counts, [unitId]: (counts[unitId] || 0) + 1 }), {})
+    requireValue(Object.keys(expected).length >= 30, `${label} 小${grade}: 30問未満（${Object.keys(expected).length}問）`)
+    for (const [unitId, count] of Object.entries(unitCounts)) requireValue(count >= 3, `${label} 小${grade}: ${unitId} が3問未満（${count}問）`)
+  }
+}
+verifyFixedBankCoverage('理科', RIKA_UNIT_EXPECTATIONS)
+verifyFixedBankCoverage('社会', SHAKAI_UNIT_EXPECTATIONS)
+for (const unitId of ['social:3:city-observation', 'social:3:local-production', 'social:4:traditional-culture', 'social:4:local-development', 'social:5:trade', 'social:5:environment']) {
+  const grade = unitId.split(':')[1]
+  requireValue(Object.values(SHAKAI_UNIT_EXPECTATIONS[grade] || {}).includes(unitId), `社会の必須単元が未収録: ${unitId}`)
+}
 
 // 計画書§2-3: 正解だけが長いという見た目の手がかりを作らない。
 // 固定バンク教科は誤答も人手で書くため、正解だけが極端に長くなりやすい
@@ -350,6 +366,34 @@ for (let i = 0; i < 400; i++) {
     const expected = Math.round(radius * radius * 3.14 * 100) / 100
     requireValue(Number(circleArea.answerId) === expected, `さんすう 円の面積の正解が誤り: 半径${radius}cm → ${circleArea.answerId}（正しくは ${expected}）`)
   }
+}
+
+// ---- WP3: 名前だけでなく、学年の中核操作を実際に問う ----
+// decimalDiv は小数「で」わる、fracDiv は分数「で」わる問題でなければ、
+// 小5・小6の欠落単元を埋めたことにならない。
+for (let i = 0; i < 300; i++) {
+  const decimal = generateNumbersQuestion({ grade: 5, level: 12, choiceCount: 4 }, 'n:decimalDiv')
+  const decimalMatch = String(decimal.instruction).match(/^([\d.]+) ÷ ([\d.]+) ＝/)
+  requireValue(decimalMatch && Number(decimalMatch[2]) % 1 !== 0, `さんすう 小数のわり算: 除数が小数ではない (${decimal.instruction})`)
+  if (decimalMatch) {
+    const expected = Math.round((Number(decimalMatch[1]) / Number(decimalMatch[2])) * 100) / 100
+    requireValue(Number(decimal.answerId) === expected, `さんすう 小数のわり算の正解が誤り: ${decimal.instruction} → ${decimal.answerId}`)
+  }
+
+  const fraction = generateNumbersQuestion({ grade: 6, level: 12, choiceCount: 4 }, 'n:fracDiv')
+  const fractionMatch = String(fraction.instruction).match(/^(\d+)\/(\d+) ÷ (\d+)\/(\d+) ＝/)
+  requireValue(!!fractionMatch, `さんすう 分数のわり算: 除数が分数ではない (${fraction.instruction})`)
+  if (fractionMatch) {
+    const expected = (Number(fractionMatch[1]) * Number(fractionMatch[4])) / (Number(fractionMatch[2]) * Number(fractionMatch[3]))
+    const [num, denom = '1'] = String(fraction.answerId).split('/')
+    requireValue(Math.abs(Number(num) / Number(denom) - expected) < 1e-9, `さんすう 分数のわり算の正解が誤り: ${fraction.instruction} → ${fraction.answerId}`)
+  }
+}
+for (const kind of ['decimalMul', 'fracAddSame', 'fracSubSame']) {
+  requireValue(NUMBERS_KINDS_BY_GRADE[4].includes(kind), `小4の必須算数単元が未登録: ${kind}`)
+}
+for (const kind of ['volume', 'multiples', 'divisors', 'lcm', 'gcdKind']) {
+  requireValue(NUMBERS_KINDS_BY_GRADE[5].includes(kind), `小5の必須算数単元が未登録: ${kind}`)
 }
 
 // ---- 算数: 選択肢に浮動小数の誤差を出さない ----

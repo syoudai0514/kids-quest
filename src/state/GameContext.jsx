@@ -27,6 +27,8 @@ import { migrateEnglishWordStats } from '../engine/englishMigration.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../engine/progressMigration.js'
 import { grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../engine/battleTickets.js'
 import { freshDailyMission, lowerGradeProgress } from '../engine/gradeReset.js'
+import { activeReviewSrs, activeStatsDomainId } from '../engine/reviewMode.js'
+export { activeReviewSrs, activeStatsDomainId } from '../engine/reviewMode.js'
 
 // 1日3戦は自由に遊べる。さらに、教科をやりきる・追加問題を正解すると
 // チケットで増えていく。「がんばるほど遊べる」を保ちつつ、以前より
@@ -77,7 +79,7 @@ export function masteryProgress(state) {
 
 // きょう復習する問題の数（ホームのバッジ・とっくんの件数）
 export function missedCount(state) {
-  return dueCount(state.srs) + englishDueEntries(state, dayNumber()).length
+  return dueCount(activeReviewSrs(state)) + englishDueEntries(state, dayNumber()).length
 }
 
 // いま そうびしている武器（無ければ null）
@@ -484,9 +486,9 @@ function reduceProfile(state, action) {
       let englishAlphabetStats = state.englishAlphabetStats || {}
       if (domainId === 'english' && action.englishItemKey) {
         const rawKey = String(action.englishItemKey).split('#')[0]
-        const isPhrase = rawKey.startsWith('enp:')
+        const isPhrase = rawKey.startsWith('enp:') || rawKey.startsWith('eng:')
         const isAlphabet = rawKey.startsWith('ena:')
-        const key = rawKey.replace(/^en[wap]?:/, '')
+        const key = rawKey.replace(/^(?:en[wap]?|eng):/, '')
         const stats = isAlphabet ? englishAlphabetStats : isPhrase ? englishPhraseStats : englishWordStats
         const prevStat = stats[key] || emptyEnglishProgress(dayNumber())
         const todayDay = dayNumber()

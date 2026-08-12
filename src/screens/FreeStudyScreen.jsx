@@ -9,7 +9,7 @@
 // ============================================================
 
 import React from 'react'
-import { useGame, skillOf } from '../state/GameContext.jsx'
+import { activeStatsDomainId, useGame, skillOf } from '../state/GameContext.jsx'
 import { domainsForGrade, domainName } from '../engine/activities.js'
 import { buildFreeTask } from '../engine/missions.js'
 import { dueKeys } from '../engine/srs.js'
@@ -53,8 +53,9 @@ export default function FreeStudyScreen({ onBack, onStartTask, onEnglishDictiona
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 12 }}>
             {doms.map((dom) => {
-              const sk = skillOf(state, dom.id)
-              const due = dueKeys(state.srs, dom.id).length
+              const statsDomainId = activeStatsDomainId(state, dom.id)
+              const sk = skillOf(state, statsDomainId)
+              const due = dueKeys(state.srs, statsDomainId).length
               return (
                 <button
                   key={dom.id}

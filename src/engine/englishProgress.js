@@ -30,15 +30,15 @@ export function advanceEnglishProgress(previous, correct, today, at = Date.now()
 // 英語は汎用SRSへ二重登録せず、この進捗だけから「とっくん」を組み立てる。
 export function englishDueEntries(state, today) {
   const sources = [
-    ['enw:', state?.englishWordStats],
-    ['enp:', state?.englishPhraseStats],
-    ['ena:', state?.englishAlphabetStats]
+    ['enw:', state?.englishWordStats, null],
+    ['enp:', state?.englishPhraseStats, (id) => id.startsWith('eg') ? 'eng:' : 'enp:'],
+    ['ena:', state?.englishAlphabetStats, null]
   ]
   const out = []
-  for (const [prefix, stats] of sources) {
+  for (const [prefix, stats, prefixFor] of sources) {
     for (const [id, entry] of Object.entries(stats || {})) {
       if (((entry.correct || 0) > 0 || (entry.wrong || 0) > 0) && (entry.nextDue ?? Infinity) <= today) {
-        out.push({ domainId: 'english', key: `${prefix}${id}`, entry: { ...entry, due: entry.nextDue } })
+        out.push({ domainId: 'english', key: `${prefixFor ? prefixFor(id) : prefix}${id}`, entry: { ...entry, due: entry.nextDue } })
       }
     }
   }

@@ -30,16 +30,20 @@ const rawWords = [
   ['schoolevent','homework','しゅくだい','📝',4],['schoolevent','test','テスト','📄',4],['schoolevent','textbook','きょうかしょ','📗',4],['schoolevent','timetable','じかんわり','🗓️',4],['schoolevent','period','じかんめ','⏰',4],['schoolevent','lunch time','きゅうしょくの じかん','🍱',4],['schoolevent','recess','きゅうけいじかん','🔔',4],['schoolevent','sports day','うんどうかい','🏅',4],['schoolevent','field trip','えんそく','🧭',4],['schoolevent','graduation','そつぎょうしき','🎓',4],['schoolevent','entrance ceremony','にゅうがくしき','🎌',4],['schoolevent','club activity','クラブかつどう','🏸',4],
   ['schoolplace','gym','たいいくかん','🏟️',4],['schoolplace','announcement','ほうそう','📢',4],['schoolplace','locker','ロッカー','🗄️',4],['schoolplace','principal','こうちょう先生','🧑‍💼',4],['schoolplace','nurse\'s office','ほけんしつ','🩹',4],['schoolplace','playground','うんどうじょう','🛝',4],['schoolplace','staff room','しょくいんしつ','🗃️',4],['schoolplace','auditorium','こうどう','🎭',4],
   ['supply','scissors','はさみ','✂️',4],['supply','calculator','けいさんき','🧮',4],['supply','paper clip','クリップ','📎',4],['supply','crayon','クレヨン','🖍️',4],['supply','tissue','ティッシュ','🧻',4],['supply','vacation','きゅうか','🏖️',4],['supply','glue','のり','🧴',4],['supply','pencil case','ふでばこ','🧳',4],
+  ['supply','compass','コンパス','🧭',4],['supply','folder','ファイル','📁',4],
   // 小5: 職業・日課・道案内
   ['job','doctor','いしゃ','🩺',5],['job','nurse','かんごし','💉',5],['job','police officer','けいかん','👮',5],['job','firefighter','しょうぼうし','🧑‍🚒',5],['job','farmer','のうか','🚜',5],['job','cook','りょうりにん','👨‍🍳',5],['job','baker','パンや','🥖',5],['job','astronaut','うちゅうひこうし','👨‍🚀',5],['job','pilot','パイロット','🧑‍✈️',5],['job','singer','かしゅ','🎤',5],['job','artist','がか','👩‍🎨',5],['job','scientist','かがくしゃ','🧑‍🔬',5],
   ['job2','vet','じゅういし','🐾',5],['job2','driver','うんてんしゅ','🚕',5],['job2','carpenter','だいく','🔨',5],['job2','fisherman','りょうし','🎣',5],['job2','designer','デザイナー','✒️',5],['job2','programmer','プログラマー','🧑‍💻',5],
+  ['job2','dentist','はいしゃ','🦷',5],['job2','mechanic','せいびし','🔧',5],['job2','photographer','しゃしんか','📷',5],['job2','translator','ほんやくか','🗣️',5],
   ['routine','wake up','おきる','🌄',5],['routine','brush teeth','はを みがく','🪥',5],['routine','wash face','かおを あらう','🧼',5],['routine','get dressed','ふくを きる','👚',5],['routine','go to bed','ねる じかん','🌜',5],['routine','take a bath','おふろに はいる','🛁',5],['routine','clean','そうじする','🧹',5],['routine','help','てつだう','🤝',5],['routine','water plants','みずやりする','🪴',5],
   ['direction','straight','まっすぐ','⬆️',5],['direction','turn left','ひだりに まがる','⬅️',5],['direction','turn right','みぎに まがる','➡️',5],['direction','corner','かど','📍',5],['direction','bridge','はし','🌉',5],['direction','crosswalk','おうだんほどう','🚸',5],['direction','traffic light','しんごう','🚦',5],['direction','map','ちず','🗺️',5],['direction','sign','かんばん','🪧',5],
   // 小6: 国・文化・将来の夢
   ['country','Japan','にほん','🇯🇵',6],['country','America','アメリカ','🇺🇸',6],['country','China','ちゅうごく','🇨🇳',6],['country','Korea','かんこく','🇰🇷',6],['country','England','イギリス','🇬🇧',6],['country','France','フランス','🇫🇷',6],['country','Australia','オーストラリア','🇦🇺',6],['country','India','インド','🇮🇳',6],['country','Brazil','ブラジル','🇧🇷',6],['country','Egypt','エジプト','🇪🇬',6],
   ['culture','world','せかい','🌍',6],['culture','language','げんご','🗣️',6],['culture','tradition','でんとう','⛩️',6],['culture','festival','おまつり','🎏',6],['culture','kimono','きもの','👘',6],['culture','flag','こっき','🏳️',6],['culture','history','れきし','📜',6],
+  ['culture','culture','ぶんか','🏛️',6],['culture','continent','たいりく','🗺️',6],['culture','peace','へいわ','🕊️',6],['culture','environment','かんきょう','🌱',6],['culture','international','こくさいてきな','🌐',6],
   ['dream','future','みらい','🔮',6],['dream','dream','ゆめ','💭',6],['dream','hope','きぼう','🌠',6],['dream','engineer','ぎじゅつしゃ','⚙️',6],['dream','athlete','うんどう せんしゅ','🏆',6],['dream','musician','おんがくか','🎻',6],['dream','goal','もくひょう','🥅',6],['dream','effort','どりょく','💯',6],['dream','challenge','ちょうせん','🧗',6],
-  ['schoolstep','junior high school','ちゅうがっこう','🏢',6],['schoolstep','study abroad','りゅうがく','🛫',6],['schoolstep','graduate','そつぎょうする','🎊',6],['schoolstep','exam','じゅけん','🖋️',6],['schoolstep','target','もくてき','🎯',6]
+  ['schoolstep','junior high school','ちゅうがっこう','🏢',6],['schoolstep','study abroad','りゅうがく','🛫',6],['schoolstep','graduate','そつぎょうする','🎊',6],['schoolstep','exam','じゅけん','🖋️',6],['schoolstep','target','もくてき','🎯',6],
+  ['schoolstep','volunteer','ボランティア','🤝',6],['schoolstep','university','だいがく','🎓',6],['schoolstep','career','しょうらいの しごと','🧭',6],['schoolstep','communicate','つたえあう','💬',6]
 ]
 
 // 絵を使えるかは「重複していないか」ではなく教材として明示する。連想絵は false。
@@ -52,16 +56,16 @@ const PICTURE_INELIGIBLE = new Set([
   'Japanese', 'math', 'science', 'social studies', 'art', 'P.E.', 'English', 'moral education', 'home economics', 'calligraphy',
   'homework', 'test', 'textbook', 'timetable', 'period', 'lunch time', 'recess', 'sports day', 'field trip', 'graduation', 'entrance ceremony', 'club activity',
   'gym', 'announcement', 'locker', 'principal', "nurse's office", 'staff room', 'auditorium',
-  'calculator', 'tissue', 'vacation', 'glue', 'pencil case',
+  'calculator', 'tissue', 'vacation', 'glue', 'pencil case', 'compass', 'folder',
   // 小5: 道具の絵から職業名は決まらない。日課は行為なので絵にできない
   'doctor', 'nurse', 'farmer', 'baker', 'singer',
-  'vet', 'driver', 'carpenter', 'fisherman', 'designer', 'programmer',
+  'vet', 'driver', 'carpenter', 'fisherman', 'designer', 'programmer', 'dentist', 'mechanic', 'photographer', 'translator',
   'wake up', 'brush teeth', 'wash face', 'get dressed', 'go to bed', 'take a bath', 'clean', 'help', 'water plants',
   'straight', 'turn left', 'turn right', 'corner',
   // 小6: 文化・将来の夢はどれも抽象語
-  'language', 'tradition', 'history',
+  'language', 'tradition', 'history', 'culture', 'continent', 'peace', 'environment', 'international',
   'future', 'dream', 'hope', 'engineer', 'athlete', 'musician', 'goal', 'effort', 'challenge',
-  'junior high school', 'study abroad', 'graduate', 'exam', 'target'
+  'junior high school', 'study abroad', 'graduate', 'exam', 'target', 'volunteer', 'university', 'career', 'communicate'
 ])
 export const ENGLISH_WORDS = rawWords.map(([category, english, japanese, emoji, minGrade], i) => ({
   id: `ew${String(i + 1).padStart(3, '0')}`, category, english, japanese, emoji, minGrade, speak: english,
@@ -84,6 +88,30 @@ export const ENGLISH_PHRASES = phraseRows.map(([english, japanese, scene, respon
   id: `ep${String(i + 1).padStart(3, '0')}`, english, japanese, scene, response,
   distractors: PHRASE_DISTRACTORS[i % PHRASE_DISTRACTORS.length].filter((x) => x !== response),
   minGrade: i < 20 ? 0 : i < 38 ? 2 : 4, speak: english
+}))
+
+// 小4〜6の「読むこと・書くこと」へつなぐ文法問題。会話とは別形式だが、
+// 進捗は既存の englishPhraseStats に eg*** IDで保存し、セーブ形式を増やさない。
+const grammarRows = [
+  ['wh',4,'___ is your birthday?','When',['Where','Who','How'],'日や時をたずねるときは When を使うよ。'],
+  ['wh',4,'___ is your favorite sport?','What',['Where','When','Who'],'何かをたずねるときは What を使うよ。'],
+  ['plural',4,'I have two ___.','books',['book','bookes','bookses'],'two の後ろは、bookを複数形の books にするよ。'],
+  ['plural',4,'There are three ___.','boxes',['box','boxs','boxies'],'boxのようにxで終わる語は es をつけて boxes にするよ。'],
+  ['third-person',5,'He ___ soccer after school.','plays',['play','played','playing'],'主語が he の現在の習慣では、動詞に s をつけて plays にするよ。'],
+  ['third-person',5,'My sister ___ English.','studies',['study','studied','studying'],'主語が my sister の現在の習慣では、studyを studies にするよ。'],
+  ['past',5,'I ___ to the park yesterday.','went',['go','goes','will go'],'yesterdayは過去なので、goの過去形 went を使うよ。'],
+  ['past',5,'We ___ dinner at seven yesterday.','ate',['eat','eats','will eat'],'昨日のことなので、eatの過去形 ate を使うよ。'],
+  ['wh',5,'___ do you live?','Where',['What','When','Who'],'場所をたずねるときは Where を使うよ。'],
+  ['wh',5,'___ did you go with?','Who',['What','Where','When'],'だれと行ったかをたずねるときは Who を使うよ。'],
+  ['comparison',6,'A train is ___ than a bicycle.','faster',['fast','fastest','more fast'],'二つをくらべ、thanがあるので fastの比較級 faster を使うよ。'],
+  ['comparison',6,'This bag is ___ than that one.','heavier',['heavy','heaviest','more heavy'],'二つをくらべるとき、heavyは yをiにかえて er をつけるよ。'],
+  ['past',6,'She ___ a letter last night.','wrote',['write','writes','writing'],'last nightは過去なので、writeの過去形 wrote を使うよ。'],
+  ['third-person',6,'Ken ___ breakfast every morning.','eats',['eat','ate','eating'],'Ken一人の毎朝の習慣なので、eatに s をつけるよ。'],
+  ['plural',6,'We saw five ___.','children',['child','childs','childrens'],'childの複数形は特別な形の children だよ。']
+]
+export const ENGLISH_GRAMMAR = grammarRows.map(([kind, minGrade, sentence, answer, distractors, explain], i) => ({
+  id: `eg${String(i + 1).padStart(3, '0')}`, kind, minGrade, sentence, english: sentence,
+  japanese: '文法', answer, distractors, explain
 }))
 
 // へんじ（response）は英語しか持たないため、解説で意味が伝わらなかった。
@@ -142,13 +170,14 @@ export function normalizeEnglishKey(key) {
   if (/^ena:[A-Z]-[A-Z]$/i.test(raw)) return `ena:${raw.slice(4).toUpperCase()}`
   return raw
 }
-const baseKey = (key) => normalizeEnglishKey(key).replace(/^en[wap]:/, '')
+const baseKey = (key) => normalizeEnglishKey(key).replace(/^(?:en[wap]|eng):/, '')
 const localDayNumber = (date = new Date()) => Math.floor(new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() / 86400000)
 function eligibleWords(params) { const items = ENGLISH_WORDS.filter((w) => w.minGrade <= (params.grade ?? 0)); return items.length >= 4 ? items : ENGLISH_WORDS.slice(0, 8) }
 function eligiblePhrases(params) { return ENGLISH_PHRASES.filter((p) => p.minGrade <= (params.grade ?? 0)) }
+function eligibleGrammar(params) { return ENGLISH_GRAMMAR.filter((item) => item.minGrade <= (params.grade ?? 0)) }
 function itemFromKey(key) {
   const id = baseKey(key)
-  return ENGLISH_WORDS.find((w) => w.id === id) || ENGLISH_PHRASES.find((p) => p.id === id) || null
+  return ENGLISH_WORDS.find((w) => w.id === id) || ENGLISH_PHRASES.find((p) => p.id === id) || ENGLISH_GRAMMAR.find((item) => item.id === id) || null
 }
 
 // 初日に学年分の全単語へ飛ばず、8〜12語程度のテーマを順番に開く。
@@ -198,9 +227,13 @@ export function chooseEnglishStudyItem(params = {}) {
   if (forced && forced.minGrade <= grade) return forced
   const words = currentThemeWords(params)
   const phrases = eligiblePhrases(params)
+  const grammar = eligibleGrammar(params)
   const canUsePhrases = grade >= 3 && phrases.length > 0 && params.englishAudioAvailable !== false
-  const all = canUsePhrases && Math.random() < (grade >= 5 ? 0.42 : 0.28) ? phrases : words
-  const stats = all === phrases ? params.englishPhraseStats : params.englishWordStats
+  const roll = Math.random()
+  const all = grammar.length && grade >= 4 && roll < 0.22
+    ? grammar
+    : canUsePhrases && roll < (grade >= 5 ? 0.52 : 0.36) ? phrases : words
+  const stats = all === words ? params.englishWordStats : params.englishPhraseStats
   return selectByStudyOrder(all, stats, seen, params.today ?? localDayNumber())
 }
 
@@ -305,17 +338,33 @@ function orderQuestion(phrase) {
   return { domain: 'english', type: 'order', form: 'word-order', itemKey: `enp:${phrase.id}`, visual: { kind: 'bigtext', text: phrase.japanese }, instruction: 'えいごの じゅんばんに ならべよう', orderInstruction: 'ひだりから じゅんに タッチしてね', speak: 'えいごの じゅんばんに ならべよう。', items, correctOrder, answerId: correctOrder.join('|'), answerWord: { text: phrase.english }, practiceEnglish: phrase.english, explain: `${phrase.japanese} は「${phrase.english}」だよ` }
 }
 
+function grammarQuestion(item) {
+  const options = shuffle([item.answer, ...item.distractors])
+  return {
+    domain: 'english', type: 'choice', form: 'grammar', itemKey: `eng:${item.id}`,
+    visual: { kind: 'sentence', text: item.sentence },
+    instruction: '文に あう ことばを えらぼう',
+    speak: '文に あう ことばを えらぼう。',
+    choices: options.map((text) => ({ id: `grammar:${text}`, label: text })),
+    answerId: `grammar:${item.answer}`,
+    answerWord: { text: item.answer },
+    explain: item.explain
+  }
+}
+
 export function englishTaskForms(grade = 0, englishAudioAvailable = false) {
   if (englishAudioAvailable) {
     if (grade <= 0) return ['listen-picture', 'picture-word', 'word-meaning', 'alphabet']
     if (grade <= 2) return ['listen-picture', 'picture-word', 'word-meaning', 'spelling']
-    if (grade <= 4) return ['listen-picture', 'picture-word', 'conversation', 'word-order']
-    return ['listen-picture', 'word-meaning', 'conversation', 'word-order']
+    if (grade <= 3) return ['listen-picture', 'picture-word', 'conversation', 'word-order']
+    if (grade === 4) return ['listen-picture', 'word-meaning', 'grammar', 'word-order']
+    return ['listen-picture', 'conversation', 'grammar', 'word-order']
   }
   if (grade <= 0) return ['picture-word', 'word-meaning', 'picture-word', 'alphabet']
   if (grade <= 2) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
-  if (grade <= 4) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
-  return ['picture-word', 'word-meaning', 'word-order', 'spelling']
+  if (grade <= 3) return ['picture-word', 'word-meaning', 'japanese-word', 'spelling']
+  if (grade === 4) return ['word-meaning', 'grammar', 'word-order', 'spelling']
+  return ['word-meaning', 'grammar', 'word-order', 'spelling']
 }
 
 // 通常タスクでは、正答済みの同一語を繰り返さない。各設問を別枠にする。
@@ -343,12 +392,16 @@ export function generateEnglishQuestion(params = {}, reviewKey) {
       ? eligiblePhrases(params).filter((phrase) => phrase.english.replace(/[.!?]/g, '').trim().split(/\s+/).length >= 2)
       : requestedForm === 'conversation'
       ? eligiblePhrases(params)
+      : requestedForm === 'grammar'
+      ? eligibleGrammar(params)
       : requestedForm === 'spelling' ? spellableWords(params) : eligibleWords(params))
     : null
-  const forcedStats = requestedForm === 'conversation' || requestedForm === 'word-order' ? params.englishPhraseStats : params.englishWordStats
+  const forcedStats = ['conversation', 'word-order', 'grammar'].includes(requestedForm) ? params.englishPhraseStats : params.englishWordStats
   const item = requestedItem || (forcedItemPool
     ? selectByStudyOrder(forcedItemPool, forcedStats, new Set((params.seenItemKeys || []).map(baseKey)), params.today ?? localDayNumber())
     : chooseEnglishStudyItem({ ...params, reviewKey: normalizedReview }))
+  const grammar = ENGLISH_GRAMMAR.find((entry) => entry.id === item.id)
+  if (grammar) return grammarQuestion(grammar)
   const word = ENGLISH_WORDS.find((entry) => entry.id === item.id)
   if (!word) {
     const phrase = item

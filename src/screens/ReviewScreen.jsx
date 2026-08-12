@@ -11,13 +11,14 @@
 // ============================================================
 
 import React, { useEffect } from 'react'
-import { useGame, missedCount, REVIEW_BATCH_MAX } from '../state/GameContext.jsx'
+import { activeReviewSrs, useGame, missedCount, REVIEW_BATCH_MAX } from '../state/GameContext.jsx'
 import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import { dueEntries, daysUntilNext, boxCounts, dayNumber, MAX_BOX } from '../engine/srs.js'
 import { englishDaysUntilNext, englishDueEntries } from '../engine/englishProgress.js'
 import { KIND_LABELS } from '../data/content/numbers.js'
+import { HARD_NUMBERS_LABELS } from '../data/content/hard/numbers-hard.js'
 import { SEIKATSU_LABELS } from '../data/content/seikatsu.js'
-import { ENGLISH_WORDS, ENGLISH_PHRASES } from '../data/content/english.js'
+import { ENGLISH_GRAMMAR, ENGLISH_WORDS, ENGLISH_PHRASES } from '../data/content/english.js'
 import { AppHeader, Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
@@ -53,6 +54,9 @@ function labelOf(domainId, key) {
   if (domainId === 'suuji' && baseKey.startsWith('skill:math:')) {
     return { big: '🔢', sub: KIND_LABELS[baseKey.slice('skill:math:'.length)] || 'さんすう' }
   }
+  if (domainId === 'hard:suuji' && baseKey.startsWith('skill:hard:math:')) {
+    return { big: '🧠', sub: HARD_NUMBERS_LABELS[baseKey.slice('skill:hard:math:'.length)] || 'むずかしい算数' }
+  }
   if (domainId === 'suuji' && baseKey.startsWith('n:')) {
     return { big: '🔢', sub: KIND_LABELS[baseKey.slice(2)] || 'さんすう' }
   }
@@ -72,6 +76,10 @@ function labelOf(domainId, key) {
       return phrase ? { big: short(phrase.english), sub: phrase.japanese } : { big: '💬', sub: 'えいかいわ' }
     }
     if (baseKey.startsWith('ena:')) return { big: baseKey.slice(4), sub: 'アルファベット' }
+    if (baseKey.startsWith('eng:')) {
+      const grammar = ENGLISH_GRAMMAR.find((item) => item.id === baseKey.slice(4))
+      return grammar ? { big: short(grammar.sentence), sub: 'えいごの 文法' } : { big: '🔤', sub: 'えいごの 文法' }
+    }
   }
   return { big: '❓', sub: '' }
 }
@@ -79,11 +87,12 @@ function labelOf(domainId, key) {
 export default function ReviewScreen({ onBack, onStartTask }) {
   const { state } = useGame()
   const count = missedCount(state)
-  const items = [...dueEntries(state.srs), ...englishDueEntries(state, dayNumber())]
+  const reviewSrs = activeReviewSrs(state)
+  const items = [...dueEntries(reviewSrs), ...englishDueEntries(state, dayNumber())]
     .sort((a, b) => (a.entry.due ?? 0) - (b.entry.due ?? 0))
-  const nextInDays = Math.min(daysUntilNext(state.srs) ?? Infinity, englishDaysUntilNext(state, dayNumber()) ?? Infinity)
+  const nextInDays = Math.min(daysUntilNext(reviewSrs) ?? Infinity, englishDaysUntilNext(state, dayNumber()) ?? Infinity)
   const normalizedNextInDays = Number.isFinite(nextInDays) ? nextInDays : null
-  const boxes = boxCounts(state.srs)
+  const boxes = boxCounts(reviewSrs)
   const learning = boxes.slice(0, MAX_BOX).reduce((a, b) => a + b, 0)
 
   useEffect(() => {
@@ -104,7 +113,10 @@ export default function ReviewScreen({ onBack, onStartTask }) {
   const start = () => {
     sfx.swoosh()
     // 期限の古い順に、多すぎない数だけ（心が折れないように）
-    const plan = items.slice(0, REVIEW_BATCH_MAX).map(({ domainId, key }) => ({ domainId, key }))
+    const plan = items.slice(0, REVIEW_BATCH_MAX).map(({ domainId, key }) => ({
+      domainId: domainId.startsWith('hard:') ? domainId.slice(5) : domainId,
+      key
+    }))
     onStartTask({
       uid: `review_${Date.now()}`,
       kind: 'review',

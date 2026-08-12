@@ -11,14 +11,14 @@
 // ============================================================
 
 import React, { useEffect, useRef, useState } from 'react'
-import { useGame, skillOf, needsReviewLesson } from '../state/GameContext.jsx'
+import { activeStatsDomainId, useGame, skillOf, needsReviewLesson } from '../state/GameContext.jsx'
 import { DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import { dueKeys, isDue, dayNumber } from '../engine/srs.js'
 import LessonScreen from './LessonScreen.jsx'
 import { difficultyParams } from '../engine/difficulty.js'
 import { speak, cancelSpeak, hasEnglishVoice, subscribeEnglishVoice, speakEnglish, speakEnglishThenJapanese } from '../engine/tts.js'
 import { englishTaskForms, normalizeEnglishKey } from '../data/content/english.js'
-import { reviewKeyFor, savedReviewQuestion, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
+import { generatorReviewKey, reviewKeyFor, savedReviewQuestion, snapshotQuestion, withQuestionIds } from '../engine/reviewKey.js'
 import { nextLearningUnit, selectPracticeUnit, unitStatsFor, withLearningUnit, lessonForUnit } from '../engine/learningUnits.js'
 import { questionForUnit } from '../engine/unitQuestions.js'
 import { reinforcementExtraCount, reinforcementTargetIndex } from '../engine/reinforcement.js'
@@ -137,9 +137,10 @@ export default function ActivityPlayer({ task, onDone }) {
     // むずかしいモード（保護者設定）は、習熟度の管理を通常と分けるため
     // skillOf も 'hard:${domainId}' の名前空間で読む（GameContextのANSWER
     // reducerが記録時に同じ名前空間へ振り分けている。計画書§4.2(d)(f)）。
-    const mode = stateRef.current.settings?.mode === 'hard' ? 'hard' : 'normal'
+    const statsDomainId = activeStatsDomainId(stateRef.current, domainId)
+    const mode = statsDomainId.startsWith('hard:') ? 'hard' : 'normal'
     const params = {
-      ...difficultyParams(skillOf(stateRef.current, mode === 'hard' ? `hard:${domainId}` : domainId)),
+      ...difficultyParams(skillOf(stateRef.current, statsDomainId)),
       mode,
       grade: stateRef.current.grade,
       englishAudioAvailable: domainId === 'english' ? englishAudioForTask : true,
@@ -158,7 +159,7 @@ export default function ActivityPlayer({ task, onDone }) {
       // 一度でも出題したことがある knowledgeId の集合。srs は正誤に関わらず
       // 毎回このドメインの itemKey で記録されるため、そのまま「既出」の
       // 正になる（英語だけ別管理＝englishWordStats 等を別途渡している）。
-      everSeenKnowledge: domainId === 'english' ? undefined : new Set(Object.keys(stateRef.current.srs?.[domainId] || {})),
+      everSeenKnowledge: domainId === 'english' ? undefined : new Set(Object.keys(stateRef.current.srs?.[statsDomainId] || {})),
       // どうとくD視点「生命の終わり」の判定用。保護者設定がONかつ現在の
       // 学年（gradeMaxではなくgrade）が高学年のときだけ、doutoku.js側が
       // 該当項目を生成候補に入れる。
@@ -191,7 +192,7 @@ export default function ActivityPlayer({ task, onDone }) {
       // （間隔反復: 忘れかけた ちょうどよい タイミングで もう一度 出会う）。
       // ただし算数など、出題タイプ自体が学年の単元になっている分野では、
       // 2学年以上前の古い単元（例: 小6での九九だけの単独出題）を除く。
-      const dueAll = dueKeys(stateRef.current.srs, domainId)
+      const dueAll = dueKeys(stateRef.current.srs, statsDomainId)
       const due = dom?.isReviewStale ? dueAll.filter((key) => !dom.isReviewStale(key, stateRef.current.grade)) : dueAll
       // 新単元の導入直後2問には、期限復習を割り込ませない。
       if (!review && qIndex >= 2 && due.length && Math.random() < 0.45) {
@@ -212,7 +213,7 @@ export default function ActivityPlayer({ task, onDone }) {
     const generated = reinforcementSnapshot || saved || (domainId === 'english'
       ? dom.generateQuestion({ ...params, reviewKey: review }, review)
       : review?.startsWith('skill:')
-        ? dom.generateQuestion({ ...params, unitId: review.slice(6) }, review.slice(6).replace(/^math:/, 'n:'))
+        ? dom.generateQuestion({ ...params, unitId: review.slice(6) }, generatorReviewKey(review))
         : review
           ? dom.generateQuestion(params, review)
         : questionForUnit(dom, { ...params, unitId: targetUnit }, targetUnit))

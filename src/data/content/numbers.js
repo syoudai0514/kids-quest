@@ -488,11 +488,15 @@ const BUILDERS = {
     }
   },
   decimalDiv(p) {
-    const b = rng(2, 9)
-    const ans = rng(2, 99) / 10
+    // 小5の中核は「小数でわる」こと。以前は除数が常に整数だったため、
+    // 実質的に小4までの学習しか扱えていなかった。除数を10倍して整数に
+    // する操作が見える、割り切れる組み合わせに限定する。
+    const divisorInt = rng(2, 9)
+    const b = divisorInt / 10
+    const ans = rng(2, 20)
     const a = Math.round(ans * b * 10) / 10
-    const mk = (v) => String(Math.round(v * 10) / 10)
-    const dummies = [mk(ans + 0.1), mk(ans - 0.1), mk(ans * b), mk(ans + 1)]
+    const mk = (v) => String(Math.round(v * 100) / 100)
+    const dummies = [mk(ans + 1), mk(Math.max(0.1, ans - 1)), mk(ans * 10), mk(a / divisorInt)]
     return {
       domain: 'suuji', type: 'choice', itemKey: 'n:decimalDiv',
       visual: { kind: 'bigtext', text: `${mk(a)} ÷ ${b} ＝ ❓` },
@@ -501,8 +505,8 @@ const BUILDERS = {
       answerId: mk(ans),
       choices: stringChoices(mk(ans), dummies, p.cc),
       answerWord: { text: mk(ans) },
-      explain: `わられる数を10ばいして${Math.round(a * 10)}÷${b}の せいすうの わりざんにして、こたえの てんを ひとつ もどそう。こたえは ${mk(ans)}`,
-      explainColumn: columnBlock(mk(a), b, '÷', mk(ans))
+      explain: `わる数 ${b}を10ばいして${divisorInt}にするので、わられる数も10ばいする。${Math.round(a * 10)}÷${divisorInt}＝${mk(ans)}`,
+      explainColumn: columnBlock(Math.round(a * 10), divisorInt, '÷', mk(ans))
     }
   },
   fracAddDiff(p) {
@@ -552,22 +556,33 @@ const BUILDERS = {
     })
   },
   fracDiv(p) {
-    // 分数÷整数＝分母にその整数をかける（きれいに約分できる組み合わせ）
-    const pairs = [[2, 3, 2], [4, 5, 2], [1, 2, 3], [3, 4, 3], [2, 3, 4], [6, 7, 2], [3, 5, 2], [5, 6, 5]]
-    const [a, b, m] = pick(pairs)
-    const denom = b * m
-    const g = gcd(a, denom)
-    const ans = `${a / g}/${denom / g}`
-    const dummies = [`${a}/${denom}`, `${a}/${b}`, `${a * m}/${b}`, `${a / g + 1}/${denom / g}`].filter((x) => x !== ans)
+    // 小6で必要なのは分数÷分数。以前は分数÷整数しか出ず、逆数をかける
+    // 中核操作を学べなかった。答えが簡単な分数になる組み合わせを使う。
+    const pairs = [
+      [2, 3, 4, 5], [3, 4, 2, 5], [5, 6, 2, 3], [3, 5, 9, 10],
+      [4, 7, 2, 3], [7, 8, 7, 12], [2, 9, 4, 15], [5, 12, 10, 9]
+    ]
+    const [a, b, c, d] = pick(pairs)
+    const rawNum = a * d
+    const rawDenom = b * c
+    const g = gcd(rawNum, rawDenom)
+    const answerNum = rawNum / g
+    const answerDenom = rawDenom / g
+    const ans = answerDenom === 1 ? String(answerNum) : `${answerNum}/${answerDenom}`
+    const wrong1 = `${a * c}/${b * d}`
+    const wrong2 = `${a}/${b}`
+    const wrong3 = `${a + c}/${b + d}`
+    const wrong4 = `${rawNum + 1}/${rawDenom}`
+    const dummies = [wrong1, wrong2, wrong3, wrong4].filter((x) => x !== ans)
     return {
       domain: 'suuji', type: 'choice', itemKey: 'n:fracDiv',
-      visual: { kind: 'bigtext', text: `${a}/${b} ÷ ${m} ＝ ❓` },
-      instruction: `${a}/${b} ÷ ${m} ＝ ？`,
-      speak: `ぶんすうを せいすうで わるよ`,
+      visual: { kind: 'bigtext', text: `${a}/${b} ÷ ${c}/${d} ＝ ❓` },
+      instruction: `${a}/${b} ÷ ${c}/${d} ＝ ？`,
+      speak: `ぶんすうを ぶんすうで わるよ`,
       answerId: ans,
       choices: stringChoices(ans, dummies, p.cc),
       answerWord: { text: ans },
-      explain: `せいすうで わるときは、ぶんぼに その かずを かけよう。${b}×${m}＝${denom}なので ${a}/${denom}。やくぶんすると ${ans}`
+      explain: `${c}/${d}でわることは、逆数の${d}/${c}をかけること。${a}/${b}×${d}/${c}＝${rawNum}/${rawDenom}。約分すると ${ans}`
     }
   },
   ratio(p) {
@@ -1031,6 +1046,22 @@ const BUILDERS = {
       explain: `分母（下の数）が 同じ 分数どうしの たし算は、分子（上の数）だけ たす。${a}たす${b}で ${a + b}。答えは ${denom}分の${a + b}`
     }
   },
+  fracSubSame(p) {
+    const denom = pick([4, 5, 6, 7, 8, 9])
+    const a = rng(2, denom - 1)
+    const b = rng(1, a - 1)
+    const answer = `${a - b}/${denom}`
+    return {
+      domain: 'suuji', type: 'choice', itemKey: 'n:fracSubSame',
+      visual: { kind: 'bigtext', text: `${denom}分の${a} − ${denom}分の${b}\n＝ ❓` },
+      instruction: '答えを えらぼう',
+      speak: `${denom}ぶんの${a} ひく ${denom}ぶんの${b}は？`,
+      answerId: answer,
+      choices: stringChoices(answer, [`${a + b}/${denom}`, `${a - b + 1}/${denom}`, `${a - b}/${denom * 2}`, `${b}/${denom}`], p.cc),
+      answerWord: { text: `${denom}分の${a - b}` },
+      explain: `分母が同じ分数どうしのひき算は、分子だけをひく。${a}ひく${b}で${a - b}。答えは${denom}分の${a - b}`
+    }
+  },
   calcRule(p) {
     const a = rng(2, 8), b = rng(2, 8), c = rng(2, 8)
     const useParen = Math.random() < 0.5
@@ -1269,8 +1300,8 @@ export const NUMBERS_KINDS_BY_GRADE = {
   1: ['add10', 'make10', 'sub10', 'addCarry', 'sequence', 'holeAdd', 'moneyAdd', 'tens', 'subBorrow', 'compareNum', 'add3nums'],
   2: ['addCarry', 'subBorrow', 'add2digit', 'sub2digit', 'kuku', 'sequence', 'holeSub', 'double', 'half', 'mul10', 'evenOdd', 'moneyChange', 'clockPlus', 'lengthConv', 'countMoney100', 'compareNum'],
   3: ['kuku', 'div', 'add3digit', 'mul2x1', 'holeMul', 'tensMul', 'unitPrice', 'divRemainder', 'fracCompareSame', 'perimeter', 'timeCalc', 'kgConv', 'literConv'],
-  4: ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub', 'bigNumbers', 'roundNum', 'roundTen', 'area', 'angle', 'perpendicular', 'lineGraph', 'changePattern', 'fracAddSame', 'calcRule'],
-  5: ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average', 'percent', 'fracCompareDiff', 'area', 'triangleArea', 'unitAmount', 'shapeAngle', 'congruent', 'polygonCircle', 'circumference', 'bandGraph', 'multiples', 'divisors'],
+  4: ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'decimalMul', 'mul3x1', 'decimalSub', 'bigNumbers', 'roundNum', 'roundTen', 'area', 'angle', 'perpendicular', 'lineGraph', 'changePattern', 'fracAddSame', 'fracSubSame', 'calcRule'],
+  5: ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average', 'percent', 'fracCompareDiff', 'area', 'triangleArea', 'volume', 'unitAmount', 'shapeAngle', 'congruent', 'polygonCircle', 'circumference', 'bandGraph', 'multiples', 'divisors', 'lcm', 'gcdKind'],
   6: ['decimalMul', 'fracAddDiff', 'percent', 'fracMul', 'fracDiv', 'ratio', 'average', 'discount', 'lcm', 'gcdKind', 'speed', 'speedTime', 'fracCompareDiff', 'volume', 'circleArea', 'prismVolume', 'symmetry', 'proportion', 'inverseProportion', 'caseCount', 'frequencyTable', 'scaleDrawing']
 }
 
@@ -1318,13 +1349,13 @@ function kindsForGrade(grade, level) {
     return k
   }
   if (grade === 4) {
-    const k = ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'mul3x1', 'decimalSub']
-    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'div3digit', 'roundNum', 'roundTen', 'area', 'angle', 'perpendicular', 'lineGraph', 'changePattern', 'fracAddSame', 'calcRule')
+    const k = ['mul2x1', 'div', 'divRemainder', 'div3digit', 'decimalAdd', 'decimalMul', 'mul3x1', 'decimalSub']
+    if (level >= 3) k.push('bigNumbers', 'decimalAdd', 'decimalMul', 'div3digit', 'roundNum', 'roundTen', 'area', 'angle', 'perpendicular', 'lineGraph', 'changePattern', 'fracAddSame', 'fracSubSame', 'calcRule')
     return k
   }
   if (grade === 5) {
     const k = ['div3digit', 'decimalAdd', 'decimalMul', 'decimalDiv', 'fracAddDiff', 'decimalSub', 'average']
-    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'decimalDiv', 'fracCompareDiff', 'area', 'triangleArea', 'unitAmount', 'shapeAngle', 'congruent', 'polygonCircle', 'circumference', 'bandGraph', 'multiples', 'divisors')
+    if (level >= 3) k.push('percent', 'fracAddDiff', 'decimalMul', 'decimalDiv', 'fracCompareDiff', 'area', 'triangleArea', 'volume', 'unitAmount', 'shapeAngle', 'congruent', 'polygonCircle', 'circumference', 'bandGraph', 'multiples', 'divisors', 'lcm', 'gcdKind')
     return k
   }
   // 小6
@@ -1387,7 +1418,7 @@ export const KIND_LABELS = {
   unitPrice: 'ねだんの計算', roundTen: 'がいすう(十)', triangleArea: 'さんかくのめんせき',
   volume: 'たいせき', lcm: 'さいしょうこうばいすう', gcdKind: 'さいだいこうやくすう',
   angle: 'かくど', perpendicular: 'すいちょく・へいこう', lineGraph: 'おれせんグラフ',
-  changePattern: 'ともなってかわる量', fracAddSame: 'ぶんすう＋(同分母)', calcRule: '計算のきまり',
+  changePattern: 'ともなってかわる量', fracAddSame: 'ぶんすう＋(同分母)', fracSubSame: 'ぶんすう−(同分母)', calcRule: '計算のきまり',
   unitAmount: 'たんいりょうあたり', shapeAngle: '多角形の内角', congruent: '合同',
   polygonCircle: '正多角形と円', circumference: '円周', bandGraph: '帯グラフ',
   multiples: 'ばいすう', divisors: 'やくすう',

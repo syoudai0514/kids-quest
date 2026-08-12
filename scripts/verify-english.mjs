@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { ENGLISH_WORDS, ENGLISH_PHRASES, englishTaskForms, englishTaskItemSlot, generateEnglishQuestion } from '../src/data/content/english.js'
+import { ENGLISH_GRAMMAR, ENGLISH_WORDS, ENGLISH_PHRASES, englishTaskForms, englishTaskItemSlot, generateEnglishQuestion } from '../src/data/content/english.js'
 import { domainsForGrade } from '../src/engine/activities.js'
 import { buildCoreMission } from '../src/engine/missions.js'
 import { migrateContentVersion, saveProfileSnapshot } from '../src/engine/storage.js'
@@ -11,12 +11,19 @@ const expectedForms = {
   0: ['listen-picture', 'picture-word', 'alphabet'],
   1: ['listen-picture', 'picture-word', 'word-meaning', 'spelling'],
   3: ['listen-picture', 'picture-word', 'word-meaning', 'japanese-word', 'conversation'],
-  5: ['listen-picture', 'word-meaning', 'japanese-word', 'spelling', 'conversation', 'word-order']
+  5: ['listen-picture', 'word-meaning', 'japanese-word', 'spelling', 'conversation', 'grammar', 'word-order']
 }
 const englishPromptForms = new Set(['listen-picture', 'conversation', 'word-meaning', 'alphabet-name'])
 
 must(ENGLISH_WORDS.length >= 200, `単語数が不足: ${ENGLISH_WORDS.length}`)
 must(ENGLISH_PHRASES.length >= 50, `会話表現数が不足: ${ENGLISH_PHRASES.length}`)
+for (const grade of [4, 5, 6]) {
+  const count = ENGLISH_WORDS.filter((word) => word.minGrade === grade).length
+  must(count >= 40, `小${grade}の新出英単語が40語未満: ${count}`)
+}
+for (const kind of ['third-person', 'past', 'wh', 'plural', 'comparison']) {
+  must(ENGLISH_GRAMMAR.some((item) => item.kind === kind), `英語の文法形式が未実装: ${kind}`)
+}
 must(new Set(ENGLISH_WORDS.map((w) => w.id)).size === ENGLISH_WORDS.length, '単語IDが重複')
 must(new Set(ENGLISH_PHRASES.map((p) => p.id)).size === ENGLISH_PHRASES.length, '会話IDが重複')
 must(new Set(ENGLISH_WORDS.map((w) => w.japanese)).size === ENGLISH_WORDS.length, '日本語の意味が重複')
@@ -121,7 +128,8 @@ const expectedPlans = {
   0: ['listen-picture', 'picture-word', 'word-meaning', 'alphabet'],
   1: ['listen-picture', 'picture-word', 'word-meaning', 'spelling'],
   3: ['listen-picture', 'picture-word', 'conversation', 'word-order'],
-  5: ['listen-picture', 'word-meaning', 'conversation', 'word-order']
+  4: ['listen-picture', 'word-meaning', 'grammar', 'word-order'],
+  5: ['listen-picture', 'conversation', 'grammar', 'word-order']
 }
 for (const [grade, plan] of Object.entries(expectedPlans)) {
   must(JSON.stringify(englishTaskForms(Number(grade), true)) === JSON.stringify(plan), `小${grade}: 音声あり4問構成が不正`)
@@ -209,6 +217,12 @@ for (const phrase of ENGLISH_PHRASES) {
   must(q.choices.filter((c) => c.id === q.answerId).length === 1, '会話の正解が一つに定まらない')
   must(new Set(q.choices.map((c) => c.label)).size === q.choices.length, '会話選択肢の表示文言が重複')
 }
+for (const grammar of ENGLISH_GRAMMAR) {
+  const key = `eng:${grammar.id}`
+  const q = generateEnglishQuestion({ grade: 6, englishAudioAvailable: false, forceForm: 'grammar', reviewKey: key }, key)
+  must(q.itemKey === key && q.form === 'grammar', `${key}: 文法の指定復習が別項目へ化けた`)
+  verifyQuestion(q, 6, false)
+}
 
 const progressDay1 = advanceEnglishProgress(null, true, today, 1)
 const progressSameDay = advanceEnglishProgress(progressDay1, true, today, 2)
@@ -252,4 +266,4 @@ const reloadedProfiles = JSON.parse(JSON.stringify(profilesAfterSwitch))
 must(reloadedProfiles.childA.state.grade === 3 && reloadedProfiles.childA.state.englishPhraseStats.ep001.stage === 1 && reloadedProfiles.childA.state.daily.coreIndex === 1, 'プロフィールAの保存・再読み込みに失敗')
 must(reloadedProfiles.childB.state.grade === 0 && reloadedProfiles.childB.state.englishWordStats.ew002.stage === 3 && reloadedProfiles.childB.state.englishAlphabetStats['B-C'].stage === 1, 'プロフィールBの保存・再読み込みに失敗')
 
-console.log(`英語検証OK: ${ENGLISH_WORDS.length}語・${ENGLISH_PHRASES.length}表現、安全な出題・復習・保存移行・7教科ローテーションを確認`)
+console.log(`英語検証OK: ${ENGLISH_WORDS.length}語・${ENGLISH_PHRASES.length}表現・${ENGLISH_GRAMMAR.length}文法、安全な出題・復習・保存移行・7教科ローテーションを確認`)
