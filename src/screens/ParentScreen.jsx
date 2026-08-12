@@ -469,22 +469,32 @@ export default function ParentScreen({ onBack }) {
             <h3 style={{ margin: '4px 0 10px' }}>むずかしいモード</h3>
             <div className="card">
               <p className="muted" style={{ fontSize: 13, lineHeight: 1.7, marginTop: 0 }}>
-                ONにすると、小4〜6は中学受験レベル（特殊算・発展読解など）、
-                年長〜小3は1〜2学年の先取り・思考力問題が出るようになります。<br />
+                ONにすると、<b>小4〜6の さんすう・こくご</b>が 中学受験レベル
+                （特殊算・数の性質・割合と比・発展読解など）に 入れかわります。
+                その教科は ぜんぶ むずかしい問題になり、出題中は
+                「🎓 むずかしいモードの もんだい」と 画面に表示されます。<br />
+                <b>りか・しゃかい・えいご・かき とりは、まだ ふつうの問題のまま</b>
+                です（順次 追加していきます）。年長〜小3も いまは 変わりません。<br />
                 進級（ほしのしれん）はこのモードの結果を使わず、いつも
-                「ふつう」の問題で判定します。バトル・チケット・図鑑・そうび
+                「ふつう」の問題で判定します。とっくん（復習）・習熟度も
+                ふつうの問題とは 別で記録するので、まちがえても ふだんの
+                学習には ひびきません。バトル・チケット・図鑑・そうび
                 の仕組みも変わりません。
               </p>
               <label className="row" style={{ justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 800 }}>🎓 むずかしいモード</span>
+                <span style={{ fontWeight: 800 }}>🎓 いまの せってい</span>
                 <button
                   className={'btn ' + (state.settings.mode === 'hard' ? 'btn--primary' : 'btn--ghost')}
                   style={{ minHeight: 52, padding: '8px 20px' }}
                   onClick={() => dispatch({ type: 'SET_SETTING', key: 'mode', value: state.settings.mode === 'hard' ? 'normal' : 'hard' })}
                 >
-                  {state.settings.mode === 'hard' ? 'ON（むずかしい）' : 'OFF（ふつう）'}
+                  {state.settings.mode === 'hard' ? 'むずかしい' : 'ふつう'}
                 </button>
               </label>
+              <p className="muted" style={{ fontSize: 12, marginBottom: 0, opacity: 0.8 }}>
+                ボタンには <b>いま えらばれている ほう</b>が 出ています。
+                タップすると もう一方に 切りかわります。
+              </p>
             </div>
           </div>
 

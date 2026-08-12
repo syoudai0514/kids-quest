@@ -347,10 +347,13 @@ const HARD_BUILDERS = {
 
   // 比例配分: 全体を決まった比で分けたときの、一方の取り分。
   jrHireiHaibun() {
+    // 比は必ず約分した形で出す（2：6 のような未約分の比は入試では出ない）。
     const m = rng(2, 7)
     let n = rng(2, 7)
-    while (n === m) n = rng(2, 7)
-    const unit = rng(50, 300)
+    while (n === m || gcd(m, n) !== 1) n = rng(2, 7)
+    // 1にあたる金額は、実際の入試問題と同じように切りのよい数にする
+    // （rng(50,300) だと 1111円のような不自然な合計金額になってしまう）。
+    const unit = pick([50, 100, 150, 200, 250, 300])
     const total = (m + n) * unit
     const answerPart = m * unit
     return hardQ('jrHireiHaibun', {

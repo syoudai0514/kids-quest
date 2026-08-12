@@ -1394,6 +1394,20 @@ body {
   animation: twinkle 1.6s ease-in-out infinite;
 }
 
+/* むずかしいモードの問題だけに付く目印。
+   ふつうの問題と見分けがつかないと「解けなくて当然の問題」で
+   自信をなくすので、必ず出題中ずっと見えるようにする。
+   conquer-tag と違い、点滅させない（気を散らさないため）。 */
+.hard-tag {
+  background: linear-gradient(90deg, rgba(150, 190, 255, 0.22), rgba(150, 190, 255, 0.08));
+  border: 2px solid rgba(150, 190, 255, 0.6);
+  color: #cfe0ff;
+  font-weight: 900;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: clamp(13px, 2.4vw, 17px);
+}
+
 /* とっくん: おぼえた数カウンター */
 .conquer-counter {
   text-align: center;

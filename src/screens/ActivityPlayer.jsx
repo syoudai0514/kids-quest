@@ -565,6 +565,11 @@ export default function ActivityPlayer({ task, onDone }) {
       />
 
       <div className="center-col scroll-col">
+        {/* むずかしいモードの問題は、ふつうの問題と必ず見分けられるようにする。
+            解けなくても実力不足ではないと分かるよう、答え合わせ中も出したままにする。 */}
+        {String(question.itemKey || '').startsWith('hard:') && (
+          <div className="hard-tag">🎓 むずかしいモードの もんだい</div>
+        )}
         {/* 復習キューの問題には「克服チャンス」の目印 */}
         {isConquerTarget() && phase === 'answering' && (
           <div className="conquer-tag">⭐ できたら「ちから」になる もんだい！</div>
