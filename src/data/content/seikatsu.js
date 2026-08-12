@@ -20,17 +20,19 @@ const WEEK = ['にちようび', 'げつようび', 'かようび', 'すいよ�
 const WEEK_KANJI = ['日', '月', '火', '水', '木', '金', '土']
 
 // 日付が動かない祝日だけを「何月何日？」の問題に使う（確実に正しいもの）
+// why = その祝日が「なぜ その日にあるか」。解説を答えの言い換えにしないため、
+// 日づけだけでなく由来を必ず添える。
 const FIXED_HOLIDAYS = [
-  { m: 1, d: 1, name: 'がんじつ（お正月）' },
-  { m: 2, d: 11, name: 'けんこくきねんの日' },
-  { m: 2, d: 23, name: 'てんのうたんじょうび' },
-  { m: 4, d: 29, name: 'しょうわの日' },
-  { m: 5, d: 3, name: 'けんぽうきねんび' },
-  { m: 5, d: 4, name: 'みどりの日' },
-  { m: 5, d: 5, name: 'こどもの日' },
-  { m: 8, d: 11, name: '山の日' },
-  { m: 11, d: 3, name: 'ぶんかの日' },
-  { m: 11, d: 23, name: 'きんろうかんしゃの日' }
+  { m: 1, d: 1, name: 'がんじつ（お正月）', why: '1年の いちばん さいしょの日を おいわいする日' },
+  { m: 2, d: 11, name: 'けんこくきねんの日', why: '日本の くにが できたことを おもう日' },
+  { m: 2, d: 23, name: 'てんのうたんじょうび', why: 'てんのうへいかの おたんじょうびを おいわいする日' },
+  { m: 4, d: 29, name: 'しょうわの日', why: 'しょうわの じだいを ふりかえる日' },
+  { m: 5, d: 3, name: 'けんぽうきねんび', why: '日本国けんぽうが できた日' },
+  { m: 5, d: 4, name: 'みどりの日', why: 'しぜんに したしみ、めぐみに かんしゃする日' },
+  { m: 5, d: 5, name: 'こどもの日', why: 'こどもが げんきに そだつことを ねがう日' },
+  { m: 8, d: 11, name: '山の日', why: '山に したしみ、山の めぐみに かんしゃする日' },
+  { m: 11, d: 3, name: 'ぶんかの日', why: 'じゆうと へいわを あいし、ぶんかを すすめる日' },
+  { m: 11, d: 23, name: 'きんろうかんしゃの日', why: 'はたらくことを たいせつにし、たがいに かんしゃする日' }
 ]
 
 // 月ごとの行事（季節感を育てる）
@@ -104,19 +106,21 @@ const BUILDERS = {
       instruction: 'きょうは 何月何日？',
       speak: 'きょうは なんがつ なんにち かな？',
       answer: ans, dummies, cc: p.cc,
-      explain: `きょうは ${ans}だよ`
+      explain: `きのうは ${dateLabel(addDays(t, -1))}、あしたは ${dateLabel(addDays(t, 1))}。カレンダーで きのうの つぎを さがすと きょうが わかるよ`
     })
   },
   // きょうは何曜日？
   todayWeek(p) {
     const t = new Date()
     const ans = WEEK[t.getDay()]
+    const yesterday = WEEK[(t.getDay() + 6) % 7]
+    const tomorrow = WEEK[(t.getDay() + 1) % 7]
     return sq('todayWeek', {
       visual: { kind: 'bigtext', text: '📅 きょうは\n何ようび？' },
       instruction: 'きょうは 何ようび？',
       speak: 'きょうは なんようび かな？',
       answer: ans, dummies: WEEK.filter((w) => w !== ans), cc: p.cc,
-      explain: `きょうは ${ans}だよ`
+      explain: `ようびは ${WEEK.join('・')} の 7日で ひとまわり。きのうが ${yesterday}なら つぎは ${ans}、そのつぎが ${tomorrow}だよ`
     })
   },
   // あした・あさって・きのう・おととい
@@ -197,6 +201,7 @@ const BUILDERS = {
   monthEvent(p) {
     const m = pick(Object.keys(MONTH_EVENT).map(Number))
     const ans = `${m}がつ`
+    const season = SEASONS.find((s) => s.months.includes(m))
     return sq('monthEvent', {
       visual: { kind: 'bigtext', text: MONTH_EVENT[m] },
       instruction: `${MONTH_EVENT[m]}は 何月？`,
@@ -204,7 +209,7 @@ const BUILDERS = {
       answer: ans,
       dummies: [1, 2, 3, 5].map((k) => `${((m + k) % 12) + 1}がつ`).filter((x) => x !== ans),
       cc: p.cc,
-      explain: `${MONTH_EVENT[m]}は ${m}がつだよ`
+      explain: `${MONTH_EVENT[m]}は ${season.name}の ぎょうじ。${season.months.join('・')}がつが ${season.name}だから ${m}がつだよ`
     })
   },
   // 祝日の日づけ
@@ -217,7 +222,7 @@ const BUILDERS = {
       instruction: `${h.name}は いつ？`,
       speak: `${h.name}は なんがつ なんにち かな？`,
       answer: ans, dummies, cc: p.cc,
-      explain: `${h.name}は ${ans}だよ`
+      explain: `${h.name}は ${h.why}。だから ${ans}だよ`
     })
   },
   // 祝日の名前

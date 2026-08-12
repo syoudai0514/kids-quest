@@ -29,6 +29,15 @@ function verifyQuestion(question, grade, domain, choiceCount) {
   if (question?.type === 'choice') requireValue(question?.visual?.kind && !String(question.visual.text ?? '').includes('undefined') && !String(question.visual.text ?? '').includes('NaN'), `${label}: visual が空または壊れている`)
   if (question?.type === 'choice') {
     requireValue(typeof question?.explain === 'string' && question.explain, `${label}: 解説がない`)
+    // 計画書§2原則4: 解説は「なぜ」を含む。答えの言い換えだけは禁止。
+    // 解説から答えの文字列を取り除いても、理由・手順として読める分量が
+    // 残っていることを機械的に確認する（例「これは まるだよ」は不可）。
+    const answerText = String(question.answerWord?.text ?? question.answerId ?? '')
+    const explainText = String(question.explain ?? '')
+    if (answerText && explainText) {
+      const withoutAnswer = explainText.split(answerText).join('').replace(/[「」。、\s]/g, '')
+      requireValue(withoutAnswer.length > 6, `${label}: 解説が答えの言い換えだけ（理由・手順がない）: 「${explainText}」`)
+    }
     const choices = question.choices ?? []
     const ids = choices.map((choice) => choice.id)
     // 比較・偶奇など、意味のある二択問題は2択を許容する。

@@ -206,7 +206,13 @@ const BUILDERS = {
       visual: { kind: 'shape', shape: target.id, color: target.color },
       instruction: 'この かたちは なに？', speak: 'この かたちの なまえは なにかな？',
       answerId: target.id, choices: shuffle(shapes.slice(0, 3).includes(target) ? shapes.slice(0, 3) : [target, ...shapes.filter((s) => s.id !== target).slice(0, 2)]).map((s) => ({ id: s.id, label: s.label })),
-      answerWord: { text: target.label }, explain: `これは ${target.label}だよ`
+      answerWord: { text: target.label },
+      explain: {
+        circle: 'まるは かどが 1つも なくて、まわりが ずっと まがっているよ',
+        triangle: 'さんかくは かどが 3つ、まっすぐな へんが 3ぼんだよ',
+        square: 'しかくは かどが 4つ。4つの へんの ながさが みんな おなじだよ',
+        rectangle: 'ながしかくは かどが 4つ。むかいあう へんの ながさが おなじで、たてと よこの ながさが ちがうよ'
+      }[target.id]
     }
   },
   shapeGroups(p) {
@@ -644,7 +650,7 @@ const BUILDERS = {
       instruction: `${a}えんと ${b}えんで いくら？`,
       speak: `${a}えんと ${b}えんを あわせると なんえん？`,
       answer: a + b, cc: p.cc, spread: 10, say: `${a + b}えん`,
-      explain: `あわせて ${a + b}えんだよ`
+      explain: `10のまとまりで かぞえよう。${a / 10}こと ${b / 10}こで ${(a + b) / 10}こ。10が ${(a + b) / 10}こで ${a + b}えん`
     })
   },
   moneyChange(p) {
