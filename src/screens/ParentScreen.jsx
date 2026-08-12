@@ -462,6 +462,30 @@ export default function ParentScreen({ onBack }) {
             </div>
           </div>
 
+          {/* むずかしいモード（中学受験レベル・保護者のみ変更可） */}
+          <div>
+            <h3 style={{ margin: '4px 0 10px' }}>むずかしいモード</h3>
+            <div className="card">
+              <p className="muted" style={{ fontSize: 13, lineHeight: 1.7, marginTop: 0 }}>
+                ONにすると、小4〜6は中学受験レベル（特殊算・発展読解など）、
+                年長〜小3は1〜2学年の先取り・思考力問題が出るようになります。<br />
+                進級（ほしのしれん）はこのモードの結果を使わず、いつも
+                「ふつう」の問題で判定します。バトル・チケット・図鑑・そうび
+                の仕組みも変わりません。
+              </p>
+              <label className="row" style={{ justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 800 }}>🎓 むずかしいモード</span>
+                <button
+                  className={'btn ' + (state.settings.mode === 'hard' ? 'btn--primary' : 'btn--ghost')}
+                  style={{ minHeight: 52, padding: '8px 20px' }}
+                  onClick={() => dispatch({ type: 'SET_SETTING', key: 'mode', value: state.settings.mode === 'hard' ? 'normal' : 'hard' })}
+                >
+                  {state.settings.mode === 'hard' ? 'ON（むずかしい）' : 'OFF（ふつう）'}
+                </button>
+              </label>
+            </div>
+          </div>
+
           {/* 設定 */}
           <div>
             <h3 style={{ margin: '4px 0 10px' }}>せってい</h3>

@@ -144,7 +144,10 @@ function createInitialState() {
     // showLifeEndTopics: どうとくD視点で「生き物の死」を扱うかの保護者設定。
     // 既定OFF。ONにしない限り、現在の学年（gradeMax ではなく grade）が
     // 5未満のときも一切生成候補に入らない（doutoku.js 側で判定）。
-    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true, showLifeEndTopics: false },
+    // mode: 'normal' | 'hard'。保護者のみ変更可（ParentScreen）。既定は
+    // 'normal'。settingsForCurrentVersion() が fresh を先に展開するため、
+    // 既存セーブにも自動で 'normal' が入る（マイグレーション不要）。
+    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true, showLifeEndTopics: false, mode: 'normal' },
     history: {},
     pendingCelebration: null
   }
@@ -417,10 +420,17 @@ function reduceProfile(state, action) {
     case 'ANSWER': {
       const { domainId, correct, itemKey, unitId } = action
       const grade = state.grade
+      // むずかしいモードの問題は、生のitemKeyが 'hard:' から始まる
+      // （suuji等でknowledgeIdが 'skill:hard:math:xxx' に変形されても
+      // action.question.itemKey には元の値が残る）。通常の習熟度・SRS・
+      // 単元進捗・おさらい判定に一切混ざらないよう、statsIdだけ
+      // 'hard:${domainId}' に切り替える（計画書§4.2(d)(f)）。
+      const isHard = String(action.question?.itemKey || itemKey || '').startsWith('hard:')
+      const statsId = isHard ? `hard:${domainId}` : domainId
       const gradeSkills = skillsForGrade(state)
-      const skill = gradeSkills[domainId] || makeSkill()
+      const skill = gradeSkills[statsId] || makeSkill()
       const { skill: newSkill } = applyResult(skill, correct)
-      const newGradeSkills = { ...gradeSkills, [domainId]: newSkill }
+      const newGradeSkills = { ...gradeSkills, [statsId]: newSkill }
 
       const today = todayKey()
       let streak = state.streak
@@ -435,18 +445,18 @@ function reduceProfile(state, action) {
       //   期限の来た問題に正解 → 次に会う日を のばす（1→3→7→14→30日）
       //   最高boxに到達 → 「完全に自分のものになった」= conquered
       let srs = state.srs
-      const unitStats = recordUnitResult(state.unitStats, grade, domainId, unitId, correct, dayNumber(), itemKey)
+      const unitStats = recordUnitResult(state.unitStats, grade, statsId, unitId, correct, dayNumber(), itemKey)
       let reviewQuestions = state.reviewQuestions || {}
       let conquered = state.conquered
       let xpGain = correct ? 2 : 0
       if (itemKey && domainId !== 'english') {
         const day = dayNumber()
-        const byKey = srs[domainId] || {}
+        const byKey = srs[statsId] || {}
         const prev = byKey[itemKey]
         const wasDue = isDue(prev, day) // 復習として出ていた問題か
         {
           const { entry, mastered } = scheduleAnswer(prev, correct, day)
-          srs = { ...srs, [domainId]: { ...byKey, [itemKey]: entry } }
+          srs = { ...srs, [statsId]: { ...byKey, [itemKey]: entry } }
           // 固定知識は同じ設問を保存する。算数は skillId から別の類題を作るため、
           // 計算式そのものは保存しない。
           if (action.question && domainId !== 'suuji') {
@@ -454,11 +464,14 @@ function reduceProfile(state, action) {
             if (snapshot) {
               reviewQuestions = {
                 ...reviewQuestions,
-                [domainId]: { ...reviewQuestions[domainId], [itemKey]: snapshot }
+                [statsId]: { ...reviewQuestions[statsId], [itemKey]: snapshot }
               }
             }
           }
-          if (correct && wasDue) {
+          // むずかしいモードは正解しても conquered（図鑑コンプ演出）や
+          // 期限復習ボーナスXPの対象にしない。報酬設計は変更しない
+          // （計画書§4.2(f)・§9）が、参加のごほうびとして基礎XPは出す。
+          if (!isHard && correct && wasDue) {
             xpGain += 4 // まちがいを ちからに かえたボーナス
             if (mastered) conquered += 1
           }
@@ -500,7 +513,7 @@ function reduceProfile(state, action) {
       //（メーターは いまどれくらい仕上がっているかの めやす表示に使う）
 
       // 教科ごとの直近の正解率（「おさらい授業」を出すかの判定に使う）
-      const accKey = `${grade}:${domainId}`
+      const accKey = `${grade}:${statsId}`
       const prevAcc = state.domainAccuracy[accKey] || { c: 0, n: 0 }
       let acc = { c: prevAcc.c + (correct ? 1 : 0), n: prevAcc.n + 1 }
       if (acc.n > 20) acc = { c: Math.round(acc.c / 2), n: Math.round(acc.n / 2) } // 直近を重く見る

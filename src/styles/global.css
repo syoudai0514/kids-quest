@@ -521,6 +521,22 @@ body {
   text-align: right;
   white-space: pre;
 }
+/* むずかしいモード（特殊算など）の段階解説。答えを当てるより
+   式の組み立て方を残すのが目的なので、番号付きで手順を追えるようにする。 */
+.explain-card__steps {
+  margin: 10px 0 0;
+  padding-left: 1.4em;
+  text-align: left;
+  font-size: clamp(13px, 2.6vw, 16px);
+  line-height: 1.6;
+  color: var(--text);
+}
+.explain-card__steps li {
+  margin-bottom: 4px;
+}
+.explain-card__steps li:last-child {
+  margin-bottom: 0;
+}
 
 /* ----- 手を動かす問題（テンキー・時計・ならべかえ・グループ分け） ----- */
 .interaction-wrap {

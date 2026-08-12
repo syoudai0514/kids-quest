@@ -13,6 +13,8 @@ import { KANJI_BY_GRADE, JUKUGO_BY_GRADE } from '../src/data/kanjiByGrade.js'
 import { hasStrokeData } from '../src/data/strokeOrder.js'
 import { generateWritingQuestion, WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
 import { questionIds } from '../src/engine/reviewKey.js'
+import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_GRADE } from '../src/data/content/hard/numbers-hard.js'
+import { unitIdFor, unitLedger } from '../src/engine/learningUnits.js'
 
 const errors = []
 const SAMPLE_COUNT = 24
@@ -360,6 +362,48 @@ for (let grade = 0; grade <= 6; grade++) {
       requireValue(!/\d\.\d{3,}/.test(String(choice.label)), `さんすう 選択肢に浮動小数の誤差: ${question.itemKey} → ${choice.label}`)
     }
   }
+}
+
+// ---- WP9/WP10: むずかしいモード（特殊算）----
+// 計画書§4.2(d)(f): hard専用の名前空間を使い、通常のunitLedgerに
+// 一切合流しないことを固定で検証する（りか/しゃかい等と違い、
+// 「単元台帳を汚さない」こと自体が受入条件のため）。
+for (const grade of [4, 5, 6]) {
+  const expectedKinds = new Set(HARD_NUMBERS_KINDS_BY_GRADE[grade] || [])
+  for (const kind of expectedKinds) {
+    for (let i = 0; i < 20; i++) {
+      const q = generateHardNumbersQuestion({ grade }, `hard:n:${kind}`)
+      requireValue(q, `hard算数 小${grade} ${kind}: 生成できない`)
+      if (!q) continue
+      requireValue(q.itemKey === `hard:n:${kind}`, `hard算数 小${grade} ${kind}: itemKeyが不正 (${q.itemKey})`)
+      requireValue(/^\d+$/.test(String(q.answerId)), `hard算数 小${grade} ${kind}: 答えが非負整数でない (${q.answerId})`)
+      requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hard算数 小${grade} ${kind}: explainがない`)
+      requireValue(Array.isArray(q.explainSteps) && q.explainSteps.length >= 2, `hard算数 小${grade} ${kind}: explainStepsが不足`)
+      const unitId = unitIdFor(q, grade)
+      requireValue(String(unitId).startsWith('hard:'), `hard算数 小${grade} ${kind}: unitIdが通常名前空間に漏れている (${unitId})`)
+    }
+  }
+  // 未出のkindも含め、grade指定のみでの自由生成でも到達できることを確認
+  const reached = new Set()
+  for (let i = 0; i < 400; i++) {
+    const q = generateHardNumbersQuestion({ grade })
+    if (q) reached.add(q.itemKey.slice(7))
+  }
+  for (const kind of expectedKinds) requireValue(reached.has(kind), `hard算数 小${grade} ${kind}: 自由生成で一度も出ない`)
+}
+// numbers.js の mode==='hard' 分岐が正しく機能し、通常モードを汚さないこと
+for (const grade of [4, 5, 6]) {
+  for (let i = 0; i < 60; i++) {
+    const hardQ = generateNumbersQuestion({ grade, mode: 'hard', level: 1, choiceCount: 4 })
+    requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:n:'), `さんすう hardモード 小${grade}: hard内容が返らない`)
+    const normalQ = generateNumbersQuestion({ grade, mode: 'normal', level: 3, choiceCount: 4 })
+    requireValue(normalQ && !String(normalQ.itemKey).startsWith('hard:'), `さんすう normalモード 小${grade}: hard内容が混入`)
+  }
+}
+// unitLedgerにhard系unitIdが一切現れないこと（全学年）
+for (let grade = 0; grade <= 6; grade++) {
+  const polluted = unitLedger(grade).filter((entry) => String(entry.unitId).startsWith('hard:'))
+  requireValue(polluted.length === 0, `unitLedger 小${grade}: hard系unitIdが混入 (${polluted.map((e) => e.unitId).join(',')})`)
 }
 
 if (errors.length) {

@@ -21,6 +21,17 @@ export function unitIdFor(question, grade = 0) {
   if (question.unitId) return question.unitId
   const g = gradeId(grade)
   const key = String(question.itemKey || '')
+  // むずかしいモード（'hard:n:xxx' 等）は、通常の 'math:xxx' などと
+  // 名前空間を絶対に共有しない専用の unitId を返す。この unitId は
+  // どの *_KINDS_BY_GRADE にも登録しないため、unitLedger()（下の
+  // unitLedger 関数を参照）には一切現れず、進級必須単元数を増やさない
+  // （計画書§4.2(d)）。
+  if (key.startsWith('hard:')) {
+    const inner = key.slice(5) // 例: 'n:jrTsurukame'
+    const kind = inner.includes(':') ? inner.split(':').pop().split('#')[0] : inner.split('#')[0]
+    const sub = question.domain === 'suuji' || inner.startsWith('n:') ? 'math' : (question.domain || 'x')
+    return `hard:${sub}:${kind}`
+  }
   if (question.domain === 'suuji' || key.startsWith('n:')) return `math:${key.slice(2).split('#')[0]}`
   if (question.domain === 'seikatsu' || key.startsWith('s:')) {
     const kind = key.slice(2).split('#')[0]

@@ -14,6 +14,8 @@
 // 問題ごとに分け、元の問題スナップショットを優先して再出題する。
 // ============================================================
 
+import { generateHardNumbersQuestion } from './hard/numbers-hard.js'
+
 const COUNT_EMOJI = ['🦕', '⭐', '🦖', '🪐', '🚀', '🌙', '🥚', '☄️', '🍎', '🐟']
 
 function rng(min, max) {
@@ -1339,6 +1341,18 @@ function kindsForGrade(grade, level) {
 export function generateNumbersQuestion(params, reviewKey = null) {
   const grade = params.grade || 0
   const p = { ...params, grade, cc: Math.max(3, params.choiceCount) }
+
+  // むずかしいモード（保護者設定, 対象は特殊算を扱う小4〜6）。
+  // 単元ローテーション（questionForUnitのmath:分岐）は常に具体的な
+  // 'n:xxx' reviewKeyを渡してくるため、通常のreviewKey判定より前で
+  // 分岐しないと、hardモードにしても一切hard内容が出せない。
+  // hard専用の itemKey（hard:n:xxx）は通常の unitLedger・SRS・習熟度と
+  // 名前空間を共有しない（計画書§4.2(d)、GameContext.jsxのANSWER reducer
+  // 側で 'hard:' 接頭辞を見て振り分ける）。
+  if (params.mode === 'hard' && grade >= 4) {
+    const hard = generateHardNumbersQuestion(p, reviewKey)
+    if (hard) return hard
+  }
 
   if (reviewKey && reviewKey.startsWith('n:')) {
     // 古いセーブにある "n:add10" も、新しい "n:add10#xxxx" も受け入れる。

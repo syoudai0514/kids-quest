@@ -134,8 +134,13 @@ export default function ActivityPlayer({ task, onDone }) {
     const domainId = currentDomainId()
     domainIdRef.current = domainId
     const dom = DOMAIN_BY_ID[domainId]
+    // むずかしいモード（保護者設定）は、習熟度の管理を通常と分けるため
+    // skillOf も 'hard:${domainId}' の名前空間で読む（GameContextのANSWER
+    // reducerが記録時に同じ名前空間へ振り分けている。計画書§4.2(d)(f)）。
+    const mode = stateRef.current.settings?.mode === 'hard' ? 'hard' : 'normal'
     const params = {
-      ...difficultyParams(skillOf(stateRef.current, domainId)),
+      ...difficultyParams(skillOf(stateRef.current, mode === 'hard' ? `hard:${domainId}` : domainId)),
+      mode,
       grade: stateRef.current.grade,
       englishAudioAvailable: domainId === 'english' ? englishAudioForTask : true,
       taskForm: domainId === 'english' && !isReviewTask && !reinforcementQueueRef.current.some((entry) => entry.after <= qIndex)
@@ -467,7 +472,8 @@ export default function ActivityPlayer({ task, onDone }) {
         setExplainReveal({
           text: question.explain || '',
           spelling: isEnglish ? question.answerWord?.text : null,
-          column: question.explainColumn || null
+          column: question.explainColumn || null,
+          steps: question.explainSteps || null
         })
         if (isEnglish) {
           // explain は英語と日本語が混在する教材文なので、音声（日本語ナビ）へは
@@ -504,7 +510,7 @@ export default function ActivityPlayer({ task, onDone }) {
     const ans = question.choices?.find((c) => c.id === question.answerId)
     const ansText = question.answerWord?.text || ans?.label || ''
     setFeedback({ good: false, word: 'いっしょに おぼえよう' })
-    setExplainReveal({ text: question.explain || '', spelling: isEnglish ? ansText : null, column: question.explainColumn || null })
+    setExplainReveal({ text: question.explain || '', spelling: isEnglish ? ansText : null, column: question.explainColumn || null, steps: question.explainSteps || null })
     advanceAfterFeedback(
       isEnglish
         ? 'だいじょうぶ。こたえを きいて、おぼえよう。つぎは できるよ！'
@@ -637,13 +643,22 @@ export default function ActivityPlayer({ task, onDone }) {
                 showHint={showAnswerHint && phase === 'answering'}
               />
             )}
-            {explainReveal && (explainReveal.spelling || explainReveal.text || explainReveal.column) && (
+            {explainReveal && (explainReveal.spelling || explainReveal.text || explainReveal.column || explainReveal.steps) && (
               <div className="explain-card">
                 {explainReveal.spelling && (
                   <div className="explain-card__spelling">{explainReveal.spelling}</div>
                 )}
                 {explainReveal.column && <pre className="explain-card__column">{explainReveal.column}</pre>}
                 {explainReveal.text && <div className="explain-card__text">{explainReveal.text}</div>}
+                {/* むずかしいモード（特殊算など）の段階解説。答えを当てることより
+                    式の組み立て方を残すのが目的（計画書§4.2(e)）。 */}
+                {Array.isArray(explainReveal.steps) && explainReveal.steps.length > 0 && (
+                  <ol className="explain-card__steps">
+                    {explainReveal.steps.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                )}
               </div>
             )}
             {phase === 'answering' && !isReflect && (
