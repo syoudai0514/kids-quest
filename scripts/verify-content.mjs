@@ -14,6 +14,7 @@ import { hasStrokeData } from '../src/data/strokeOrder.js'
 import { generateWritingQuestion, WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
 import { questionIds } from '../src/engine/reviewKey.js'
 import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_GRADE } from '../src/data/content/hard/numbers-hard.js'
+import { generateHardReadingQuestion, HARD_READING_FORMS } from '../src/data/content/hard/reading-hard.js'
 import { unitIdFor, unitLedger } from '../src/engine/learningUnits.js'
 
 const errors = []
@@ -508,6 +509,42 @@ for (let grade = 0; grade <= 6; grade++) {
   const polluted = unitLedger(grade).filter((entry) => String(entry.unitId).startsWith('hard:'))
   requireValue(polluted.length === 0, `unitLedger 小${grade}: hard系unitIdが混入 (${polluted.map((e) => e.unitId).join(',')})`)
 }
+
+// ---- WP10: むずかしいモード（こくご発展）----
+// hard算数と同じ設計（計画書§4.2(d)）。itemKeyは 'hard:yomu:' 名前空間、
+// unitIdは 'hard:' 名前空間で、unitLedgerには一切合流しない（上のループで確認済み）。
+for (const grade of [4, 5, 6]) {
+  const reached = new Set()
+  for (let i = 0; i < 1500; i++) {
+    const q = generateHardReadingQuestion({ grade, choiceCount: 4 })
+    if (!q) continue
+    reached.add(q.itemKey)
+    requireValue(String(q.itemKey).startsWith('hard:yomu:'), `hardこくご 小${grade}: itemKeyが不正 (${q.itemKey})`)
+    requireValue(String(q.unitId).startsWith('hard:'), `hardこくご 小${grade}: unitIdが通常名前空間に漏れている (${q.unitId})`)
+    requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hardこくご 小${grade} ${q.itemKey}: explainがない`)
+    requireValue((q.choices || []).some((c) => c.id === q.answerId), `hardこくご 小${grade} ${q.itemKey}: 正解が選択肢にない`)
+    requireValue(new Set((q.choices || []).map((c) => c.id)).size === (q.choices || []).length, `hardこくご 小${grade} ${q.itemKey}: 選択肢が重複`)
+  }
+  for (const form of HARD_READING_FORMS) {
+    for (const item of form.pool) {
+      if ((item.minGrade ?? 4) > grade) continue
+      const key = form.keyOf(item)
+      requireValue(reached.has(key), `hardこくご 小${grade}: 自由生成で一度も出ない (${key})`)
+    }
+  }
+}
+// reading.js の mode==='hard' 分岐が正しく機能し、通常モードを汚さないこと
+for (const grade of [4, 5, 6]) {
+  for (let i = 0; i < 60; i++) {
+    const hardQ = generateReadingQuestion({ grade, mode: 'hard', level: 1, choiceCount: 4 })
+    requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:'), `こくご hardモード 小${grade}: hard内容が返らない`)
+    const normalQ = generateReadingQuestion({ grade, mode: 'normal', level: 3, choiceCount: 4 })
+    requireValue(normalQ && !String(normalQ.itemKey).startsWith('hard:'), `こくご normalモード 小${grade}: hard内容が混入`)
+  }
+}
+// 長さだけで正解が分かってしまわないこと（品詞名の字数など、固定語い系の形式は
+// 特に危険。numbers-hard.jsと同じ verifySystematicLengthTell を再利用する）
+verifySystematicLengthTell('こくご(hard)', (params) => generateReadingQuestion({ ...params, mode: 'hard' }), [4, 5, 6], 1500)
 
 if (errors.length) {
   console.error(`コンテンツ検証失敗 (${errors.length}件)`)

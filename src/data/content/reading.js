@@ -268,6 +268,7 @@ export const WORDS = [
 
 import { kanjiPoolForGrade, KANJI_BY_CHAR, jukugoPoolForGrade, JUKUGO_BY_WORD } from '../kanjiByGrade.js'
 import { generateLanguageQuestion, generateDokkaiQuestion } from './readingLanguage.js'
+import { generateHardReadingQuestion } from './hard/reading-hard.js'
 
 // WP2: 語彙・文法系の新形式は itemKey の接頭辞で判別する。
 const LANGUAGE_PREFIXES = ['idiom:', 'proverb:', 'yoji:', 'anto:', 'syno:', 'homo:', 'bushu:', 'okuri:', 'bunpo:', 'keigo:']
@@ -454,6 +455,18 @@ function jukugoQuestion(answer, params) {
  * @param {string|null} reviewKey 'w:ことば' | 'k:字' | 'idiom:...' など（復習したい項目）
  */
 export function generateReadingQuestion(params, reviewKey = null) {
+  // むずかしいモード（保護者設定, 対象は小4〜6）。単元ローテーション
+  // （questionForUnitのyomu:分岐）は常に具体的な reviewKey を渡してくる
+  // ため、通常のreviewKey判定より前で分岐しないと、hardモードにしても
+  // 一切hard内容が出せない。hard専用の itemKey（hard:yomu:xxx）は
+  // 通常の unitLedger・SRS・習熟度と名前空間を共有しない
+  // （計画書§4.2(d)、numbers.jsのhard算数分岐と同じ設計）。
+  const grade = params.grade || 0
+  if (params.mode === 'hard' && grade >= 4) {
+    const hard = generateHardReadingQuestion(params, reviewKey)
+    if (hard) return hard
+  }
+
   // 復習キューからの再出題
   if (reviewKey) {
     if (reviewKey.startsWith('j:')) {
@@ -491,7 +504,6 @@ export function generateReadingQuestion(params, reviewKey = null) {
   if (String(params.unitId || '').endsWith(':dokkai')) return generateDokkaiQuestion(params)
 
   // 漢字は必ず熟語で出す。裸の一字に語全体の読みを答えさせない。
-  const grade = params.grade || 0
   const kanjiProb = grade >= 2 ? 0.65 : grade === 1 ? 0.45 : params.level >= 3 ? 0.35 : 0
   const jpool = grade >= 1 ? jukugoPoolForGrade(grade) : []
   const pool = poolForLevel(params.level, params.allowKatakana, params.allowHard, grade)

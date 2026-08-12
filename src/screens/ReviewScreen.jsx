@@ -17,6 +17,7 @@ import { dueEntries, daysUntilNext, boxCounts, dayNumber, MAX_BOX } from '../eng
 import { englishDaysUntilNext, englishDueEntries } from '../engine/englishProgress.js'
 import { KIND_LABELS } from '../data/content/numbers.js'
 import { HARD_NUMBERS_LABELS } from '../data/content/hard/numbers-hard.js'
+import { HARD_READING_LABELS } from '../data/content/hard/reading-hard.js'
 import { SEIKATSU_LABELS } from '../data/content/seikatsu.js'
 import { ENGLISH_GRAMMAR, ENGLISH_WORDS, ENGLISH_PHRASES } from '../data/content/english.js'
 import { AppHeader, Starfield } from '../components/common.jsx'
@@ -56,6 +57,10 @@ function labelOf(domainId, key) {
   }
   if (domainId === 'hard:suuji' && baseKey.startsWith('skill:hard:math:')) {
     return { big: '🧠', sub: HARD_NUMBERS_LABELS[baseKey.slice('skill:hard:math:'.length)] || 'むずかしい算数' }
+  }
+  if (domainId === 'hard:yomu' && baseKey.startsWith('hard:yomu:')) {
+    const cat = baseKey.slice('hard:yomu:'.length).split(':')[0]
+    return { big: '🧠', sub: HARD_READING_LABELS[cat] || 'むずかしい こくご' }
   }
   if (domainId === 'suuji' && baseKey.startsWith('n:')) {
     return { big: '🔢', sub: KIND_LABELS[baseKey.slice(2)] || 'さんすう' }
