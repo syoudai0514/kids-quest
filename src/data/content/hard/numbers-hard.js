@@ -7,6 +7,7 @@
 //   数の性質 : 余りの問題・約数の個数・数列の規則性
 //   割合と比 : 食塩水の濃度・売買損益・比例配分・速さと比
 //   平面図形 : おうぎ形の面積・面積比・相似・正多角形の角・L字型
+//   立体図形 : 組み合わせた直方体・水そう・立方体の色ぬり・円柱・相似比と体積
 //
 // 通常モードとの分離（計画書§4.2(d)）:
 //   - itemKey は必ず `hard:n:${kind}` の名前空間を使う。
@@ -535,19 +536,133 @@ const HARD_BUILDERS = {
         `まわりの長さは (${height}＋${width})×2＝${perimeter}cm`
       ]
     })
+  },
+
+  // ---- 立体図形 ----
+
+  // 直方体を2つ組み合わせた立体の体積。
+  jrRittaiL() {
+    const a = rng(3, 10)
+    const b = rng(3, 10)
+    const c = rng(2, 8)
+    const d = rng(2, a)
+    const e = rng(2, b)
+    const f = rng(2, 8)
+    const lower = a * b * c
+    const upper = d * e * f
+    return hardQ('jrRittaiL', {
+      visual: { kind: 'sentence', text: `たて${a}cm、よこ${b}cm、高さ${c}cmの直方体の上に、たて${d}cm、よこ${e}cm、高さ${f}cmの直方体を のせました。この立体の体積は何cm³ですか。` },
+      instruction: '体積は何cm³？',
+      speak: `たて${a}センチメートル、よこ${b}センチメートル、高さ${c}センチメートルの直方体の上に、たて${d}センチメートル、よこ${e}センチメートル、高さ${f}センチメートルの直方体をのせました。この立体の体積は何立方センチメートルですか。`,
+      answer: lower + upper,
+      explain: `${lower + upper}cm³`,
+      explainSteps: [
+        `2つの直方体に分けて、それぞれの体積を出す`,
+        `下の直方体は ${a}×${b}×${c}＝${lower}cm³`,
+        `上の直方体は ${d}×${e}×${f}＝${upper}cm³`,
+        `合わせて ${lower}＋${upper}＝${lower + upper}cm³`
+      ]
+    })
+  },
+
+  // 水そう: 底面積から「1分間に何cm深くなるか」を出すのが要点。
+  jrMizusou() {
+    const a = pick([10, 15, 20, 25, 30])
+    const b = pick([10, 15, 20, 25, 30])
+    const perMinute = rng(1, 4) // 1分あたり何cm深くなるか
+    const minutes = rng(3, 12)
+    const depth = perMinute * minutes
+    const rate = a * b * perMinute
+    const tankDepth = depth + rng(3, 10)
+    return hardQ('jrMizusou', {
+      visual: { kind: 'sentence', text: `たて${a}cm、よこ${b}cm、深さ${tankDepth}cmの直方体の水そうに、毎分${rate}cm³の水を入れます。水の深さが${depth}cmになるのは何分後ですか。` },
+      instruction: '何分後？',
+      speak: `たて${a}センチメートル、よこ${b}センチメートル、深さ${tankDepth}センチメートルの直方体の水そうに、毎分${rate}立方センチメートルの水を入れます。水の深さが${depth}センチメートルになるのは何分後ですか。`,
+      answer: minutes,
+      explain: `${minutes}分後`,
+      explainSteps: [
+        `水そうの底の面積は ${a}×${b}＝${a * b}cm²`,
+        `1分間に入る水は${rate}cm³なので、深さは1分で ${rate}÷${a * b}＝${perMinute}cm ずつ増える`,
+        `深さ${depth}cmになるのは ${depth}÷${perMinute}＝${minutes}分後`
+      ]
+    })
+  },
+
+  // 立方体の色ぬり: 外側をぬったとき、内側に残る立方体の個数。
+  jrCubePaint() {
+    const n = rng(3, 7)
+    const inner = (n - 2) ** 3
+    return hardQ('jrCubePaint', {
+      visual: { kind: 'sentence', text: `1辺1cmの立方体を積み上げて、1辺${n}cmの大きな立方体を作り、外側の面すべてに色をぬりました。色が1面もぬられていない立方体は何個ですか。` },
+      instruction: '何個？',
+      speak: `1辺1センチメートルの立方体を積み上げて、1辺${n}センチメートルの大きな立方体を作り、外側の面すべてに色をぬりました。色が1面もぬられていない立方体は何個ですか。`,
+      answer: inner,
+      explain: `${inner}個`,
+      explainSteps: [
+        `色がぬられていないのは、外側にふれていない「内がわ」の立方体だけ`,
+        `内がわは、たて・よこ・高さのそれぞれから 両はしの1個ずつを取りのぞいた部分`,
+        `1辺は ${n}－2＝${n - 2}個ぶん`,
+        `個数は ${n - 2}×${n - 2}×${n - 2}＝${inner}個`
+      ]
+    })
+  },
+
+  // 円柱の体積。答えが必ず整数になる「半径×高さ」の組だけを使う。
+  jrEnchuuTaiseki() {
+    const [radius, heights] = pick([
+      [5, [2, 4, 6, 8, 10, 12]],
+      [10, [2, 3, 4, 5, 6, 7, 8, 9, 10]],
+      [20, [2, 3, 4, 5]]
+    ])
+    const height = pick(heights)
+    const base = radius * radius * 3.14
+    const volume = Math.round(base * height)
+    return hardQ('jrEnchuuTaiseki', {
+      visual: { kind: 'sentence', text: `底面の半径が${radius}cm、高さが${height}cmの円柱の体積は何cm³ですか。円周率は3.14とします。` },
+      instruction: '体積は何cm³？',
+      speak: `底面の半径が${radius}センチメートル、高さが${height}センチメートルの円柱の体積は何立方センチメートルですか。円周率は3.14とします。`,
+      answer: volume,
+      explain: `${volume}cm³`,
+      explainSteps: [
+        `円柱の体積は「底面積×高さ」で求められる`,
+        `底面積は ${radius}×${radius}×3.14＝${base}cm²`,
+        `体積は ${base}×${height}＝${volume}cm³`
+      ]
+    })
+  },
+
+  // 相似な立体: 体積の比は、相似比を3回かけた比になる。
+  jrSoujiTaiseki() {
+    const [m, n] = pick([[1, 2], [2, 3], [1, 3], [3, 4], [2, 5], [3, 5]])
+    const k = rng(1, 5)
+    const small = m ** 3 * k
+    const large = n ** 3 * k
+    return hardQ('jrSoujiTaiseki', {
+      visual: { kind: 'sentence', text: `形が同じで、相似比が ${m}：${n} である2つの立体があります。小さい方の体積が${small}cm³のとき、大きい方の体積は何cm³ですか。` },
+      instruction: '大きい方の体積は？',
+      speak: `形が同じで、相似比が ${m}たい${n}である2つの立体があります。小さい方の体積が${small}立方センチメートルのとき、大きい方の体積は何立方センチメートルですか。`,
+      answer: large,
+      explain: `${large}cm³`,
+      explainSteps: [
+        `長さが${m}：${n}のとき、体積の比は それを3回かけた比になる`,
+        `体積の比は ${m}×${m}×${m}：${n}×${n}×${n}＝${m ** 3}：${n ** 3}`,
+        `大きい方の体積は ${small}÷${m ** 3}×${n ** 3}＝${large}cm³`
+      ]
+    })
   }
 }
 
 export const HARD_NUMBERS_KINDS = Object.keys(HARD_BUILDERS)
 
 // 特殊算は小4〜6のいずれも同じ種類を対象にする（複雑さは数値の範囲で吸収する）。
-// 数の性質・割合と比は小5から、円の面積を使うおうぎ形・面積比・相似は小6から。
+// 数の性質・割合と比・立体の基本は小5から、円の面積・円柱・面積比・相似は小6から。
 export const HARD_NUMBERS_KINDS_BY_GRADE = {
   4: ['jrTsurukame', 'jrUekigi', 'jrKafusoku', 'jrLjiMenseki', 'jrLjiMawari'],
   5: [
     'jrTsurukame', 'jrTabibito', 'jrUekigi', 'jrKafusoku', 'jrSashiatsume', 'jrSoutou',
     'jrSuuretsu', 'jrHireiHaibun', 'jrEnbun',
-    'jrLjiMenseki', 'jrLjiMawari', 'jrSeiTakakukei'
+    'jrLjiMenseki', 'jrLjiMawari', 'jrSeiTakakukei',
+    'jrRittaiL', 'jrMizusou', 'jrCubePaint'
   ],
   6: HARD_NUMBERS_KINDS
 }
@@ -570,5 +685,7 @@ export const HARD_NUMBERS_LABELS = {
   jrAmari: '余りの問題', jrYakusuu: '約数の個数', jrSuuretsu: '数列の規則性',
   jrEnbun: '食塩水の濃度', jrBaibaiSoneki: '売買損益', jrHireiHaibun: '比例配分', jrHayasaHi: '速さと比',
   jrOugigata: 'おうぎ形の面積', jrMensekiHi: '面積比', jrSouji: '相似',
-  jrSeiTakakukei: '正多角形の角', jrLjiMenseki: 'L字型の面積', jrLjiMawari: 'L字型のまわりの長さ'
+  jrSeiTakakukei: '正多角形の角', jrLjiMenseki: 'L字型の面積', jrLjiMawari: 'L字型のまわりの長さ',
+  jrRittaiL: '組み合わせた直方体', jrMizusou: '水そう', jrCubePaint: '立方体の色ぬり',
+  jrEnchuuTaiseki: '円柱の体積', jrSoujiTaiseki: '相似比と体積'
 }
