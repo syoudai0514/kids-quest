@@ -1,8 +1,12 @@
 // ============================================================
-// むずかしいモード（Phase 2）— さんすう「特殊算」
+// むずかしいモード（Phase 2）— さんすう（中学受験レベル）
 //
-// 対象は小4〜6。中学受験の標準的な特殊算（つるかめ算・旅人算・植木算・
-// 過不足算・差集め算・仕事算・年令算・相当算）を扱う。
+// 対象は小4〜6。次の分野を扱う。
+//   特殊算   : つるかめ算・旅人算・植木算・過不足算・差集め算・
+//              仕事算・年令算・相当算
+//   数の性質 : 余りの問題・約数の個数・数列の規則性
+//   割合と比 : 食塩水の濃度・売買損益・比例配分・速さと比
+//   平面図形 : おうぎ形の面積・面積比・相似・正多角形の角・L字型
 //
 // 通常モードとの分離（計画書§4.2(d)）:
 //   - itemKey は必ず `hard:n:${kind}` の名前空間を使う。
@@ -393,16 +397,158 @@ const HARD_BUILDERS = {
         `Bさんの時間は、比の${ra}にあたる: ${timeA}÷${rb}×${ra}＝${timeB}分`
       ]
     })
+  },
+
+  // ---- 平面図形 ----
+  //
+  // 図をかかずに ことばだけで 形が決まる問題に限定している
+  // （この画面は任意の図形を描けないため、絵が無いと解けない問題は作らない）。
+
+  // おうぎ形の面積。答えが必ず整数になる「半径×中心角」の組だけを使う
+  // （キーパッドに小数点が無いため。3.14を使う以上、組合せは限られる）。
+  jrOugigata() {
+    const [radius, angles] = pick([
+      [20, [45, 90, 135, 180, 270]],
+      [30, [60, 120, 180, 240, 300]],
+      [60, [45, 60, 90, 120, 135, 150, 180, 270]]
+    ])
+    const angle = pick(angles)
+    const circle = radius * radius * 3.14
+    const area = Math.round((circle * angle) / 360)
+    return hardQ('jrOugigata', {
+      visual: { kind: 'sentence', text: `半径${radius}cm、中心角${angle}度の おうぎ形の面積は何cm²ですか。円周率は3.14とします。` },
+      instruction: '面積は何cm²？',
+      speak: `半径${radius}センチメートル、中心角${angle}度の おうぎ形の面積は何平方センチメートルですか。円周率は3.14とします。`,
+      answer: area,
+      explain: `${area}cm²`,
+      explainSteps: [
+        `まず、半径${radius}cmの円全体の面積を出す: ${radius}×${radius}×3.14＝${circle}cm²`,
+        `おうぎ形は、円全体を360度としたときの${angle}度分なので、${angle}／360 にあたる`,
+        `面積は ${circle}×${angle}÷360＝${area}cm²`
+      ]
+    })
+  },
+
+  // 面積比: 底辺を分けた比が、そのまま三角形の面積の比になる。
+  jrMensekiHi() {
+    const m = rng(2, 5)
+    let n = rng(2, 5)
+    while (n === m || gcd(m, n) !== 1) n = rng(2, 5)
+    const unit = rng(3, 12)
+    const small = m * unit
+    const whole = (m + n) * unit
+    return hardQ('jrMensekiHi', {
+      visual: { kind: 'sentence', text: `三角形ABCで、辺BCを ${m}：${n} に分ける点をDとします。三角形ABDの面積が${small}cm²のとき、三角形ABCの面積は何cm²ですか。` },
+      instruction: '三角形ABCの面積は？',
+      speak: `三角形ABCで、辺BCを ${m}たい${n}に分ける点をDとします。三角形ABDの面積が${small}平方センチメートルのとき、三角形ABCの面積は何平方センチメートルですか。`,
+      answer: whole,
+      explain: `${whole}cm²`,
+      explainSteps: [
+        `三角形ABDと三角形ABCは、頂点Aから見た高さが同じ`,
+        `高さが同じ三角形の面積の比は、底辺の比とそのまま同じになる`,
+        `BD：BC＝${m}：${m + n} なので、面積の比も ${m}：${m + n}`,
+        `三角形ABCの面積は ${small}÷${m}×${m + n}＝${whole}cm²`
+      ]
+    })
+  },
+
+  // 相似: 同じ時刻の影の長さの比は、高さの比と同じになる。
+  jrSouji() {
+    const poleHeight = rng(2, 5)
+    const poleShadow = rng(2, 6)
+    const times = rng(3, 9)
+    const treeShadow = poleShadow * times
+    const treeHeight = poleHeight * times
+    return hardQ('jrSouji', {
+      visual: { kind: 'sentence', text: `高さ${poleHeight}mの棒を まっすぐ立てると、影の長さは${poleShadow}mでした。同じ時刻に、木の影の長さは${treeShadow}mでした。木の高さは何mですか。` },
+      instruction: '木の高さは何m？',
+      speak: `高さ${poleHeight}メートルの棒を まっすぐ立てると、影の長さは${poleShadow}メートルでした。同じ時刻に、木の影の長さは${treeShadow}メートルでした。木の高さは何メートルですか。`,
+      answer: treeHeight,
+      explain: `${treeHeight}m`,
+      explainSteps: [
+        `同じ時刻の影なので、棒がつくる三角形と、木がつくる三角形は相似`,
+        `木の影は棒の影の ${treeShadow}÷${poleShadow}＝${times}倍`,
+        `高さも同じ${times}倍になるので、${poleHeight}×${times}＝${treeHeight}m`
+      ]
+    })
+  },
+
+  // 正多角形: 1つの内角から、辺の数を逆に求める（外角に直すのが近道）。
+  jrSeiTakakukei() {
+    const n = pick([5, 6, 8, 9, 10, 12, 15, 18, 20])
+    const outer = 360 / n
+    const inner = 180 - outer
+    return hardQ('jrSeiTakakukei', {
+      visual: { kind: 'sentence', text: `1つの内角の大きさが${inner}度である正多角形は、正何角形ですか。` },
+      instruction: '正何角形？',
+      speak: `1つの内角の大きさが${inner}度である正多角形は、正何角形ですか。`,
+      answer: n,
+      explain: `正${n}角形`,
+      explainSteps: [
+        `内角と外角を合わせると180度になるので、1つの外角は 180－${inner}＝${outer}度`,
+        `正多角形の外角をぜんぶ合わせると、いつでも360度になる`,
+        `辺の数は 360÷${outer}＝${n}なので、正${n}角形`
+      ]
+    })
+  },
+
+  // L字型の面積: 大きい長方形から、切り取った長方形を引く。
+  jrLjiMenseki() {
+    const height = rng(6, 15)
+    const width = rng(6, 15)
+    // 切り取る量は各辺の6割までにする。ほとんど全部を切り取ると、
+    // 細長すぎて形が想像しにくい問題になってしまう。
+    const cutH = rng(2, Math.floor(height * 0.6))
+    const cutW = rng(2, Math.floor(width * 0.6))
+    const area = height * width - cutH * cutW
+    return hardQ('jrLjiMenseki', {
+      visual: { kind: 'sentence', text: `たて${height}cm、よこ${width}cmの長方形の 右上のかどから、たて${cutH}cm、よこ${cutW}cmの長方形を 切り取りました。残った形の面積は何cm²ですか。` },
+      instruction: '残った面積は？',
+      speak: `たて${height}センチメートル、よこ${width}センチメートルの長方形の 右上のかどから、たて${cutH}センチメートル、よこ${cutW}センチメートルの長方形を切り取りました。残った形の面積は何平方センチメートルですか。`,
+      answer: area,
+      explain: `${area}cm²`,
+      explainSteps: [
+        `もとの長方形の面積は ${height}×${width}＝${height * width}cm²`,
+        `切り取った長方形の面積は ${cutH}×${cutW}＝${cutH * cutW}cm²`,
+        `残りは ${height * width}－${cutH * cutW}＝${area}cm²`
+      ]
+    })
+  },
+
+  // L字型の周りの長さ: 角を切り取っても、周りの長さは変わらないという気づき。
+  jrLjiMawari() {
+    const height = rng(6, 15)
+    const width = rng(6, 15)
+    const cutH = rng(2, Math.floor(height * 0.6))
+    const cutW = rng(2, Math.floor(width * 0.6))
+    const perimeter = 2 * (height + width)
+    return hardQ('jrLjiMawari', {
+      visual: { kind: 'sentence', text: `たて${height}cm、よこ${width}cmの長方形の 右上のかどから、たて${cutH}cm、よこ${cutW}cmの長方形を 切り取りました。残った形の まわりの長さは何cmですか。` },
+      instruction: 'まわりの長さは？',
+      speak: `たて${height}センチメートル、よこ${width}センチメートルの長方形の 右上のかどから、たて${cutH}センチメートル、よこ${cutW}センチメートルの長方形を切り取りました。残った形の まわりの長さは何センチメートルですか。`,
+      answer: perimeter,
+      explain: `${perimeter}cm`,
+      explainSteps: [
+        `切り取ってできた へこみの2辺を、外がわへ動かして考える`,
+        `動かすと、ちょうど もとの長方形の たてとよこに ぴったり重なる`,
+        `つまり かどを切り取っても、まわりの長さは もとの長方形と同じ`,
+        `まわりの長さは (${height}＋${width})×2＝${perimeter}cm`
+      ]
+    })
   }
 }
 
 export const HARD_NUMBERS_KINDS = Object.keys(HARD_BUILDERS)
 
 // 特殊算は小4〜6のいずれも同じ種類を対象にする（複雑さは数値の範囲で吸収する）。
-// 数の性質・割合と比は5年生からの単元なので、小5以降でのみ出す。
+// 数の性質・割合と比は小5から、円の面積を使うおうぎ形・面積比・相似は小6から。
 export const HARD_NUMBERS_KINDS_BY_GRADE = {
-  4: ['jrTsurukame', 'jrUekigi', 'jrKafusoku'],
-  5: ['jrTsurukame', 'jrTabibito', 'jrUekigi', 'jrKafusoku', 'jrSashiatsume', 'jrSoutou', 'jrSuuretsu', 'jrHireiHaibun', 'jrEnbun'],
+  4: ['jrTsurukame', 'jrUekigi', 'jrKafusoku', 'jrLjiMenseki', 'jrLjiMawari'],
+  5: [
+    'jrTsurukame', 'jrTabibito', 'jrUekigi', 'jrKafusoku', 'jrSashiatsume', 'jrSoutou',
+    'jrSuuretsu', 'jrHireiHaibun', 'jrEnbun',
+    'jrLjiMenseki', 'jrLjiMawari', 'jrSeiTakakukei'
+  ],
   6: HARD_NUMBERS_KINDS
 }
 
@@ -422,5 +568,7 @@ export const HARD_NUMBERS_LABELS = {
   jrKafusoku: '過不足算', jrSashiatsume: '差集め算', jrShigoto: '仕事算',
   jrNenrei: '年令算', jrSoutou: '相当算',
   jrAmari: '余りの問題', jrYakusuu: '約数の個数', jrSuuretsu: '数列の規則性',
-  jrEnbun: '食塩水の濃度', jrBaibaiSoneki: '売買損益', jrHireiHaibun: '比例配分', jrHayasaHi: '速さと比'
+  jrEnbun: '食塩水の濃度', jrBaibaiSoneki: '売買損益', jrHireiHaibun: '比例配分', jrHayasaHi: '速さと比',
+  jrOugigata: 'おうぎ形の面積', jrMensekiHi: '面積比', jrSouji: '相似',
+  jrSeiTakakukei: '正多角形の角', jrLjiMenseki: 'L字型の面積', jrLjiMawari: 'L字型のまわりの長さ'
 }
