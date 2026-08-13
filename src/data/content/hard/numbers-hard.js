@@ -9,6 +9,7 @@
 //   平面図形 : おうぎ形の面積・面積比・相似・正多角形の角・L字型
 //   立体図形 : 組み合わせた直方体・水そう・立方体の色ぬり・円柱・相似比と体積
 //   場合の数 : 順列・組合せ・道順・カードで整数を作る・総当たり戦
+//   速さ     : 通過算・すれちがい・流水算・時計算
 //
 // 通常モードとの分離（計画書§4.2(d)）:
 //   - itemKey は必ず `hard:n:${kind}` の名前空間を使う。
@@ -762,6 +763,135 @@ const HARD_BUILDERS = {
         `試合数は ${teams * (teams - 1)}÷2＝${total}試合`
       ]
     })
+  },
+
+  // ---- 速さ ----
+
+  // 通過算: 電車は「自分の長さ＋橋の長さ」だけ進んで渡り終わる。
+  jrTsuuka() {
+    // 橋も電車も、実際の問題と同じように切りのよい長さにする。
+    // そのうえで、割り切れる秒速だけを候補にする（答えを整数にするため）。
+    const trainLength = pick([100, 120, 140, 150, 160, 180, 200])
+    const bridge = pick([300, 400, 450, 500, 600, 700, 800])
+    const total = trainLength + bridge
+    const speeds = []
+    for (let v = 15; v <= 25; v++) if (total % v === 0) speeds.push(v)
+    if (!speeds.length) return HARD_BUILDERS.jrTsuuka()
+    const speed = pick(speeds)
+    const seconds = total / speed
+    return hardQ('jrTsuuka', {
+      visual: { kind: 'sentence', text: `長さ${trainLength}mの電車が、秒速${speed}mで 長さ${bridge}mの鉄橋を わたります。わたり始めてから わたり終わるまで何秒かかりますか。` },
+      instruction: '何秒？',
+      speak: `長さ${trainLength}メートルの電車が、秒速${speed}メートルで 長さ${bridge}メートルの鉄橋をわたります。わたり始めてから わたり終わるまで何秒かかりますか。`,
+      answer: seconds,
+      explain: `${seconds}秒`,
+      explainSteps: [
+        `「わたり終わる」のは、電車の最後尾が橋を出たとき`,
+        `そのとき電車は、橋の長さ＋電車の長さ ぶん進んでいる`,
+        `進む道のりは ${bridge}＋${trainLength}＝${bridge + trainLength}m`,
+        `かかる時間は ${bridge + trainLength}÷${speed}＝${seconds}秒`
+      ]
+    })
+  },
+
+  // 通過算（すれちがい）: 2つの電車の長さの合計を、速さの和で進む。
+  jrSurechigai() {
+    // 2本とも切りのよい長さにしてから、合計を割り切る速さの組を選ぶ。
+    const lengthA = pick([100, 120, 140, 150, 160, 180, 200])
+    const lengthB = pick([100, 120, 140, 150, 160, 180, 200])
+    const totalLength = lengthA + lengthB
+    const pairs = []
+    for (let a = 15; a <= 25; a++) {
+      for (let b = 15; b <= 25; b++) {
+        if (totalLength % (a + b) === 0) pairs.push([a, b])
+      }
+    }
+    if (!pairs.length) return HARD_BUILDERS.jrSurechigai()
+    const [speedA, speedB] = pick(pairs)
+    const seconds = totalLength / (speedA + speedB)
+    return hardQ('jrSurechigai', {
+      visual: { kind: 'sentence', text: `長さ${lengthA}mで秒速${speedA}mの電車と、長さ${lengthB}mで秒速${speedB}mの電車が 反対向きに走っています。出会ってから 完全にすれちがうまで何秒かかりますか。` },
+      instruction: '何秒？',
+      speak: `長さ${lengthA}メートルで秒速${speedA}メートルの電車と、長さ${lengthB}メートルで秒速${speedB}メートルの電車が反対向きに走っています。出会ってから完全にすれちがうまで何秒かかりますか。`,
+      answer: seconds,
+      explain: `${seconds}秒`,
+      explainSteps: [
+        `完全にすれちがうまでに進む道のりは、2つの電車の長さの合計`,
+        `合計の長さは ${lengthA}＋${lengthB}＝${totalLength}m`,
+        `反対向きなので、1秒に近づく速さは ${speedA}＋${speedB}＝${speedA + speedB}m`,
+        `かかる時間は ${totalLength}÷${speedA + speedB}＝${seconds}秒`
+      ]
+    })
+  },
+
+  // 流水算（下り）: 川を下るときは、船の速さに流れの速さが加わる。
+  jrRyuusuiKudari() {
+    // 下りの速さ（船＋流れ）が50の倍数になる組だけを使い、
+    // 道のりが 3025m のような半端な数にならないようにする。
+    const flow = pick([20, 25, 30, 40, 50])
+    const still = pick([2, 3, 4, 5, 6]) * 50 - flow
+    const minutes = rng(4, 15)
+    const distance = (still + flow) * minutes
+    return hardQ('jrRyuusuiKudari', {
+      visual: { kind: 'sentence', text: `静水での速さが分速${still}mの船が、流れの速さが分速${flow}mの川を ${distance}m下ります。何分かかりますか。` },
+      instruction: '何分？',
+      speak: `静水での速さが分速${still}メートルの船が、流れの速さが分速${flow}メートルの川を ${distance}メートル下ります。何分かかりますか。`,
+      answer: minutes,
+      explain: `${minutes}分`,
+      explainSteps: [
+        `川を下るときは、船の速さに 流れの速さが たされる`,
+        `下りの速さは ${still}＋${flow}＝${still + flow}m/分`,
+        `かかる時間は ${distance}÷${still + flow}＝${minutes}分`
+      ]
+    })
+  },
+
+  // 流水算（静水時の速さ）: 下りと上りの速さの平均が、船そのものの速さ。
+  jrRyuusuiJousui() {
+    const still = pick([120, 150, 180, 200, 240, 250])
+    const flow = pick([20, 30, 40, 50])
+    const down = still + flow
+    const up = still - flow
+    return hardQ('jrRyuusuiJousui', {
+      visual: { kind: 'sentence', text: `ある船が川を下るときの速さは分速${down}m、上るときの速さは分速${up}mです。静水での船の速さは分速何mですか。` },
+      instruction: '分速何m？',
+      speak: `ある船が川を下るときの速さは分速${down}メートル、上るときの速さは分速${up}メートルです。静水での船の速さは分速何メートルですか。`,
+      answer: still,
+      explain: `分速${still}m`,
+      explainSteps: [
+        `下りの速さは「船の速さ＋流れの速さ」、上りの速さは「船の速さ－流れの速さ」`,
+        `2つをたすと 流れの速さが消えて、船の速さの2つぶんになる`,
+        `${down}＋${up}＝${down + up} は 船の速さの2つぶん`,
+        `静水での船の速さは ${down + up}÷2＝${still}m/分`
+      ]
+    })
+  },
+
+  // 時計算: 長針は1分で6度、短針は1分で0.5度進む。
+  // 分は偶数だけにして、0.5×分 が必ず整数になるようにしている。
+  jrTokei() {
+    const hour = rng(1, 12)
+    const minute = rng(1, 29) * 2
+    const hourAngle = 30 * hour + 0.5 * minute
+    const minuteAngle = 6 * minute
+    const raw = Math.abs(hourAngle - minuteAngle)
+    const angle = raw > 180 ? 360 - raw : raw
+    if (angle === 0 || angle === 180) return HARD_BUILDERS.jrTokei()
+    return hardQ('jrTokei', {
+      visual: { kind: 'sentence', text: `${hour}時${minute}分のとき、時計の長針と短針が作る角のうち、小さい方は何度ですか。` },
+      instruction: '何度？',
+      speak: `${hour}時${minute}分のとき、時計の長針と短針が作る角のうち、小さい方は何度ですか。`,
+      answer: angle,
+      explain: `${angle}度`,
+      explainSteps: [
+        `長針は1分に6度進むので、${minute}分では 6×${minute}＝${minuteAngle}度`,
+        `短針は1時間で30度、つまり1分に0.5度進む`,
+        `短針は12時の位置から 30×${hour}＋0.5×${minute}＝${hourAngle}度`,
+        raw > 180
+          ? `2つの差は ${Math.max(hourAngle, minuteAngle)}－${Math.min(hourAngle, minuteAngle)}＝${raw}度。180度をこえるので、小さい方は 360－${raw}＝${angle}度`
+          : `2つの差は ${Math.max(hourAngle, minuteAngle)}－${Math.min(hourAngle, minuteAngle)}＝${angle}度`
+      ]
+    })
   }
 }
 
@@ -776,7 +906,8 @@ export const HARD_NUMBERS_KINDS_BY_GRADE = {
     'jrSuuretsu', 'jrHireiHaibun', 'jrEnbun',
     'jrLjiMenseki', 'jrLjiMawari', 'jrSeiTakakukei',
     'jrRittaiL', 'jrMizusou', 'jrCubePaint',
-    'jrSoutotal', 'jrSeisuuTsukuru'
+    'jrSoutotal', 'jrSeisuuTsukuru',
+    'jrTsuuka', 'jrRyuusuiKudari', 'jrTokei'
   ],
   6: HARD_NUMBERS_KINDS
 }
@@ -803,5 +934,7 @@ export const HARD_NUMBERS_LABELS = {
   jrRittaiL: '組み合わせた直方体', jrMizusou: '水そう', jrCubePaint: '立方体の色ぬり',
   jrEnchuuTaiseki: '円柱の体積', jrSoujiTaiseki: '相似比と体積',
   jrJunretsu: '順列（並べ方）', jrKumiawase: '組合せ（選び方）', jrMichijun: '道順',
-  jrSeisuuTsukuru: 'カードで整数を作る', jrSoutotal: '総当たり戦の試合数'
+  jrSeisuuTsukuru: 'カードで整数を作る', jrSoutotal: '総当たり戦の試合数',
+  jrTsuuka: '通過算', jrSurechigai: '通過算（すれちがい）',
+  jrRyuusuiKudari: '流水算（下り）', jrRyuusuiJousui: '流水算（静水時の速さ）', jrTokei: '時計算'
 }
