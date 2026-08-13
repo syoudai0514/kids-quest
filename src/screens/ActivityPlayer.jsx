@@ -323,7 +323,30 @@ export default function ActivityPlayer({ task, onDone }) {
     )
   }
 
-  if (!question) return null
+  // 指定復習の問題を作れなかった直後（次の問題へ切り替わるまでの一瞬）は
+  // question が null になる。ここで何も描画しないと、画面が完全に真っ白
+  // （ヘッダーの「もどる」ボタンごと消える）になり、実機で「フリーズした」
+  // という報告につながっていた（とっくんに、もう存在しない古い復習キーが
+  // 残っていると、この状態が古い項目の数だけ連続して起こりうる）。
+  // 「もどる」だけは必ず押せる状態を保ち、案内メッセージも見えるようにする。
+  if (!question) {
+    return (
+      <div className={'screen screen-in activity-screen' + (domainIdRef.current === 'english' ? ' activity-screen--english' : '')}>
+        <Starfield count={16} />
+        <AppHeader
+          className="app-header--progress"
+          onBack={onDone}
+          title={<ProgressDots total={questionCount} index={qIndex} />}
+          right={<div className="pill">{isReviewTask ? '🎯 とっくん' : `${domain.emoji} ${domainName(domain, state.grade)}`}</div>}
+        />
+        <div className="center-col scroll-col">
+          <div className="muted activity-instruction" style={{ fontSize: 'clamp(16px,3vw,24px)', fontWeight: 800, textAlign: 'center' }}>
+            {feedback?.word || 'つぎの もんだいを じゅんびしているよ…'}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const advanceAfterFeedback = (line, { english = '', rate: feedbackRate, minVisibleMs = 900 } = {}) => {
     const speechId = ++feedbackSpeechRef.current
