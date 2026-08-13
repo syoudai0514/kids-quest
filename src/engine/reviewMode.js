@@ -2,7 +2,7 @@
 // 教材の無い教科をここに入れると、統計だけ 'hard:xxx' 側へ切り替わって
 // 通常の習熟度（skillOf）が空の状態から始まってしまうため、
 // 実際にhardコンテンツを持つ教科だけを明示的に列挙する。
-const DOMAINS_WITH_HARD_CONTENT = new Set(['suuji', 'yomu', 'rika'])
+const DOMAINS_WITH_HARD_CONTENT = new Set(['suuji', 'yomu', 'rika', 'shakai'])
 
 // ふつう／むずかしいで分離した学習台帳のうち、いま表示・出題する側を選ぶ。
 export function activeStatsDomainId(state, domainId, grade = state.grade) {

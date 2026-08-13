@@ -71,6 +71,7 @@ function labelOf(domainId, key) {
   if (domainId === 'rika' && baseKey.startsWith('r:')) return { big: '🔬', sub: short(baseKey.slice(2)) }
   if (domainId === 'hard:rika' && baseKey.startsWith('hard:r:')) return { big: '🔬', sub: short(baseKey.slice(7)) }
   if (domainId === 'shakai' && baseKey.startsWith('c:')) return { big: '🗾', sub: short(baseKey.slice(2)) }
+  if (domainId === 'hard:shakai' && baseKey.startsWith('hard:c:')) return { big: '🗾', sub: short(baseKey.slice(7)) }
   if (domainId === 'doutoku' && baseKey.startsWith('d:')) return { big: '💗', sub: short(baseKey.slice(2)) }
   if (domainId === 'english') {
     if (baseKey.startsWith('enw:')) {

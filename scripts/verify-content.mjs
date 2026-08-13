@@ -16,6 +16,7 @@ import { questionIds } from '../src/engine/reviewKey.js'
 import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_GRADE } from '../src/data/content/hard/numbers-hard.js'
 import { generateHardReadingQuestion, HARD_READING_FORMS } from '../src/data/content/hard/reading-hard.js'
 import { generateHardRikaQuestion, HARD_RIKA_QUESTIONS } from '../src/data/content/hard/rika-hard.js'
+import { generateHardShakaiQuestion, HARD_SHAKAI_QUESTIONS } from '../src/data/content/hard/shakai-hard.js'
 import { unitIdFor, unitLedger } from '../src/engine/learningUnits.js'
 
 const errors = []
@@ -623,6 +624,43 @@ for (const grade of [4, 5, 6]) {
 // （誤答3件中2件しか見せない分、正解が単独最長/最短に偏って見える）。
 verifyNoLengthTell('りか(hard)', HARD_RIKA_QUESTIONS, (params, key) => generateHardRikaQuestion(params, key), 'hard:r:')
 verifyLengthDistribution('りか(hard)', HARD_RIKA_QUESTIONS, (params, key) => generateHardRikaQuestion(params, key), 'hard:r:')
+
+// ---- WP10: むずかしいモード（しゃかい発展）----
+// hardりかと同じ設計。itemKeyは 'hard:c:' 名前空間、
+// unitIdは 'hard:shakai:' 名前空間で、unitLedgerには一切合流しない。
+{
+  const reached = new Set()
+  for (let i = 0; i < 3000; i++) {
+    const q = generateHardShakaiQuestion({ grade: 6, choiceCount: 4 })
+    if (!q) continue
+    reached.add(q.itemKey)
+    requireValue(String(q.itemKey).startsWith('hard:c:'), `hardしゃかい: itemKeyが不正 (${q.itemKey})`)
+    requireValue(String(q.unitId).startsWith('hard:shakai:'), `hardしゃかい: unitIdが通常名前空間に漏れている (${q.unitId})`)
+    requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hardしゃかい ${q.itemKey}: explainがない`)
+    requireValue((q.choices || []).some((c) => c.id === q.answerId), `hardしゃかい ${q.itemKey}: 正解が選択肢にない`)
+    requireValue(new Set((q.choices || []).map((c) => c.id)).size === (q.choices || []).length, `hardしゃかい ${q.itemKey}: 選択肢が重複`)
+  }
+  for (const question of HARD_SHAKAI_QUESTIONS) {
+    requireValue(reached.has(`hard:c:${question}`), `hardしゃかい: 自由生成で一度も出ない (${question})`)
+  }
+  const dupCheck = new Set()
+  for (const question of HARD_SHAKAI_QUESTIONS) {
+    requireValue(!dupCheck.has(question), `hardしゃかい: 問題文が重複 (${question})`)
+    dupCheck.add(question)
+    requireValue(!SHAKAI_QUESTIONS.includes(question), `hardしゃかい: 通常モードと同じ問題文が混入 (${question})`)
+  }
+}
+// shakai.js の mode==='hard' 分岐が正しく機能し、通常モードを汚さないこと
+for (const grade of [4, 5, 6]) {
+  for (let i = 0; i < 40; i++) {
+    const hardQ = generateShakaiQuestion({ grade, mode: 'hard', choiceCount: 4 })
+    requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:'), `しゃかい hardモード 小${grade}: hard内容が返らない`)
+    const normalQ = generateShakaiQuestion({ grade, mode: 'normal', choiceCount: 4 })
+    requireValue(normalQ && !String(normalQ.itemKey).startsWith('hard:'), `しゃかい normalモード 小${grade}: hard内容が混入`)
+  }
+}
+verifyNoLengthTell('しゃかい(hard)', HARD_SHAKAI_QUESTIONS, (params, key) => generateHardShakaiQuestion(params, key), 'hard:c:')
+verifyLengthDistribution('しゃかい(hard)', HARD_SHAKAI_QUESTIONS, (params, key) => generateHardShakaiQuestion(params, key), 'hard:c:')
 
 if (errors.length) {
   console.error(`コンテンツ検証失敗 (${errors.length}件)`)
