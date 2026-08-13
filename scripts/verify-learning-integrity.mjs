@@ -45,19 +45,33 @@ const hardState = {
   srs: {
     suuji: { 'skill:math:decimalDiv': { due: 1 } },
     'hard:suuji': { 'skill:hard:math:jrTsurukame': { due: 1 } },
-    rika: { 'r:通常理科': { due: 1 } }
+    yomu: { 'j:通常こくご': { due: 1 } },
+    'hard:yomu': { 'hard:yomu:yoji2:通常発展': { due: 1 } },
+    rika: { 'r:通常理科': { due: 1 } },
+    'hard:rika': { 'hard:r:通常理科hard': { due: 1 } },
+    // しゃかいには まだhard専用教材が無いので、常に通常台帳のままになる
+    // ことを確かめる対照群として使う。
+    shakai: { 'c:通常社会': { due: 1 } }
   }
 }
 must(activeStatsDomainId(hardState, 'suuji') === 'hard:suuji', '小5hard算数の習熟度を専用台帳から読めない')
-must(activeStatsDomainId(hardState, 'rika') === 'rika', 'hardモードで通常理科の難易度台帳まで切り替わった')
+must(activeStatsDomainId(hardState, 'yomu') === 'hard:yomu', '小5hardこくごの習熟度を専用台帳から読めない')
+must(activeStatsDomainId(hardState, 'rika') === 'hard:rika', '小5hardりかの習熟度を専用台帳から読めない')
+must(activeStatsDomainId(hardState, 'shakai') === 'shakai', 'hard教材の無い教科(しゃかい)まで難易度台帳が切り替わった')
 must(generatorReviewKey('skill:hard:math:jrTsurukame') === 'hard:n:jrTsurukame', 'hard算数knowledgeIdを生成キーへ戻せない')
 const hardOriginal = withQuestionIds(withLearningUnit(DOMAIN_BY_ID.suuji.generateQuestion({ grade: 5, mode: 'hard', choiceCount: 4 }, 'hard:n:jrTsurukame'), 5))
 const hardAgain = withQuestionIds(withLearningUnit(DOMAIN_BY_ID.suuji.generateQuestion({ grade: 5, mode: 'hard', choiceCount: 4 }, generatorReviewKey(hardOriginal.knowledgeId)), 5))
 must(hardOriginal.knowledgeId === 'skill:hard:math:jrTsurukame' && hardAgain.knowledgeId === hardOriginal.knowledgeId, 'hard算数の期限復習が同じ技能へ戻らない')
 const hardReviewSrs = activeReviewSrs(hardState)
-must(!hardReviewSrs.suuji && hardReviewSrs['hard:suuji'] && hardReviewSrs.rika, 'hardモードのとっくん台帳を正しく選べない')
+must(!hardReviewSrs.suuji && hardReviewSrs['hard:suuji'], 'hardモードのとっくん台帳(さんすう)を正しく選べない')
+must(!hardReviewSrs.yomu && hardReviewSrs['hard:yomu'], 'hardモードのとっくん台帳(こくご)を正しく選べない')
+must(!hardReviewSrs.rika && hardReviewSrs['hard:rika'], 'hardモードのとっくん台帳(りか)を正しく選べない')
+must(hardReviewSrs.shakai && !hardReviewSrs['hard:shakai'], 'hard教材の無い教科(しゃかい)のとっくんがhardモードで消えた')
 const normalReviewSrs = activeReviewSrs({ ...hardState, settings: { mode: 'normal' } })
-must(normalReviewSrs.suuji && !normalReviewSrs['hard:suuji'] && normalReviewSrs.rika, 'normalモードのとっくんにhard算数が混入')
+must(normalReviewSrs.suuji && !normalReviewSrs['hard:suuji'], 'normalモードのとっくんにhard算数が混入')
+must(normalReviewSrs.yomu && !normalReviewSrs['hard:yomu'], 'normalモードのとっくんにhardこくごが混入')
+must(normalReviewSrs.rika && !normalReviewSrs['hard:rika'], 'normalモードのとっくんにhardりかが混入')
+must(normalReviewSrs.shakai, 'normalモードでしゃかいのとっくんが消えた')
 
 // 英語キー・図鑑指定練習・アルファベット22項目。
 for (const [raw, normalized] of [['en:ew001', 'enw:ew001'], ['enw:ew001', 'enw:ew001'], ['enp:ep001', 'enp:ep001'], ['ena:A-B', 'ena:A-B']]) must(normalizeEnglishKey(raw) === normalized, `${raw}: 英語キーの正規化に失敗`)

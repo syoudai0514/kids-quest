@@ -15,6 +15,7 @@ import { generateWritingQuestion, WRITING_GROUPS_BY_GRADE } from '../src/data/co
 import { questionIds } from '../src/engine/reviewKey.js'
 import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_GRADE } from '../src/data/content/hard/numbers-hard.js'
 import { generateHardReadingQuestion, HARD_READING_FORMS } from '../src/data/content/hard/reading-hard.js'
+import { generateHardRikaQuestion, HARD_RIKA_QUESTIONS } from '../src/data/content/hard/rika-hard.js'
 import { unitIdFor, unitLedger } from '../src/engine/learningUnits.js'
 
 const errors = []
@@ -581,6 +582,47 @@ for (const grade of [4, 5, 6]) {
 // 長さだけで正解が分かってしまわないこと（品詞名の字数など、固定語い系の形式は
 // 特に危険。numbers-hard.jsと同じ verifySystematicLengthTell を再利用する）
 verifySystematicLengthTell('こくご(hard)', (params) => generateReadingQuestion({ ...params, mode: 'hard' }), [4, 5, 6], 1500)
+
+// ---- WP10: むずかしいモード（りか発展）----
+// hard算数・hardこくごと同じ設計。itemKeyは 'hard:r:' 名前空間、
+// unitIdは 'hard:rika:' 名前空間で、unitLedgerには一切合流しない。
+{
+  const reached = new Set()
+  for (let i = 0; i < 3000; i++) {
+    const q = generateHardRikaQuestion({ grade: 6, choiceCount: 4 })
+    if (!q) continue
+    reached.add(q.itemKey)
+    requireValue(String(q.itemKey).startsWith('hard:r:'), `hardりか: itemKeyが不正 (${q.itemKey})`)
+    requireValue(String(q.unitId).startsWith('hard:rika:'), `hardりか: unitIdが通常名前空間に漏れている (${q.unitId})`)
+    requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hardりか ${q.itemKey}: explainがない`)
+    requireValue((q.choices || []).some((c) => c.id === q.answerId), `hardりか ${q.itemKey}: 正解が選択肢にない`)
+    requireValue(new Set((q.choices || []).map((c) => c.id)).size === (q.choices || []).length, `hardりか ${q.itemKey}: 選択肢が重複`)
+  }
+  for (const question of HARD_RIKA_QUESTIONS) {
+    requireValue(reached.has(`hard:r:${question}`), `hardりか: 自由生成で一度も出ない (${question})`)
+  }
+  const dupCheck = new Set()
+  for (const question of HARD_RIKA_QUESTIONS) {
+    requireValue(!dupCheck.has(question), `hardりか: 問題文が重複 (${question})`)
+    dupCheck.add(question)
+    requireValue(!RIKA_QUESTIONS.includes(question), `hardりか: 通常モードと同じ問題文が混入 (${question})`)
+  }
+}
+// rika.js の mode==='hard' 分岐が正しく機能し、通常モードを汚さないこと
+for (const grade of [4, 5, 6]) {
+  for (let i = 0; i < 40; i++) {
+    const hardQ = generateRikaQuestion({ grade, mode: 'hard', choiceCount: 4 })
+    requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:'), `りか hardモード 小${grade}: hard内容が返らない`)
+    const normalQ = generateRikaQuestion({ grade, mode: 'normal', choiceCount: 4 })
+    requireValue(normalQ && !String(normalQ.itemKey).startsWith('hard:'), `りか normalモード 小${grade}: hard内容が混入`)
+  }
+}
+// hardりかは通常りかと同じ「最長の誤答を必ず含める」build()方式（選択肢が
+// 常に4つ）なので、専用のcc=4版チェック（通常りか/しゃかいと同じ関数）を使う。
+// verifySystematicLengthTell はcc=3を使うため、この方式とは相性が悪い
+// （誤答3件中2件しか見せない分、正解が単独最長/最短に偏って見える）。
+verifyNoLengthTell('りか(hard)', HARD_RIKA_QUESTIONS, (params, key) => generateHardRikaQuestion(params, key), 'hard:r:')
+verifyLengthDistribution('りか(hard)', HARD_RIKA_QUESTIONS, (params, key) => generateHardRikaQuestion(params, key), 'hard:r:')
 
 if (errors.length) {
   console.error(`コンテンツ検証失敗 (${errors.length}件)`)

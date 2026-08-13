@@ -1,16 +1,26 @@
+// hard専用教材（src/data/content/hard/配下）が存在する教科だけをここに足す。
+// 教材の無い教科をここに入れると、統計だけ 'hard:xxx' 側へ切り替わって
+// 通常の習熟度（skillOf）が空の状態から始まってしまうため、
+// 実際にhardコンテンツを持つ教科だけを明示的に列挙する。
+const DOMAINS_WITH_HARD_CONTENT = new Set(['suuji', 'yomu', 'rika'])
+
 // ふつう／むずかしいで分離した学習台帳のうち、いま表示・出題する側を選ぶ。
-// 現時点のhard専用教材は小4〜6算数だけなので、他教科は通常台帳を使う。
 export function activeStatsDomainId(state, domainId, grade = state.grade) {
-  return state.settings?.mode === 'hard' && domainId === 'suuji' && grade >= 4
-    ? 'hard:suuji'
+  return state.settings?.mode === 'hard' && DOMAINS_WITH_HARD_CONTENT.has(domainId) && grade >= 4
+    ? `hard:${domainId}`
     : domainId
 }
 
-// 反対モードの算数SRSは削除せず、切り替えるまで一覧から隠す。
+// 反対モードのSRSは削除せず、切り替えるまで一覧から隠す。
+// hardコンテンツを持つ教科（DOMAINS_WITH_HARD_CONTENT）は、いま有効な
+// 側（'xxx' か 'hard:xxx'）だけを見せる。それ以外の教科は常に通常台帳のみ。
 export function activeReviewSrs(state) {
-  const activeMath = activeStatsDomainId(state, 'suuji')
+  const activeByDomain = new Map(
+    [...DOMAINS_WITH_HARD_CONTENT].map((domainId) => [domainId, activeStatsDomainId(state, domainId)])
+  )
   return Object.fromEntries(Object.entries(state.srs || {}).filter(([domainId]) => {
-    if (domainId === 'suuji' || domainId === 'hard:suuji') return domainId === activeMath
+    const base = domainId.startsWith('hard:') ? domainId.slice(5) : domainId
+    if (activeByDomain.has(base)) return domainId === activeByDomain.get(base)
     return !domainId.startsWith('hard:')
   }))
 }

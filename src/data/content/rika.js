@@ -1,3 +1,5 @@
+import { generateHardRikaQuestion } from './hard/rika-hard.js'
+
 // ============================================================
 // 「りか（理科）」分野 — 小3〜小6
 //
@@ -230,6 +232,18 @@ function build(item, cc) {
 }
 
 export function generateRikaQuestion(params, reviewKey = null) {
+  // むずかしいモード（保護者設定, 対象は小4〜6）。単元ローテーション
+  // （questionForUnitのrika:分岐）は常に具体的な reviewKey を渡してくる
+  // ため、通常のreviewKey判定より前で分岐しないと、hardモードにしても
+  // 一切hard内容が出せない。hard専用の itemKey（hard:r:xxx）は
+  // 通常の unitLedger・SRS・習熟度と名前空間を共有しない
+  // （計画書§4.2(d)、numbers.js/reading.jsのhard分岐と同じ設計）。
+  const grade = params.grade || 0
+  if (params.mode === 'hard' && grade >= 4) {
+    const hard = generateHardRikaQuestion(params, reviewKey)
+    if (hard) return hard
+  }
+
   const cc = Math.max(3, params.choiceCount || 3)
   if (reviewKey && reviewKey.startsWith('r:')) {
     const it = BY_Q[reviewKey.slice(2)]
