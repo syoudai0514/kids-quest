@@ -8,6 +8,7 @@
 //   割合と比 : 食塩水の濃度・売買損益・比例配分・速さと比
 //   平面図形 : おうぎ形の面積・面積比・相似・正多角形の角・L字型
 //   立体図形 : 組み合わせた直方体・水そう・立方体の色ぬり・円柱・相似比と体積
+//   場合の数 : 順列・組合せ・道順・カードで整数を作る・総当たり戦
 //
 // 通常モードとの分離（計画書§4.2(d)）:
 //   - itemKey は必ず `hard:n:${kind}` の名前空間を使う。
@@ -649,6 +650,118 @@ const HARD_BUILDERS = {
         `大きい方の体積は ${small}÷${m ** 3}×${n ** 3}＝${large}cm³`
       ]
     })
+  },
+
+  // ---- 場合の数 ----
+
+  // 順列: 並べる順番まで区別して数える。
+  jrJunretsu() {
+    const n = rng(4, 7)
+    const r = rng(2, 3)
+    let total = 1
+    const terms = []
+    for (let i = 0; i < r; i++) { total *= n - i; terms.push(n - i) }
+    return hardQ('jrJunretsu', {
+      visual: { kind: 'sentence', text: `${n}人の中から${r}人を選んで、1列に並べます。並べ方は全部で何通りありますか。` },
+      instruction: '何通り？',
+      speak: `${n}人の中から${r}人を選んで、1列に並べます。並べ方は全部で何通りありますか。`,
+      answer: total,
+      explain: `${total}通り`,
+      explainSteps: [
+        `並ぶ順番がちがえば ちがう並べ方なので、前から順に決めていく`,
+        `${terms.map((t, i) => `${i + 1}番目は${t}通り`).join('、')}`,
+        `かけ合わせて ${terms.join('×')}＝${total}通り`
+      ]
+    })
+  },
+
+  // 組合せ: 選ぶだけで順番を区別しないので、並べ方を「並び順の数」で割る。
+  jrKumiawase() {
+    const n = rng(4, 8)
+    const r = rng(2, 3)
+    let perm = 1
+    const terms = []
+    for (let i = 0; i < r; i++) { perm *= n - i; terms.push(n - i) }
+    let fact = 1
+    for (let i = 1; i <= r; i++) fact *= i
+    const total = perm / fact
+    return hardQ('jrKumiawase', {
+      visual: { kind: 'sentence', text: `${n}人の中から${r}人を選びます。選び方は全部で何通りありますか。（選ぶだけで、順番は考えません）` },
+      instruction: '何通り？',
+      speak: `${n}人の中から${r}人を選びます。選び方は全部で何通りありますか。選ぶだけで、順番は考えません。`,
+      answer: total,
+      explain: `${total}通り`,
+      explainSteps: [
+        `まず、順番まで区別して並べる数を出す: ${terms.join('×')}＝${perm}通り`,
+        `同じ${r}人でも、並べ方が ${Array.from({ length: r }, (_, i) => i + 1).join('×')}＝${fact}通りある`,
+        `選び方はその${fact}通りを1つと数えるので、${perm}÷${fact}＝${total}通り`
+      ]
+    })
+  },
+
+  // 道順: 「右へ何回・上へ何回」のうち、どこで上へ行くかを選ぶ問題に置きかえる。
+  jrMichijun() {
+    const across = rng(2, 4)
+    const up = rng(2, 4)
+    const steps = across + up
+    let perm = 1
+    for (let i = 0; i < up; i++) perm *= steps - i
+    let fact = 1
+    for (let i = 1; i <= up; i++) fact *= i
+    const total = perm / fact
+    return hardQ('jrMichijun', {
+      visual: { kind: 'sentence', text: `右へ${across}区画、上へ${up}区画 進んだ先にある地点まで、遠回りせずに行きます。行き方は全部で何通りありますか。` },
+      instruction: '何通り？',
+      speak: `右へ${across}区画、上へ${up}区画 進んだ先にある地点まで、遠回りせずに行きます。行き方は全部で何通りありますか。`,
+      answer: total,
+      explain: `${total}通り`,
+      explainSteps: [
+        `遠回りしないので、進み方は「右へ${across}回」と「上へ${up}回」の合計${steps}回で決まる`,
+        `${steps}回のうち、どの回で上へ進むかを選べば道順が1つ決まる`,
+        `${steps}回から${up}回を選ぶ選び方なので、(${Array.from({ length: up }, (_, i) => steps - i).join('×')})÷(${Array.from({ length: up }, (_, i) => up - i).join('×')})＝${total}通り`
+      ]
+    })
+  },
+
+  // カードで整数を作る: 同じカードは2度使えないので、けたごとに1つずつ減る。
+  jrSeisuuTsukuru() {
+    const cards = rng(4, 6)
+    const digits = rng(2, 3)
+    let total = 1
+    const terms = []
+    for (let i = 0; i < digits; i++) { total *= cards - i; terms.push(cards - i) }
+    const list = Array.from({ length: cards }, (_, i) => i + 1).join('、')
+    return hardQ('jrSeisuuTsukuru', {
+      visual: { kind: 'sentence', text: `${list} と書かれた${cards}枚のカードから${digits}枚を使って、${digits}けたの整数を作ります。整数は全部で何個できますか。` },
+      instruction: '何個？',
+      speak: `${list}と書かれた${cards}枚のカードから${digits}枚を使って、${digits}けたの整数を作ります。整数は全部で何個できますか。`,
+      answer: total,
+      explain: `${total}個`,
+      explainSteps: [
+        `上のけたから順に、使えるカードの枚数を数えていく`,
+        `${terms.map((t, i) => `${i + 1}けた目は${t}通り`).join('、')}（一度使ったカードは もう使えない）`,
+        `かけ合わせて ${terms.join('×')}＝${total}個`
+      ]
+    })
+  },
+
+  // 総当たり戦: どの2チームの組にも試合が1つずつ対応する。
+  jrSoutotal() {
+    const teams = rng(4, 10)
+    const total = (teams * (teams - 1)) / 2
+    return hardQ('jrSoutotal', {
+      visual: { kind: 'sentence', text: `${teams}チームが、どのチームとも1回ずつ試合をします。試合は全部で何試合ありますか。` },
+      instruction: '何試合？',
+      speak: `${teams}チームが、どのチームとも1回ずつ試合をします。試合は全部で何試合ありますか。`,
+      answer: total,
+      explain: `${total}試合`,
+      explainSteps: [
+        `1チームは、自分以外の ${teams}－1＝${teams - 1}チームと試合をする`,
+        `${teams}チームぶんを数えると ${teams}×${teams - 1}＝${teams * (teams - 1)}`,
+        `ただし どの試合も2チームぶん 二重に数えているので、2でわる`,
+        `試合数は ${teams * (teams - 1)}÷2＝${total}試合`
+      ]
+    })
   }
 }
 
@@ -662,7 +775,8 @@ export const HARD_NUMBERS_KINDS_BY_GRADE = {
     'jrTsurukame', 'jrTabibito', 'jrUekigi', 'jrKafusoku', 'jrSashiatsume', 'jrSoutou',
     'jrSuuretsu', 'jrHireiHaibun', 'jrEnbun',
     'jrLjiMenseki', 'jrLjiMawari', 'jrSeiTakakukei',
-    'jrRittaiL', 'jrMizusou', 'jrCubePaint'
+    'jrRittaiL', 'jrMizusou', 'jrCubePaint',
+    'jrSoutotal', 'jrSeisuuTsukuru'
   ],
   6: HARD_NUMBERS_KINDS
 }
@@ -687,5 +801,7 @@ export const HARD_NUMBERS_LABELS = {
   jrOugigata: 'おうぎ形の面積', jrMensekiHi: '面積比', jrSouji: '相似',
   jrSeiTakakukei: '正多角形の角', jrLjiMenseki: 'L字型の面積', jrLjiMawari: 'L字型のまわりの長さ',
   jrRittaiL: '組み合わせた直方体', jrMizusou: '水そう', jrCubePaint: '立方体の色ぬり',
-  jrEnchuuTaiseki: '円柱の体積', jrSoujiTaiseki: '相似比と体積'
+  jrEnchuuTaiseki: '円柱の体積', jrSoujiTaiseki: '相似比と体積',
+  jrJunretsu: '順列（並べ方）', jrKumiawase: '組合せ（選び方）', jrMichijun: '道順',
+  jrSeisuuTsukuru: 'カードで整数を作る', jrSoutotal: '総当たり戦の試合数'
 }

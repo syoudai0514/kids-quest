@@ -510,6 +510,42 @@ for (let grade = 0; grade <= 6; grade++) {
   requireValue(polluted.length === 0, `unitLedger 小${grade}: hard系unitIdが混入 (${polluted.map((e) => e.unitId).join(',')})`)
 }
 
+// ---- hard算数: 解説の式が、書いてあるとおりに計算して答えに合うこと ----
+// ×と÷を混ぜた式でかっこを忘れると（例: 6×5÷1×2＝15）、書いてある順に
+// 計算した子は違う答えになる。答え自体は正しいので通常の検算では見つからず、
+// 解説を読んで真面目に計算した子だけが混乱する。実際に道順の解説で発生した。
+{
+  const EXPR = /([0-9０-９().,×÷＋－]+)＝([0-9]+(?:\.[0-9]+)?)/g
+  const toJs = (expr) => expr
+    .replace(/×/g, '*').replace(/÷/g, '/').replace(/＋/g, '+').replace(/－/g, '-')
+    .replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xFEE0))
+    .replace(/,/g, '')
+  for (const kind of HARD_NUMBERS_KINDS) {
+    for (let i = 0; i < 60; i++) {
+      const question = generateHardNumbersQuestion({ grade: 6 }, `hard:n:${kind}`)
+      for (const step of [...(question?.explainSteps || []), question?.explain || '']) {
+        const text = String(step)
+        for (const match of text.matchAll(EXPR)) {
+          const [whole, expr, rhs] = match
+          // 「A：B＝C：D」の比の行は「式＝答え」ではないため対象外
+          //（＝をまたいで比の片側だけを拾ってしまい誤検知になる）。
+          if (text[match.index - 1] === '：' || text[match.index + whole.length] === '：') continue
+          if (!/[×÷＋－]/.test(expr)) continue
+          const js = toJs(expr)
+          if (!/^[\d().+\-*/ ]+$/.test(js)) continue
+          let value
+          try { value = eval(js) } catch { continue } // eslint-disable-line no-eval
+          if (typeof value !== 'number' || !isFinite(value)) continue
+          requireValue(
+            Math.abs(value - Number(rhs)) < 1e-9,
+            `hard算数 ${kind}: 解説の式が書いてある順に計算すると合わない「${expr}＝${rhs}」（計算すると ${value}。かっこが要る）`
+          )
+        }
+      }
+    }
+  }
+}
+
 // ---- WP10: むずかしいモード（こくご発展）----
 // hard算数と同じ設計（計画書§4.2(d)）。itemKeyは 'hard:yomu:' 名前空間、
 // unitIdは 'hard:' 名前空間で、unitLedgerには一切合流しない（上のループで確認済み）。
