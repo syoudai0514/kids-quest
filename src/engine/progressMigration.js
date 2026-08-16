@@ -21,6 +21,14 @@ function normalizedKnowledgeId(domainId, oldKey, snapshot = null, fallbackGrade 
   }
   const base = String(oldKey || '').split('#')[0]
   if (!base) return null
+  // むずかしいモードの itemKey/skillId（'hard:xxx' や 'skill:hard:xxx'）は、
+  // 生成時から既に安定した識別子として設計されている（計画書§4.2(d)）ため、
+  // 通常モードのような旧形式からの変換は不要でそのまま通す。
+  // hard:suuji はreviewQuestionsにスナップショットを保存しない（計算式
+  // そのものは保存せず毎回類題を作る設計）ため、上のsnapshot分岐を
+  // 必ず素通りしてここへ来る。ここで拾わないと、次にUNIT_PROGRESS_VERSIONを
+  // 上げた瞬間に全ユーザーのhardさんすう進捗が消えてしまう（Issue #23）。
+  if (domainId.startsWith('hard:')) return base
   if (domainId === 'suuji') {
     if (base.startsWith('skill:math:')) return base
     if (base.startsWith('n:')) return `skill:math:${base.slice(2)}`

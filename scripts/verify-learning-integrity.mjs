@@ -7,7 +7,8 @@ import { DOMAIN_BY_ID } from '../src/engine/activities.js'
 import { unitLedger, requiredUnitIds, unitReady, recordUnitResult, promotionResult, lessonForUnit, selectPracticeUnit, withLearningUnit } from '../src/engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../src/engine/englishMigration.js'
 import { englishDueEntries } from '../src/engine/englishProgress.js'
-import { generatorReviewKey, questionIds, withQuestionIds, persistentReviewSnapshot } from '../src/engine/reviewKey.js'
+import { generatorReviewKey, questionIds, withQuestionIds, persistentReviewSnapshot, snapshotQuestion } from '../src/engine/reviewKey.js'
+import { generateHardRikaQuestion } from '../src/data/content/hard/rika-hard.js'
 import { activeReviewSrs, activeStatsDomainId } from '../src/engine/reviewMode.js'
 import { buildCoreMission } from '../src/engine/missions.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../src/engine/progressMigration.js'
@@ -128,6 +129,30 @@ must(!legacyProgress.srs.english && legacyProgress.srs.suuji['skill:math:add10']
 must(!legacyProgress.reviewQuestions.suuji && legacyProgress.reviewQuestions.rika[oldRikaQuestion.itemKey], '算数スナップショット廃止・固定知識保存を両立できない')
 const migratedWritingUnit = `writing:3:${WRITING_GROUPS_BY_GRADE[3][0].id}`
 must(legacyProgress.unitStats[3].kaku[migratedWritingUnit]?.itemKeys.includes(`char:3:${writingTarget}`), 'v14書字進捗を文字グループへ復元できない')
+
+// Issue #23: むずかしいモードのsrsが、次にUNIT_PROGRESS_VERSIONを上げた
+// 瞬間に全ユーザーぶん消える不具合の回帰テスト。特にhard:suujiは
+// reviewQuestionsスナップショットを保存しない設計（計算式そのものを保存
+// せず毎回類題を作る）ため、他のhard教科（スナップショットありで
+// もともと無事だった）と違い、この移行処理が唯一の防衛線になる。
+{
+  const hardRika = generateHardRikaQuestion({ grade: 6, choiceCount: 4 })
+  const hardRikaKey = withQuestionIds(hardRika).knowledgeId
+  const hardMigrated = migrateLearningProgress({
+    unitProgressVersion: 14, grade: 6, gradeMax: 6,
+    srs: {
+      'hard:suuji': { 'skill:hard:math:jrSuuretsuKids': { box: 0, due: 0, lapses: 1 }, 'skill:hard:math:jrNakamahazure': { box: 1, due: 5, lapses: 0 } },
+      'hard:rika': { [hardRikaKey]: { box: 2, due: 9, lapses: 0 } }
+    },
+    reviewQuestions: { 'hard:rika': { [hardRikaKey]: snapshotQuestion(hardRika, hardRikaKey) } }
+  })
+  must(
+    hardMigrated.srs['hard:suuji']?.['skill:hard:math:jrSuuretsuKids']?.box === 0 &&
+    hardMigrated.srs['hard:suuji']?.['skill:hard:math:jrNakamahazure']?.box === 1,
+    'hard:suujiのsrsが移行処理で消える（Issue #23）'
+  )
+  must(hardMigrated.srs['hard:rika']?.[hardRikaKey]?.box === 2, 'hard:rikaのsrsが移行処理で消える（Issue #23）')
+}
 
 // 全必須単元を指定生成できる。書字を読み単元へ誤記録しない。
 for (let grade = 0; grade <= 6; grade++) {
