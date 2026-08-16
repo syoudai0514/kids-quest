@@ -14,8 +14,9 @@ import { getPartner, partnerStage, getWildMonsters, MONSTERS, MONSTER_BY_ID } fr
 import { MONSTER_MASTER_BY_ID } from '../data/monsterMaster/monsterMaster.js'
 import { releasedMonsterFormAsset, withReleasedMonsterAsset } from '../data/monsterAssets.js'
 import { MOVE_BY_ID } from '../data/monsterMaster/moves.js'
-import { activeCompanion, companionLevel, formStatus, PILOT_MONSTER_IDS } from '../engine/monsterProgress.js'
+import { activeCompanion, companionBattleStats, companionLevel, formStatus, PILOT_MONSTER_IDS } from '../engine/monsterProgress.js'
 import { rollScheduledWeaponReward, RARITIES } from '../data/weapons.js'
+import { basicBattlePlaysLeft, canBattleToday, dailyBattleUnlocked } from '../engine/battleTickets.js'
 import {
   TYPES,
   typeOfElement,
@@ -52,6 +53,8 @@ export default function BattleScreen({ onBack }) {
     ? partnerStage(partner, state.totalClears)
     : { name: partner.name, scale: 1, colors: partner.colors }
   const level = companion ? companionLevel(companion.xp) : 1
+  const battleStats = companionBattleStats(companion)
+  const partnerType = battleStats.battleType
 
   const pColor = PARTNER_COLORS[state.partnerColor]
   const colors =
@@ -59,8 +62,9 @@ export default function BattleScreen({ onBack }) {
       ? { ...stage.colors, body: pColor.body, belly: pColor.belly }
       : stage.colors
 
-  const playsLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
-  const canPlay = playsLeft > 0 || state.battle.tickets > 0
+  const battleUnlocked = dailyBattleUnlocked(state.daily)
+  const playsLeft = basicBattlePlaysLeft(state.battle, state.daily)
+  const canPlay = canBattleToday(state.battle, state.daily)
 
   const [round, setRound] = useState(0) // もう一回 のたびに敵を引き直す
   const enemy = useMemo(() => {
@@ -92,7 +96,7 @@ export default function BattleScreen({ onBack }) {
   const weapon = companion?.sourceMonsterId === 'hoshu' ? equippedWeapon(state) : null
   const isTutorialBattle = (state.rewardProgress?.battleTutorialsSeen || 0) < 5
   const E_MAX = enemyMaxHp(enemyLv, isElite)
-  const P_MAX = partnerMaxHp(level, weapon)
+  const P_MAX = partnerMaxHp(level, weapon, battleStats.hpBonus)
 
   const [mode, setMode] = useState(canPlay ? 'intro' : 'locked')
   const [pHp, setPHp] = useState(P_MAX)
@@ -149,7 +153,9 @@ export default function BattleScreen({ onBack }) {
   useEffect(() => {
     if (mode === 'locked') {
       speak(
-        'いきぬきバトルの きょうの ぶんは おしまい。ついか もんだいを とくと チケットが もらえて、もっと あそべるよ！'
+        battleUnlocked
+          ? 'いきぬきバトルの きょうの ぶんは おしまい。ついか もんだいを とくと チケットが もらえて、もっと あそべるよ！'
+          : 'きょうの ミッションを クリアすると、バトルが 3かい あそべるよ！'
       )
     } else if (mode === 'intro') {
       speak(
@@ -159,7 +165,7 @@ export default function BattleScreen({ onBack }) {
       )
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, round])
+  }, [mode, round, battleUnlocked])
 
   const startBattle = () => {
     if (startedRef.current) return
@@ -246,10 +252,10 @@ export default function BattleScreen({ onBack }) {
       setTimeout(() => enemyTurn(), 500)
       return
     }
-    const rolled = rollDamage(move, enemyType, level, weapon)
+    const rolled = rollDamage(move, enemyType, level, weapon, battleStats.attackBonus, partnerType)
     const formMultiplier = activeBattleForm ? 1.35 : 1
     const dmg = Math.max(1, Math.round(rolled.dmg * formMultiplier * attackBoostRef.current))
-    const { mult, crit } = rolled
+    const { mult, affinityMult, crit } = rolled
     attackBoostRef.current = 1
     const eff = effectLabel(mult)
     setShake('enemy')
@@ -257,9 +263,10 @@ export default function BattleScreen({ onBack }) {
     if (mult > 1 || crit) sfx.hitBig()
     else sfx.hit()
     showDmg('enemy', `-${dmg}${crit ? '💥' : mult > 1 ? '❗' : ''}`)
+    const affinityTxt = affinityMult > 1 ? ' とくいタイプ ボーナス！' : ''
     const critTxt = crit ? ' かいしんの いちげき！' : ''
-    setLog(`${stage.name}の ${move.name}！${eff ? ` ${eff}` : ''}${critTxt}`)
-    speak(`${move.name}！${eff ? ` ${eff}` : ''}${critTxt}`)
+    setLog(`${stage.name}の ${move.name}！${eff ? ` ${eff}` : ''}${affinityTxt}${critTxt}`)
+    speak(`${move.name}！${eff ? ` ${eff}` : ''}${affinityTxt}${critTxt}`)
     setTimeout(() => { setShake(null); setPose({ partner: 'idle', enemy: 'idle' }) }, 420)
 
     setEHp((hp) => {
@@ -537,6 +544,7 @@ export default function BattleScreen({ onBack }) {
           </div>
           <div style={{ fontWeight: 900, margin: '2px 0' }}>
             {stage.name} <span className="type-chip">Lv.{level}</span>
+            <span className="type-chip" style={{ marginLeft: 4 }}>{TYPES[partnerType].emoji} {TYPES[partnerType].name}</span>
             {activeBattleForm && <span className="type-chip" style={{ marginLeft: 4 }}>{activeBattleForm.form.kind === 'giga' ? `🌟 ギガ ${gigaTurns}` : '✨ かくせい'}</span>}
             {weapon && (
               <span className="type-chip" style={{ marginLeft: 4 }}>
@@ -577,7 +585,14 @@ export default function BattleScreen({ onBack }) {
                 {state.party.filter((id) => id !== state.activeCompanionId).map((companionId) => {
                   const reserve = state.companions[companionId]
                   const reserveMonster = reserve && MONSTER_BY_ID[reserve.currentMonsterId]
-                  return reserveMonster ? <button key={companionId} className="move-btn" onClick={() => switchTo(companionId)}>🔁 {reserveMonster.name}<small>Lv.{companionLevel(reserve.xp)}</small></button> : null
+                  const reserveType = reserveMonster && TYPES[typeOfElement(reserveMonster.element)]
+                  return reserveMonster ? (
+                    <button key={companionId} className="move-btn" onClick={() => switchTo(companionId)}>
+                      <span className="move-btn__emoji">🔁</span>
+                      <span className="move-btn__name">{reserveMonster.name}</span>
+                      <small className="move-btn__hint">Lv.{companionLevel(reserve.xp)}　{reserveType.emoji} {reserveType.name}</small>
+                    </button>
+                  ) : null
                 })}
                 <button className="move-btn" onClick={() => setShowSwitch(false)}>↩️ もどる</button>
               </div>
@@ -592,6 +607,7 @@ export default function BattleScreen({ onBack }) {
                   const mult = effectiveness(m.type, enemyType)
                   const isStrong = mult > 1
                   const isWeak = mult < 1
+                  const isFavorite = m.type === partnerType
                   return (
                   <button
                     key={m.name}
@@ -599,11 +615,11 @@ export default function BattleScreen({ onBack }) {
                     disabled={busy}
                     onClick={() => useMove(m)}
                   >
-                    <span className="move-btn__emoji">{m.emoji}</span>
-                    <span className="move-btn__name">{m.name}</span>
-                    {isTutorialBattle && (
+                      <span className="move-btn__emoji">{m.emoji}</span>
+                      <span className="move-btn__name">{m.name}</span>
+                    {(isTutorialBattle || isFavorite) && (
                       <small className={isStrong ? 'move-btn__hint move-btn__hint--strong' : isWeak ? 'move-btn__hint move-btn__hint--weak' : 'move-btn__hint'}>
-                        {isStrong ? '↑ ばつぐん！' : isWeak ? '↓ ちょっと にがて' : '→ ふつう'}
+                        {isStrong ? '↑ ばつぐん！' : isWeak ? '↓ ちょっと にがて' : isFavorite ? '✦ とくい +25%' : '→ ふつう'}
                       </small>
                     )}
                   </button>
