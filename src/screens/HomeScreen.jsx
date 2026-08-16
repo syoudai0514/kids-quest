@@ -316,8 +316,8 @@ export default function HomeScreen({ onStartTask, onGo }) {
             }}
           >
             <span className="menu-tile__emoji">📒</span>
-            <span className="menu-tile__label">ずかん</span>
-            <span className="menu-tile__sub">{state.unlockedMonsters.length} / {MONSTERS.length}</span>
+            <span className="menu-tile__label">なかま・そだてる</span>
+            <span className="menu-tile__sub">チーム {state.party?.length || 1}/3・ゲージ {state.starGauge || 0}</span>
           </button>
 
           <button
