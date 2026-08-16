@@ -63,6 +63,7 @@
 .collection-card__name { font-weight: 900; margin-top: 5px; font-size: clamp(15px,2.6vw,20px); }
 .collection-card__meta { font-size: 12px; }
 .collection-card__active { display: inline-block; margin-top: 5px; padding: 3px 8px; border-radius: 999px; background: var(--accent-2); color: #493300; font-size: 11px; font-weight: 900; }
+.collection-card__evolve { display: inline-block; margin-top: 5px; padding: 3px 8px; border-radius: 999px; background: #79efb3; color: #073e2d; font-size: 11px; font-weight: 900; }
 .monster-detail-backdrop { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; padding: 12px 12px max(12px, env(safe-area-inset-bottom)); background: rgba(7,4,24,0.76); }
 .monster-detail { position: relative; width: min(620px,100%); max-height: min(88vh,760px); overflow-y: auto; padding: 18px; border-radius: 28px 28px 18px 18px; background: #2b2059; border: 3px solid rgba(255,255,255,0.2); box-shadow: 0 -10px 40px rgba(0,0,0,0.45); }
 .monster-detail__close { position: absolute; top: 10px; right: 10px; z-index: 1; width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); background: #1a123d; color: white; font-size: 22px; }
@@ -72,10 +73,22 @@
 .monster-xp-bar { height: 16px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: rgba(0,0,0,0.3); }
 .monster-xp-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--accent),#79d9ff); }
 .monster-detail__goal { text-align: center; margin: 5px 0 10px; font-weight: 900; color: var(--accent-2); }
+.monster-detail__power { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin-bottom: 6px; }
+.monster-detail__power span { padding: 8px; border-radius: 14px; background: rgba(122,240,208,0.13); text-align: center; font-weight: 900; }
+.monster-detail__affinity { margin: 0 0 9px; padding: 8px 10px; border-radius: 14px; background: rgba(255,209,102,0.12); color: #fff1bb; text-align: center; font-size: 13px; font-weight: 800; }
+.evolution-panel { display: grid; gap: 6px; margin: 0 0 10px; padding: 11px; border: 2px solid rgba(255,255,255,0.18); border-radius: 18px; background: rgba(255,255,255,0.07); text-align: center; }
+.evolution-panel strong { font-size: 18px; }
+.evolution-panel span { color: var(--accent-2); font-weight: 900; }
+.evolution-panel .btn { min-height: 52px; padding: 8px; }
+.evolution-panel--ready { border-color: #79efb3; background: rgba(121,239,179,0.13); }
+.evolution-panel--complete { color: var(--text-dim); font-weight: 800; }
 .monster-detail__stats { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin-bottom: 10px; }
 .monster-detail__stats span { padding: 8px; border-radius: 14px; background: rgba(255,255,255,0.08); text-align: center; font-weight: 800; }
 .monster-detail__actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
 .monster-detail__actions .btn { min-height: 64px; padding: 10px; font-size: clamp(16px,3vw,20px); }
+.party-order-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; margin-top: 8px; }
+.party-order-actions > span { grid-column: 1 / -1; text-align: center; color: var(--text-dim); font-weight: 800; }
+.party-order-actions .btn { min-height: 48px; padding: 8px; }
 .growth-goal { width: 100%; min-height: 60px; margin-top: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; border-radius: 18px; border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.09); color: white; font: inherit; }
 .growth-goal strong { font-size: 18px; }
 .growth-goal span { color: var(--accent-2); font-weight: 900; }
