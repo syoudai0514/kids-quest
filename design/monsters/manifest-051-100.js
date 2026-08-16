@@ -65,6 +65,11 @@ const PERSONALITIES = Object.freeze([
   '堂々として近寄りがたい'
 ])
 
+const APPROVED_ART_051_062 = new Set([
+  'g042', 'g043', 'g044', 'g045', 'g046', 'g047',
+  'g048', 'g049', 'g050', 'g051', 'g052', 'g053'
+])
+
 const ELEMENT_STRUCTURE_CUE = Object.freeze({
   いわ: '肩から背中へ粗い六角岩板が段差をつくる',
   でんき: '関節を結ぶ黄色い稲妻線が脈のように発光する',
@@ -144,7 +149,17 @@ export const DESIGN_MANIFEST_051_100 = Object.freeze(pilotPlans.flatMap((plan, f
         forms: Object.freeze(Object.fromEntries(Object.entries(runtime.forms).map(([kind, form]) => [kind, form.asset])))
       }),
       promptVersion: DESIGN_PROMPT_VERSION,
-      qa: Object.freeze({ status: 'planned', reviewer: 'Codex Sol', notes: [] })
+      qa: APPROVED_ART_051_062.has(monsterId)
+        ? Object.freeze({
+            status: 'asset-approved',
+            reviewer: 'Codex Sol',
+            notes: Object.freeze([
+              '透明alpha・正方形・安全余白・容量・重複検査に合格',
+              '白背景/暗背景コンタクトシートの目視QAに合格',
+              '375px/393px実画面とオフラインfallbackはUI接続WPで確認する'
+            ])
+          })
+        : Object.freeze({ status: 'planned', reviewer: 'Codex Sol', notes: [] })
     })
   })
 }))
