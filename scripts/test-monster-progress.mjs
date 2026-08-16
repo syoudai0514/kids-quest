@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import { MONSTERS } from '../src/data/monsters.js'
 import {
   catchCompanion,
   companionForMonster,
   companionIdFor,
   companionLevel,
+  createCompanion,
   consumeStarGauge,
   evolveCompanion,
   formStatus,
@@ -17,6 +19,12 @@ import {
   unlockForm,
   xpForLevel
 } from '../src/engine/monsterProgress.js'
+import { releasedMonsterFullAsset } from '../src/data/monsterAssets.js'
+
+// GameContext contains JSX, so this small source-level regression tripwire
+// keeps SET_GRADE from ever falling through into the ANSWER reducer branch.
+const gameContextSource = await readFile(new URL('../src/state/GameContext.jsx', import.meta.url), 'utf8')
+assert.match(gameContextSource, /case 'SET_GRADE':[\s\S]*?return next\s*\n\s*}\s*\n\s*\/\/ 1問の回答結果/)
 
 const oldSave = {
   version: 3,
@@ -31,7 +39,7 @@ const oldSave = {
 }
 
 const migrated = normalizeMonsterProgress(oldSave)
-assert.equal(migrated.version, 4)
+assert.equal(migrated.version, 3)
 assert.equal(migrated.battle, oldSave.battle)
 assert.equal(migrated.srs, oldSave.srs)
 assert.equal(migrated.englishWordStats, oldSave.englishWordStats)
@@ -43,6 +51,9 @@ assert.equal(migrated.party.length, 3)
 assert.equal(migrated.companions[companionIdFor('hoshu')].xp, oldSave.xp)
 assert.equal(companionLevel(migrated.companions[companionIdFor('g042')].xp), 9)
 assert.deepEqual(normalizeMonsterProgress(migrated), migrated, 'migration must be idempotent')
+assert.equal(normalizeMonsterProgress({ ...oldSave, version: 4 }).version, 3, 'an early v4 growth save must roll back to the public v3 envelope')
+assert.ok(releasedMonsterFullAsset('g042'), 'release pilot uses generated full artwork')
+assert.equal(releasedMonsterFullAsset('g054'), null, 'unreleased catalogue entries keep their existing artwork')
 
 let state = grantLearningAnswerXp(migrated, { xpGain: 2, domainId: 'suuji', dayKey: '2026-08-16' })
 const activeId = state.activeCompanionId
@@ -134,6 +145,7 @@ state = {
 assert.equal(formStatus(state, g053Id, 'giga').ready, true)
 state = unlockForm(state, g053Id, 'giga')
 assert.ok(state.companions[g053Id].unlockedFormIds.includes('giga-g053'))
+assert.ok(createCompanion('g053', xpForLevel(12)).selectedMoveIds.includes('signature-g053'), 'level 12 signature move is immediately equipped')
 state = consumeStarGauge(state)
 assert.equal(state.starGauge, 0, 'using a form consumes a full star gauge')
 

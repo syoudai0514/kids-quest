@@ -50,7 +50,7 @@ function pick(arr) {
 export default function ActivityPlayer({ task, onDone }) {
   const { state, dispatch } = useGame()
   const monsterRewardKeyRef = useRef(
-    `${state.daily.date}:${task.kind}:${state.daily.tasksClearedToday}:${task.domainId || 'mixed'}`
+    `${state.daily.date}:${task.kind}:${state.daily.tasksClearedToday}:${task.domainId || 'mixed'}:${Date.now().toString(36)}`
   )
   // とっくんタスクは1問ごとに分野が変わる
   const isReviewTask = task.kind === 'review' && Array.isArray(task.plan)

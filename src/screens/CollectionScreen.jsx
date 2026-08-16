@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react'
 import { useGame } from '../state/GameContext.jsx'
 import { MONSTERS, MONSTER_BY_ID } from '../data/monsters.js'
-import { MONSTER_MASTER_BY_ID } from '../data/monsterMaster/monsterMaster.js'
+import { withReleasedMonsterAsset } from '../data/monsterAssets.js'
 import { companionForMonster, companionLevel, evolutionStatus, formStatus, subjectCount, xpForLevel } from '../engine/monsterProgress.js'
 import Monster from '../components/Monster.jsx'
 import { AppHeader, Starfield } from '../components/common.jsx'
@@ -13,8 +13,7 @@ const PAGE_SIZE = 100
 
 function visualMonster(monsterId, asset = null) {
   const monster = MONSTER_BY_ID[monsterId]
-  const master = MONSTER_MASTER_BY_ID[monsterId]
-  return monster ? { ...monster, heroAsset: asset || master?.assets?.full || monster.heroAsset } : null
+  return monster ? withReleasedMonsterAsset({ ...monster, heroAsset: asset || monster.heroAsset }) : null
 }
 
 function requirementText(status) {

@@ -117,7 +117,7 @@ function createInitialState() {
   const today = todayKey()
   const partner = getPartner()
   return {
-    version: 4,
+    version: 3,
     contentVersion: CONTENT_VERSION,
     createdAt: Date.now(),
     onboarded: false,
@@ -428,6 +428,7 @@ function reduceProfile(state, action) {
           coreDone: state.daily.coreIndex >= tasks.length
         }
       }
+      return next
     }
 
     // 1問の回答結果

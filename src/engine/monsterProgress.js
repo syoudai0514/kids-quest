@@ -1,7 +1,10 @@
 import { MONSTER_BY_ID } from '../data/monsters.js'
 import { MONSTER_MASTER_BY_ID } from '../data/monsterMaster/monsterMaster.js'
 
-export const MONSTER_SAVE_VERSION = 4
+// Keep the outer save envelope at v3 so a temporary rollback to the previous
+// public build still loads the child's progress. New monster fields are gated
+// by this independent marker and ignored safely by that older build.
+export const MONSTER_SAVE_VERSION = 3
 export const MONSTER_ROSTER_VERSION = 1
 export const MAX_PARTY_SIZE = 3
 export const PILOT_MONSTER_IDS = Object.freeze(Array.from({ length: 12 }, (_, index) => `g${String(42 + index).padStart(3, '0')}`))
@@ -52,12 +55,12 @@ function availableMoveIds(monsterId, xp) {
 
 function repairedMoveIds(monsterId, xp, selectedMoveIds) {
   const available = availableMoveIds(monsterId, xp)
-  const selected = uniqueStrings(selectedMoveIds).filter((id) => available.includes(id)).slice(0, 4)
-  for (const id of available) {
-    if (selected.length >= Math.min(4, available.length)) break
-    if (!selected.includes(id)) selected.push(id)
-  }
-  return selected
+  const selected = uniqueStrings(selectedMoveIds).filter((id) => available.includes(id))
+  if (selected.length >= Math.min(4, available.length)) return selected.slice(-4)
+  // There is not yet a move-selection screen. Prefer the newest four moves so
+  // a level-up signature move is immediately playable instead of being hidden
+  // behind the starter four forever.
+  return available.slice(-4)
 }
 
 export function createCompanion(monsterId, xp = 0, caughtAt = Date.now()) {

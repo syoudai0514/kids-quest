@@ -16,7 +16,7 @@ import {
   equippedWeapon,
   starTrialInfo
 } from '../state/GameContext.jsx'
-import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
+import { getPartner, partnerStage } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
 import { GRADES, gradeOf, MAX_GRADE } from '../data/grades.js'
 import { buildOkawariTask, buildExtraTask, OKAWARI_MAX } from '../engine/missions.js'

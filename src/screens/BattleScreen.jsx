@@ -12,6 +12,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame, PARTNER_COLORS, equippedWeapon } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, getWildMonsters, MONSTERS, MONSTER_BY_ID } from '../data/monsters.js'
 import { MONSTER_MASTER_BY_ID } from '../data/monsterMaster/monsterMaster.js'
+import { withReleasedMonsterAsset } from '../data/monsterAssets.js'
 import { MOVE_BY_ID } from '../data/monsterMaster/moves.js'
 import { activeCompanion, companionLevel, formStatus, PILOT_MONSTER_IDS } from '../engine/monsterProgress.js'
 import { rollScheduledWeaponReward, RARITIES } from '../data/weapons.js'
@@ -35,12 +36,18 @@ import { AppHeader, Starfield, Confetti } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
 import { sfx } from '../engine/sfx.js'
 
+const ELITE_CHANCE = 0.15 // 強敵は「ときどき」。通常戦の成功体験を中心にする。
+
+function rollEncounter(level) {
+  const elite = level >= ELITE_MIN_LEVEL && Math.random() < ELITE_CHANCE
+  return { level, elite, enemyLevel: enemyLevelFor(level, elite) }
+}
+
 export default function BattleScreen({ onBack }) {
   const { state, dispatch } = useGame()
   const companion = activeCompanion(state)
   const partnerBase = MONSTER_BY_ID[companion?.currentMonsterId] || getPartner()
-  const partnerMaster = MONSTER_MASTER_BY_ID[partnerBase.id]
-  const partner = { ...partnerBase, heroAsset: partnerMaster?.assets?.full || partnerBase.heroAsset }
+  const partner = withReleasedMonsterAsset(partnerBase)
   const stage = companion?.sourceMonsterId === 'hoshu'
     ? partnerStage(partner, state.totalClears)
     : { name: partner.name, scale: 1, colors: partner.colors }
@@ -55,8 +62,6 @@ export default function BattleScreen({ onBack }) {
   const playsLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
   const canPlay = playsLeft > 0 || state.battle.tickets > 0
 
-  const ELITE_CHANCE = 0.15 // 強敵は「ときどき」。通常戦の成功体験を中心にする。
-
   const [round, setRound] = useState(0) // もう一回 のたびに敵を引き直す
   const enemy = useMemo(() => {
     const wilds = getWildMonsters()
@@ -70,7 +75,7 @@ export default function BattleScreen({ onBack }) {
   }, [round])
   const enemyType = typeOfElement(enemy.element)
   const enemyMaster = MONSTER_MASTER_BY_ID[enemy.id]
-  const enemyVisual = { ...enemy, heroAsset: enemyMaster?.assets?.full || enemy.heroAsset }
+  const enemyVisual = withReleasedMonsterAsset(enemy)
   const isBoss = enemyMaster?.bossTier && enemyMaster.bossTier !== 'none'
   const bossMove = enemyMaster?.learnset
     ?.map((entry) => MOVE_BY_ID[entry.moveId])
@@ -79,19 +84,10 @@ export default function BattleScreen({ onBack }) {
   // 敵の強さは相棒のレベルに追従（±1）。ときどき「つよい てき」が出現し、
   // 属性を正しく選ばないと本当に負けることがある本気の相手になる。
   // 交代で敵の強さやHPが変わらないよう、遭遇時のレベルを戦闘中は固定する。
-  const [encounter, setEncounter] = useState(() => ({
-    level,
-    elite: level >= ELITE_MIN_LEVEL && Math.random() < ELITE_CHANCE
-  }))
+  const [encounter, setEncounter] = useState(() => rollEncounter(level))
   const encounterLevel = encounter.level
   const isElite = encounter.elite
-  const enemyLv = useMemo(() => enemyLevelFor(encounterLevel, isElite), [encounterLevel, isElite])
-
-  useEffect(() => {
-    setEncounter({ level, elite: level >= ELITE_MIN_LEVEL && Math.random() < ELITE_CHANCE })
-    // 仲間交代では更新せず、新しい対戦だけ現在レベルを取り込む。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round])
+  const enemyLv = encounter.enemyLevel
 
   const weapon = companion?.sourceMonsterId === 'hoshu' ? equippedWeapon(state) : null
   const isTutorialBattle = (state.rewardProgress?.battleTutorialsSeen || 0) < 5
@@ -124,11 +120,14 @@ export default function BattleScreen({ onBack }) {
   const awakening = companion ? formStatus(state, state.activeCompanionId, 'awakening') : null
   const giga = companion ? formStatus(state, state.activeCompanionId, 'giga') : null
   const usableForm = [awakening, giga].find((status) => status?.unlocked)
-  const formVisual = battleForm?.form
-    ? { ...partner, heroAsset: battleForm.form.asset }
+  // A transformed companion keeps its form when it is switched out, but that
+  // form is visible and active only while the same companion is back on field.
+  const activeBattleForm = battleForm?.companionId === state.activeCompanionId ? battleForm : null
+  const formVisual = activeBattleForm?.form
+    ? { ...partner, heroAsset: activeBattleForm.form.asset }
     : partner
   const selectedBattleMoveIds = companion
-    ? [...new Set([...(battleForm?.form?.moveId ? [battleForm.form.moveId] : []), ...companion.selectedMoveIds])].slice(0, 4)
+    ? [...new Set([...(activeBattleForm?.form?.moveId ? [activeBattleForm.form.moveId] : []), ...companion.selectedMoveIds])].slice(0, 4)
     : []
   const battleMoves = companion
     ? selectedBattleMoveIds.map((moveId) => MOVE_BY_ID[moveId]).filter(Boolean).map((move) => ({
@@ -248,7 +247,7 @@ export default function BattleScreen({ onBack }) {
       return
     }
     const rolled = rollDamage(move, enemyType, level, weapon)
-    const formMultiplier = battleForm ? 1.35 : 1
+    const formMultiplier = activeBattleForm ? 1.35 : 1
     const dmg = Math.max(1, Math.round(rolled.dmg * formMultiplier * attackBoostRef.current))
     const { mult, crit } = rolled
     attackBoostRef.current = 1
@@ -272,7 +271,7 @@ export default function BattleScreen({ onBack }) {
       }
       return next
     })
-    if (battleForm?.form?.kind === 'giga') {
+    if (activeBattleForm?.form?.kind === 'giga') {
       setGigaTurns((turns) => {
         if (turns <= 1) {
           setBattleForm(null)
@@ -296,7 +295,6 @@ export default function BattleScreen({ onBack }) {
     if (busy || companionId === state.activeCompanionId) return
     setBusy(true)
     setShowSwitch(false)
-    setBattleForm(null)
     dispatch({ type: 'SET_ACTIVE_COMPANION', companionId })
     setLog('なかまを こうたいした！')
     speak('なかまを こうたいした！')
@@ -305,7 +303,7 @@ export default function BattleScreen({ onBack }) {
 
   const activateForm = () => {
     if (!usableForm || formUsed || state.starGauge < 100 || busy) return
-    setBattleForm(usableForm)
+    setBattleForm({ ...usableForm, companionId: state.activeCompanionId })
     setFormUsed(true)
     setGigaTurns(usableForm.form.kind === 'giga' ? 3 : 0)
     dispatch({ type: 'CONSUME_STAR_GAUGE' })
@@ -363,6 +361,7 @@ export default function BattleScreen({ onBack }) {
     dropRef.current = null
     resultRecordedRef.current = false
     setBusy(false)
+    setEncounter(rollEncounter(level))
     setRound((r) => r + 1)
     setMode('intro')
   }
@@ -379,13 +378,11 @@ export default function BattleScreen({ onBack }) {
     bossChargedRef.current = false
     resultRecordedRef.current = false
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, encounterLevel])
+  }, [round, encounter])
 
-  // 仲間交代では敵HP・ボス予告・その対戦の形態使用権を保持する。
+  // 仲間交代では敵HP・ボス予告・使った形態を保持する。
   useEffect(() => {
     setPHp(P_MAX)
-    setBattleForm(null)
-    setGigaTurns(0)
     guardRef.current = 0
     attackBoostRef.current = 1
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -420,6 +417,7 @@ export default function BattleScreen({ onBack }) {
   // ---- 勝敗画面 ----
   if (mode === 'win' || mode === 'lose') {
     const win = mode === 'win'
+    const shardGain = isElite ? 12 : 6
     return (
       <div className="screen fade-in">
         <Starfield />
@@ -438,9 +436,9 @@ export default function BattleScreen({ onBack }) {
             <div style={{ fontSize: 'clamp(17px,3.2vw,22px)', fontWeight: 800 }}>
               {win
                 ? wasNewCatchRef.current
-                  ? `${enemy.name}が なかまに なった！（ずかん ${state.unlockedMonsters.length}/${MONSTERS.length}）`
-                  : `${enemy.name}に かった！ バトルXP +3`
-                : `バトルXP +1。つぎは きっと かてるよ！（Lv.${enemyLv}${isElite ? ' ・ つよい てきだった' : ''}）`}
+                  ? `${enemy.name}が なかまに なった！（ずかん ${state.unlockedMonsters.length}/${MONSTERS.length}） ✦+${shardGain}・バトルXP +3`
+                  : `${enemy.name}に かった！ ✦+${shardGain}・バトルXP +3`
+                : `✦+2・バトルXP +1。つぎは きっと かてるよ！（Lv.${enemyLv}${isElite ? ' ・ つよい てきだった' : ''}）`}
             </div>
           </div>
 
@@ -539,7 +537,7 @@ export default function BattleScreen({ onBack }) {
           </div>
           <div style={{ fontWeight: 900, margin: '2px 0' }}>
             {stage.name} <span className="type-chip">Lv.{level}</span>
-            {battleForm && <span className="type-chip" style={{ marginLeft: 4 }}>{battleForm.form.kind === 'giga' ? `🌟 ギガ ${gigaTurns}` : '✨ かくせい'}</span>}
+            {activeBattleForm && <span className="type-chip" style={{ marginLeft: 4 }}>{activeBattleForm.form.kind === 'giga' ? `🌟 ギガ ${gigaTurns}` : '✨ かくせい'}</span>}
             {weapon && (
               <span className="type-chip" style={{ marginLeft: 4 }}>
                 {weapon.emoji} ⚔️+{battleAttackBonus(weapon)}
@@ -574,18 +572,6 @@ export default function BattleScreen({ onBack }) {
             >
               {log}
             </div>
-            {usableForm && !formUsed && (
-              <button className="form-activate-btn" disabled={busy || state.starGauge < 100} onClick={activateForm}>
-                {usableForm.form.kind === 'giga' ? '🌟 ギガスター' : '✨ スターかくせい'}
-                <small>{state.starGauge < 100 ? `ゲージ ${state.starGauge}/100` : 'いま つかえる！'}</small>
-              </button>
-            )}
-            {isBoss && bossChargedRef.current && (
-              <button className="boss-protect-btn" disabled={busy} onClick={protect}>🛡️ まもる！</button>
-            )}
-            {state.party.length > 1 && !showSwitch && (
-              <button className="battle-switch-btn" disabled={busy} onClick={() => setShowSwitch(true)}>🔁 こうたい</button>
-            )}
             {showSwitch ? (
               <div className="battle-switch-list">
                 {state.party.filter((id) => id !== state.activeCompanionId).map((companionId) => {
@@ -595,35 +581,47 @@ export default function BattleScreen({ onBack }) {
                 })}
                 <button className="move-btn" onClick={() => setShowSwitch(false)}>↩️ もどる</button>
               </div>
-            ) : <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, minmax(0,1fr))',
-                gap: 10
-              }}
-            >
-              {battleMoves.map((m) => {
-                const mult = effectiveness(m.type, enemyType)
-                const isStrong = mult > 1
-                const isWeak = mult < 1
-                return (
-                <button
-                  key={m.name}
-                  className={'move-btn' + (isTutorialBattle && isStrong ? ' move-btn--strong' : '')}
-                  disabled={busy}
-                  onClick={() => useMove(m)}
-                >
-                  <span className="move-btn__emoji">{m.emoji}</span>
-                  <span className="move-btn__name">{m.name}</span>
-                  {isTutorialBattle && (
-                    <small className={isStrong ? 'move-btn__hint move-btn__hint--strong' : isWeak ? 'move-btn__hint move-btn__hint--weak' : 'move-btn__hint'}>
-                      {isStrong ? '↑ ばつぐん！' : isWeak ? '↓ ちょっと にがて' : '→ ふつう'}
-                    </small>
+            ) : isBoss && bossChargedRef.current ? (
+              <div className="battle-response-grid">
+                <button className="boss-protect-btn" disabled={busy} onClick={protect}>🛡️ まもる！</button>
+                {state.party.length > 1 && <button className="battle-switch-btn" disabled={busy} onClick={() => setShowSwitch(true)}>🔁 こうたい</button>}
+              </div>
+            ) : <>
+              <div className="battle-move-grid">
+                {battleMoves.map((m) => {
+                  const mult = effectiveness(m.type, enemyType)
+                  const isStrong = mult > 1
+                  const isWeak = mult < 1
+                  return (
+                  <button
+                    key={m.name}
+                    className={'move-btn' + (isTutorialBattle && isStrong ? ' move-btn--strong' : '')}
+                    disabled={busy}
+                    onClick={() => useMove(m)}
+                  >
+                    <span className="move-btn__emoji">{m.emoji}</span>
+                    <span className="move-btn__name">{m.name}</span>
+                    {isTutorialBattle && (
+                      <small className={isStrong ? 'move-btn__hint move-btn__hint--strong' : isWeak ? 'move-btn__hint move-btn__hint--weak' : 'move-btn__hint'}>
+                        {isStrong ? '↑ ばつぐん！' : isWeak ? '↓ ちょっと にがて' : '→ ふつう'}
+                      </small>
+                    )}
+                  </button>
+                  )
+                })}
+              </div>
+              {(usableForm && !formUsed) || state.party.length > 1 ? (
+                <div className="battle-utility-grid">
+                  {usableForm && !formUsed && (
+                    <button className="form-activate-btn" disabled={busy || state.starGauge < 100} onClick={activateForm}>
+                      {usableForm.form.kind === 'giga' ? '🌟 ギガスター' : '✨ スターかくせい'}
+                      <small>{state.starGauge < 100 ? `ゲージ ${state.starGauge}/100` : 'いま つかえる！'}</small>
+                    </button>
                   )}
-                </button>
-                )
-              })}
-            </div>}
+                  {state.party.length > 1 && <button className="battle-switch-btn" disabled={busy} onClick={() => setShowSwitch(true)}>🔁 こうたい</button>}
+                </div>
+              ) : null}
+            </>}
           </div>
         )}
       </div>
