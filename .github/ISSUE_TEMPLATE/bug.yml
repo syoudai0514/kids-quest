@@ -1,0 +1,70 @@
+name: 不具合報告
+description: 再現可能な不具合、回帰、操作不能、データ問題を記録します
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        チャットだけで終わらせず、再現・影響・完了条件まで残してください。
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - P0 - データ損失・セキュリティ・全体停止
+        - P1 - 主要機能が使えない
+        - P2 - 回避策がある不具合
+        - P3 - 軽微な問題
+    validations:
+      required: true
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 症状
+      description: 何が起きるかを具体的に記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 再現手順・証拠
+      description: 手順、端末、学年、保存状態、スクリーンショット、ログなど。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待結果と実際の結果
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影響範囲
+      description: 利用者、画面、データ、類似機能への影響。
+    validations:
+      required: true
+  - type: textarea
+    id: cause
+    attributes:
+      label: 原因の見立て
+      description: 未調査なら未調査と明記してください。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 対応案
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完了条件
+      description: 修正・テスト・実機相当確認など、閉じられる条件。
+    validations:
+      required: true
+  - type: input
+    id: related
+    attributes:
+      label: 関連Issue・PR・コミット
