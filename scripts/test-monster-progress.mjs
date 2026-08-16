@@ -4,6 +4,7 @@ import { MONSTERS } from '../src/data/monsters.js'
 import {
   catchCompanion,
   companionForMonster,
+  companionBattleStats,
   companionIdFor,
   companionLevel,
   createCompanion,
@@ -14,11 +15,13 @@ import {
   grantLearningAnswerXp,
   grantLearningTaskXp,
   normalizeMonsterProgress,
+  movePartyCompanion,
   setActiveCompanion,
   togglePartyCompanion,
   unlockForm,
   xpForLevel
 } from '../src/engine/monsterProgress.js'
+import { moveAffinityMultiplier, partnerMaxHp } from '../src/engine/battle.js'
 import { releasedMonsterFormAsset, releasedMonsterFullAsset } from '../src/data/monsterAssets.js'
 
 // GameContext contains JSX, so this small source-level regression tripwire
@@ -56,6 +59,15 @@ assert.ok(releasedMonsterFullAsset('g042'), 'release pilot uses generated full a
 assert.equal(releasedMonsterFullAsset('g054'), null, 'unreleased catalogue entries keep their existing artwork')
 assert.equal(releasedMonsterFormAsset({ id: 'awakening-g052', asset: '/monsters/forms/g052-awakening.webp' }), '/monsters/forms/g052-awakening.webp')
 assert.equal(releasedMonsterFormAsset({ id: 'awakening-g054', asset: '/monsters/forms/g054-awakening.webp' }), null, 'unreleased forms keep their normal monster artwork')
+
+const originalParty = [...migrated.party]
+const reordered = movePartyCompanion(migrated, originalParty[1], 'forward')
+assert.deepEqual(reordered.party, [originalParty[1], originalParty[0], originalParty[2]], 'party order can be changed without changing companion IDs')
+assert.deepEqual(movePartyCompanion(reordered, originalParty[1], 'forward').party, reordered.party, 'first party member cannot move beyond the front')
+assert.equal(moveAffinityMultiplier('mizu', 'mizu'), 1.25, 'a monster gets a bonus for its own type move')
+assert.equal(moveAffinityMultiplier('mizu', 'kusa'), 1, 'off-type moves stay usable without a same-type bonus')
+const g042Stats = companionBattleStats(migrated.companions[companionIdFor('g042')])
+assert.ok(g042Stats.attack > 0 && partnerMaxHp(1, null, g042Stats.hpBonus) > 0, 'derived battle stats are safe for existing companions')
 
 let state = grantLearningAnswerXp(migrated, { xpGain: 2, domainId: 'suuji', dayKey: '2026-08-16' })
 const activeId = state.activeCompanionId
