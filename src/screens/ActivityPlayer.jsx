@@ -158,8 +158,10 @@ export default function ActivityPlayer({ task, onDone }) {
       // 固定バンク教科（りか・しゃかい・どうとく・よむの語彙/漢字）向け:
       // 一度でも出題したことがある knowledgeId の集合。srs は正誤に関わらず
       // 毎回このドメインの itemKey で記録されるため、そのまま「既出」の
-      // 正になる（英語だけ別管理＝englishWordStats 等を別途渡している）。
-      everSeenKnowledge: domainId === 'english' ? undefined : new Set(Object.keys(stateRef.current.srs?.[statsDomainId] || {})),
+      // 正になる（通常の英語だけ別管理＝englishWordStats 等を別途渡している。
+      // hardえいご文法はりか/しゃかいのhardと同じsrs['hard:english']に
+      // 記録されるので、そちらは対象に含める）。
+      everSeenKnowledge: domainId === 'english' && mode !== 'hard' ? undefined : new Set(Object.keys(stateRef.current.srs?.[statsDomainId] || {})),
       // どうとくD視点「生命の終わり」の判定用。保護者設定がONかつ現在の
       // 学年（gradeMaxではなくgrade）が高学年のときだけ、doutoku.js側が
       // 該当項目を生成候補に入れる。

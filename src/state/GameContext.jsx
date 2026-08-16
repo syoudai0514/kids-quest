@@ -451,7 +451,12 @@ function reduceProfile(state, action) {
       let reviewQuestions = state.reviewQuestions || {}
       let conquered = state.conquered
       let xpGain = correct ? 2 : 0
-      if (itemKey && domainId !== 'english') {
+      // 通常の英語は englishWordStats 等の専用スケジューラで管理するため、
+      // ここのsrsは使わない。ただしhardえいご文法は語彙・会話のような
+      // 個別スケジューラを持たない固定バンクなので、りか/しゃかいのhardと
+      // 同じ一般的なsrs（間隔反復）にのせる（isHardはitemKeyの'hard:'接頭辞
+      // から上で判定済み。統計名前空間も既に'hard:english'に分離されている）。
+      if (itemKey && (domainId !== 'english' || isHard)) {
         const day = dayNumber()
         const byKey = srs[statsId] || {}
         const prev = byKey[itemKey]
@@ -484,7 +489,7 @@ function reduceProfile(state, action) {
       let englishWordStats = state.englishWordStats || {}
       let englishPhraseStats = state.englishPhraseStats || {}
       let englishAlphabetStats = state.englishAlphabetStats || {}
-      if (domainId === 'english' && action.englishItemKey) {
+      if (domainId === 'english' && !isHard && action.englishItemKey) {
         const rawKey = String(action.englishItemKey).split('#')[0]
         const isPhrase = rawKey.startsWith('enp:') || rawKey.startsWith('eng:')
         const isAlphabet = rawKey.startsWith('ena:')

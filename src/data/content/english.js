@@ -1,6 +1,8 @@
 // えいご — 絵・音・意味を結び付ける、端末内完結の教材データ。
 // カタカナの発音表記は置かず、音声は en-US で読む。
 
+import { generateHardEnglishQuestion } from './hard/english-hard.js'
+
 const rawWords = [
   ['greeting','hello','こんにちは','👋',0],['greeting','goodbye','さようなら','👋',0],['greeting','thank you','ありがとう','🙏',0],['greeting','please','おねがい','😊',0],['greeting','yes','はい','⭕',0],['greeting','no','いいえ','❌',0],
   ['animal','dog','いぬ','🐶',0],['animal','cat','ねこ','🐱',0],['animal','bird','とり','🐦',0],['animal','fish','さかな','🐟',0],['animal','rabbit','うさぎ','🐰',0],['animal','bear','くま','🐻',0],['animal','lion','ライオン','🦁',1],['animal','elephant','ぞう','🐘',1],['animal','giraffe','きりん','🦒',1],['animal','monkey','さる','🐵',1],['animal','tiger','とら','🐯',1],['animal','frog','かえる','🐸',1],['animal','penguin','ペンギン','🐧',2],['animal','dolphin','イルカ','🐬',2],
@@ -375,6 +377,15 @@ export function englishTaskItemSlot(forms, questionIndex) {
 
 export function generateEnglishQuestion(params = {}, reviewKey) {
   const grade = params.grade ?? 0
+  // むずかしいモード（保護者設定, 対象は小4〜6）。単語・会話のスケジューリング
+  // （chooseEnglishStudyItem等）は複雑なため、hard内容はそこに混ぜず、
+  // 通常のreviewKey判定より前で分岐する（rika.js/shakai.jsのhard分岐と同じ設計）。
+  // hard専用の itemKey（hard:eng:xxx）は通常の単語・会話・文法の進捗と
+  // 名前空間を共有しない（計画書§4.2(d)）。
+  if (params.mode === 'hard' && grade >= 4) {
+    const hard = generateHardEnglishQuestion(params, reviewKey || params.reviewKey)
+    if (hard) return hard
+  }
   let requestedForm = params.forceForm || params.taskForm
   // 図鑑・期限復習・誤答補強は形式より項目を優先する。対象が絵に不向きなら
   // 同じ項目の文字問題へ切り替える（別単語にはしない）。

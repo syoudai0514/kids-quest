@@ -73,6 +73,9 @@ function labelOf(domainId, key) {
   if (domainId === 'shakai' && baseKey.startsWith('c:')) return { big: '🗾', sub: short(baseKey.slice(2)) }
   if (domainId === 'hard:shakai' && baseKey.startsWith('hard:c:')) return { big: '🗾', sub: short(baseKey.slice(7)) }
   if (domainId === 'doutoku' && baseKey.startsWith('d:')) return { big: '💗', sub: short(baseKey.slice(2)) }
+  if (domainId === 'hard:english' && baseKey.startsWith('hard:eng:')) {
+    return { big: '🔤', sub: short(baseKey.slice('hard:eng:'.length)) }
+  }
   if (domainId === 'english') {
     if (baseKey.startsWith('enw:')) {
       const word = ENGLISH_WORDS.find((item) => item.id === baseKey.slice(4))

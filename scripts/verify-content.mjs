@@ -17,6 +17,8 @@ import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_
 import { generateHardReadingQuestion, HARD_READING_FORMS } from '../src/data/content/hard/reading-hard.js'
 import { generateHardRikaQuestion, HARD_RIKA_QUESTIONS } from '../src/data/content/hard/rika-hard.js'
 import { generateHardShakaiQuestion, HARD_SHAKAI_QUESTIONS } from '../src/data/content/hard/shakai-hard.js'
+import { generateHardEnglishQuestion, HARD_ENGLISH_QUESTIONS } from '../src/data/content/hard/english-hard.js'
+import { generateEnglishQuestion, ENGLISH_GRAMMAR } from '../src/data/content/english.js'
 import { unitIdFor, unitLedger } from '../src/engine/learningUnits.js'
 
 const errors = []
@@ -661,6 +663,52 @@ for (const grade of [4, 5, 6]) {
 }
 verifyNoLengthTell('しゃかい(hard)', HARD_SHAKAI_QUESTIONS, (params, key) => generateHardShakaiQuestion(params, key), 'hard:c:')
 verifyLengthDistribution('しゃかい(hard)', HARD_SHAKAI_QUESTIONS, (params, key) => generateHardShakaiQuestion(params, key), 'hard:c:')
+
+// ---- WP10: むずかしいモード（えいご発展）----
+// hardりか/hardしゃかいと同じ設計。itemKeyは 'hard:eng:' 名前空間、
+// unitIdは 'hard:english:' 名前空間で、unitLedgerには一切合流しない
+// （english.jsのwithLearningUnitはdomain:'english'をそもそも素通りするため
+// unitId/skillIdはbuild()が明示的に設定した値がそのまま使われる）。
+{
+  const reached = new Set()
+  for (let i = 0; i < 3000; i++) {
+    const q = generateHardEnglishQuestion({ grade: 6, choiceCount: 4 })
+    if (!q) continue
+    reached.add(q.itemKey)
+    requireValue(String(q.itemKey).startsWith('hard:eng:'), `hardえいご: itemKeyが不正 (${q.itemKey})`)
+    requireValue(String(q.unitId).startsWith('hard:english:'), `hardえいご: unitIdが通常名前空間に漏れている (${q.unitId})`)
+    requireValue(q.domain === 'english', `hardえいご ${q.itemKey}: domainが不正 (${q.domain})`)
+    requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hardえいご ${q.itemKey}: explainがない`)
+    requireValue((q.choices || []).some((c) => c.id === q.answerId), `hardえいご ${q.itemKey}: 正解が選択肢にない`)
+    requireValue(new Set((q.choices || []).map((c) => c.id)).size === (q.choices || []).length, `hardえいご ${q.itemKey}: 選択肢が重複`)
+  }
+  for (const question of HARD_ENGLISH_QUESTIONS) {
+    requireValue(reached.has(`hard:eng:${question}`), `hardえいご: 自由生成で一度も出ない (${question})`)
+  }
+  const dupCheck = new Set()
+  for (const question of HARD_ENGLISH_QUESTIONS) {
+    requireValue(!dupCheck.has(question), `hardえいご: 問題文が重複 (${question})`)
+    dupCheck.add(question)
+    requireValue(!ENGLISH_GRAMMAR.some((item) => item.sentence === question), `hardえいご: 通常モードと同じ文が混入 (${question})`)
+  }
+}
+// english.js の mode==='hard' 分岐が正しく機能し、通常モードを汚さないこと
+for (const grade of [4, 5, 6]) {
+  for (let i = 0; i < 40; i++) {
+    const hardQ = generateEnglishQuestion({ grade, mode: 'hard', choiceCount: 4 })
+    requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:'), `えいご hardモード 小${grade}: hard内容が返らない`)
+    const normalQ = generateEnglishQuestion({ grade, mode: 'normal', choiceCount: 4, englishAudioAvailable: true })
+    requireValue(normalQ && !String(normalQ.itemKey).startsWith('hard:'), `えいご normalモード 小${grade}: hard内容が混入`)
+  }
+}
+// 指定復習（reviewKey）で hard:eng: を渡したときに、同じ文へ戻ること。
+for (const question of HARD_ENGLISH_QUESTIONS) {
+  const key = `hard:eng:${question}`
+  const q = generateEnglishQuestion({ grade: 6, mode: 'hard', choiceCount: 4, reviewKey: key }, key)
+  requireValue(q?.itemKey === key, `hardえいご: 指定復習が別の文へ化けた (${question})`)
+}
+verifyNoLengthTell('えいご(hard)', HARD_ENGLISH_QUESTIONS, (params, key) => generateHardEnglishQuestion(params, key), 'hard:eng:')
+verifyLengthDistribution('えいご(hard)', HARD_ENGLISH_QUESTIONS, (params, key) => generateHardEnglishQuestion(params, key), 'hard:eng:')
 
 if (errors.length) {
   console.error(`コンテンツ検証失敗 (${errors.length}件)`)
