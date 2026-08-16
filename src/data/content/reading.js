@@ -269,6 +269,7 @@ export const WORDS = [
 import { kanjiPoolForGrade, KANJI_BY_CHAR, jukugoPoolForGrade, JUKUGO_BY_WORD } from '../kanjiByGrade.js'
 import { generateLanguageQuestion, generateDokkaiQuestion } from './readingLanguage.js'
 import { generateHardReadingQuestion } from './hard/reading-hard.js'
+import { generateHardYomuAdvanceQuestion } from './hard/yomu-advance-hard.js'
 
 // WP2: 語彙・文法系の新形式は itemKey の接頭辞で判別する。
 const LANGUAGE_PREFIXES = ['idiom:', 'proverb:', 'yoji:', 'anto:', 'syno:', 'homo:', 'bushu:', 'okuri:', 'bunpo:', 'keigo:']
@@ -455,7 +456,9 @@ function jukugoQuestion(answer, params) {
  * @param {string|null} reviewKey 'w:ことば' | 'k:字' | 'idiom:...' など（復習したい項目）
  */
 export function generateReadingQuestion(params, reviewKey = null) {
-  // むずかしいモード（保護者設定, 対象は小4〜6）。単元ローテーション
+  // むずかしいモード（保護者設定）。小4〜6は中学受験レベルの発展内容
+  // （reading-hard.js）、小1〜3は1つ先の学年の漢字・熟語の読み先取り
+  // （yomu-advance-hard.js）。年長（grade0）は対象外。単元ローテーション
   // （questionForUnitのyomu:分岐）は常に具体的な reviewKey を渡してくる
   // ため、通常のreviewKey判定より前で分岐しないと、hardモードにしても
   // 一切hard内容が出せない。hard専用の itemKey（hard:yomu:xxx）は
@@ -464,6 +467,10 @@ export function generateReadingQuestion(params, reviewKey = null) {
   const grade = params.grade || 0
   if (params.mode === 'hard' && grade >= 4) {
     const hard = generateHardReadingQuestion(params, reviewKey)
+    if (hard) return hard
+  }
+  if (params.mode === 'hard' && grade >= 1 && grade <= 3) {
+    const hard = generateHardYomuAdvanceQuestion(params, reviewKey)
     if (hard) return hard
   }
 

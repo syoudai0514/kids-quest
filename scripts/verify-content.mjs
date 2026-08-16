@@ -17,6 +17,7 @@ import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_
 import { generateHardPuzzleQuestion, HARD_PUZZLE_KINDS } from '../src/data/content/hard/suuji-puzzle-hard.js'
 import { generateHardAdvanceQuestion, HARD_ADVANCE_KINDS, HARD_ADVANCE_KINDS_BY_GRADE } from '../src/data/content/hard/suuji-advance-hard.js'
 import { generateHardReadingQuestion, HARD_READING_FORMS } from '../src/data/content/hard/reading-hard.js'
+import { generateHardYomuAdvanceQuestion } from '../src/data/content/hard/yomu-advance-hard.js'
 import { generateHardRikaQuestion, HARD_RIKA_QUESTIONS } from '../src/data/content/hard/rika-hard.js'
 import { generateHardShakaiQuestion, HARD_SHAKAI_QUESTIONS } from '../src/data/content/hard/shakai-hard.js'
 import { generateHardEnglishQuestion, HARD_ENGLISH_QUESTIONS } from '../src/data/content/hard/english-hard.js'
@@ -741,7 +742,7 @@ for (const grade of [4, 5, 6]) {
   }
 }
 // reading.js の mode==='hard' 分岐が正しく機能し、通常モードを汚さないこと
-for (const grade of [4, 5, 6]) {
+for (const grade of [1, 2, 3, 4, 5, 6]) {
   for (let i = 0; i < 60; i++) {
     const hardQ = generateReadingQuestion({ grade, mode: 'hard', level: 1, choiceCount: 4 })
     requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:'), `こくご hardモード 小${grade}: hard内容が返らない`)
@@ -752,6 +753,48 @@ for (const grade of [4, 5, 6]) {
 // 長さだけで正解が分かってしまわないこと（品詞名の字数など、固定語い系の形式は
 // 特に危険。numbers-hard.jsと同じ verifySystematicLengthTell を再利用する）
 verifySystematicLengthTell('こくご(hard)', (params) => generateReadingQuestion({ ...params, mode: 'hard' }), [4, 5, 6], 1500)
+
+// ---- 低学年むずかしいモード（小1〜3・こくご先取り発展）----
+// reading-hard.js（小4〜6）とは別バンク。1つ先の学年で新しく習う漢字・
+// 熟語の読みだけを対象にする。itemKeyは同じ 'hard:yomu:' 名前空間を使うが、
+// カテゴリ名（kanjiPreview/jukugoPreview）は既存カテゴリと重ならない。
+{
+  const previewGradeOf = { 1: 2, 2: 3, 3: 4 }
+  for (const grade of [1, 2, 3]) {
+    const previewGrade = previewGradeOf[grade]
+    const expectedKanji = new Set(KANJI_BY_GRADE[previewGrade].map((k) => `hard:yomu:kanjiPreview:${k.k}`))
+    const expectedJukugo = new Set(JUKUGO_BY_GRADE[previewGrade].map((j) => `hard:yomu:jukugoPreview:${j.k}`))
+    const reached = new Set()
+    // 単純なランダム抽出だと、大きい方の学年別漢字プール（約160〜200字）を
+    // 有限回で全部引き切れる保証がない（実測で数字だけ引けない項目が出た）。
+    // generateHardYomuAdvanceQuestionが対応する everSeenKnowledge（未出優先）
+    // を使い、プールを取り尽くすまで確実に一巡させる。
+    for (let i = 0; i < 3000; i++) {
+      const q = generateHardYomuAdvanceQuestion({ grade, choiceCount: 4, everSeenKnowledge: reached })
+      if (!q) continue
+      reached.add(q.itemKey)
+      requireValue(q.domain === 'yomu', `hardよむ先取り 小${grade} ${q.itemKey}: domainが不正 (${q.domain})`)
+      requireValue(String(q.itemKey).startsWith('hard:yomu:'), `hardよむ先取り 小${grade}: itemKeyが不正 (${q.itemKey})`)
+      requireValue(String(q.unitId).startsWith('hard:yomu:'), `hardよむ先取り 小${grade}: unitIdが不正 (${q.unitId})`)
+      requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hardよむ先取り ${q.itemKey}: explainがない`)
+      requireValue((q.choices || []).some((c) => c.id === q.answerId), `hardよむ先取り ${q.itemKey}: 正解が選択肢にない`)
+      requireValue(new Set((q.choices || []).map((c) => c.id)).size === (q.choices || []).length, `hardよむ先取り ${q.itemKey}: 選択肢が重複`)
+      requireValue(expectedKanji.has(q.itemKey) || expectedJukugo.has(q.itemKey), `hardよむ先取り 小${grade}: 想定学年(小${previewGrade})以外の漢字/熟語が出た (${q.itemKey})`)
+    }
+    for (const key of expectedKanji) requireValue(reached.has(key), `hardよむ先取り 小${grade}: 自由生成で一度も出ない (${key})`)
+    for (const key of expectedJukugo) requireValue(reached.has(key), `hardよむ先取り 小${grade}: 自由生成で一度も出ない (${key})`)
+  }
+  // 指定復習（reviewKey）でkanji/jukugoを渡したときに、同じ項目へ戻ること。
+  for (const grade of [1, 2, 3]) {
+    const previewGrade = previewGradeOf[grade]
+    const kanjiItem = KANJI_BY_GRADE[previewGrade][0]
+    const kanjiKey = `hard:yomu:kanjiPreview:${kanjiItem.k}`
+    requireValue(generateHardYomuAdvanceQuestion({ grade, choiceCount: 4 }, kanjiKey)?.itemKey === kanjiKey, `hardよむ先取り 小${grade}: 漢字の指定復習が別項目へ化けた`)
+    const jukugoItem = JUKUGO_BY_GRADE[previewGrade][0]
+    const jukugoKey = `hard:yomu:jukugoPreview:${jukugoItem.k}`
+    requireValue(generateHardYomuAdvanceQuestion({ grade, choiceCount: 4 }, jukugoKey)?.itemKey === jukugoKey, `hardよむ先取り 小${grade}: 熟語の指定復習が別項目へ化けた`)
+  }
+}
 
 // ---- WP10: むずかしいモード（りか発展）----
 // hard算数・hardこくごと同じ設計。itemKeyは 'hard:r:' 名前空間、

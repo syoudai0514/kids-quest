@@ -17,6 +17,8 @@
 // ではなく、通常モードと同じ4択（type:'choice'）のままにする。
 // ============================================================
 
+import { HARD_YOMU_ADVANCE_LABELS } from './yomu-advance-hard.js'
+
 function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -440,5 +442,8 @@ export function generateHardReadingQuestion(params, reviewKey = null) {
 
 export const HARD_READING_LABELS = {
   yoji2: '四字熟語（発展）', proverb2: 'ことわざ（発展）', kousei: '熟語の構成',
-  doukun: '同訓異字', keigo2: '敬語（応用）', hinshi: '品詞', dokkai2: '長文読解'
+  doukun: '同訓異字', keigo2: '敬語（応用）', hinshi: '品詞', dokkai2: '長文読解',
+  // 小1〜3の先取り（yomu-advance-hard.js）も、ReviewScreenの
+  // 'hard:yomu:' 分岐がそのまま拾えるよう合流させる。
+  ...HARD_YOMU_ADVANCE_LABELS
 }
