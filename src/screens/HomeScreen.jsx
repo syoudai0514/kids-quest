@@ -16,7 +16,7 @@ import {
   equippedWeapon,
   starTrialInfo
 } from '../state/GameContext.jsx'
-import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
+import { getPartner, partnerStage } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
 import { GRADES, gradeOf, MAX_GRADE } from '../data/grades.js'
 import { buildOkawariTask, buildExtraTask, OKAWARI_MAX } from '../engine/missions.js'
@@ -316,8 +316,8 @@ export default function HomeScreen({ onStartTask, onGo }) {
             }}
           >
             <span className="menu-tile__emoji">📒</span>
-            <span className="menu-tile__label">ずかん</span>
-            <span className="menu-tile__sub">{state.unlockedMonsters.length} / {MONSTERS.length}</span>
+            <span className="menu-tile__label">なかま・そだてる</span>
+            <span className="menu-tile__sub">チーム {state.party?.length || 1}/3・ゲージ {state.starGauge || 0}</span>
           </button>
 
           <button
