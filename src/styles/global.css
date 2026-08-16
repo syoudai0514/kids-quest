@@ -1217,16 +1217,22 @@ body {
   .battle-screen .battle-back { min-height: 46px !important; min-width: 64px; padding: 8px 12px; }
   .battle-screen .topbar .pill { padding: 6px 10px; font-size: 15px; }
   .app-header__back { min-width: 52px; width: 52px; min-height: 52px; padding: 4px; font-size: 24px; }
-  .battle-screen .battle-arena { gap: 2px; padding: 2px 5px 8px !important; justify-content: flex-start !important; }
+  .battle-screen .battle-arena { gap: 2px; padding: 2px 5px 4px !important; justify-content: flex-start !important; }
   .battle-screen .battle-fighter--enemy { margin-top: 0; margin-right: 3vw !important; }
   .battle-screen .battle-fighter--partner { margin-bottom: 2px; margin-left: 3vw !important; }
   .battle-screen .hp-bar { height: 15px !important; width: 160px !important; }
   .battle-screen .type-chip { padding: 3px 8px; font-size: 12px; }
   .battle-screen .battle-guide { margin-bottom: 4px; padding: 5px 8px; font-size: 12px; }
-  .battle-screen .move-btn { min-height: 78px; border-radius: 16px; padding: 8px 10px; column-gap: 7px; row-gap: 1px; font-size: 15px; }
+  .battle-screen .move-btn { min-height: 62px; border-radius: 16px; padding: 5px 10px; column-gap: 7px; row-gap: 1px; font-size: 15px; }
   .battle-screen .move-btn__emoji { font-size: 26px; }
   .battle-screen .move-btn__name { line-height: 1.15; }
   .battle-screen .move-btn__hint { font-size: 10px; }
+  .battle-screen .battle-utility-grid { margin-top: 4px; }
+  .battle-screen .battle-utility-grid .form-activate-btn,
+  .battle-screen .battle-utility-grid .battle-switch-btn,
+  .battle-screen .battle-response-grid .boss-protect-btn,
+  .battle-screen .battle-response-grid .battle-switch-btn { min-height: 44px; }
+  .battle-screen .form-activate-btn small { display: inline; margin-left: 6px; font-size: 10px; }
 }
 @keyframes monsterAttack { 0% { transform: translateX(0) scale(1); } 45% { transform: translateX(24px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
 @keyframes monsterHurt { 0%,100% { transform: translateX(0); filter: brightness(1); } 25% { transform: translateX(-13px); filter: brightness(1.8); } 55% { transform: translateX(10px); } }

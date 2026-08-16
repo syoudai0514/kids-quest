@@ -19,7 +19,7 @@ import {
   unlockForm,
   xpForLevel
 } from '../src/engine/monsterProgress.js'
-import { releasedMonsterFullAsset } from '../src/data/monsterAssets.js'
+import { releasedMonsterFormAsset, releasedMonsterFullAsset } from '../src/data/monsterAssets.js'
 
 // GameContext contains JSX, so this small source-level regression tripwire
 // keeps SET_GRADE from ever falling through into the ANSWER reducer branch.
@@ -54,6 +54,8 @@ assert.deepEqual(normalizeMonsterProgress(migrated), migrated, 'migration must b
 assert.equal(normalizeMonsterProgress({ ...oldSave, version: 4 }).version, 3, 'an early v4 growth save must roll back to the public v3 envelope')
 assert.ok(releasedMonsterFullAsset('g042'), 'release pilot uses generated full artwork')
 assert.equal(releasedMonsterFullAsset('g054'), null, 'unreleased catalogue entries keep their existing artwork')
+assert.equal(releasedMonsterFormAsset({ id: 'awakening-g052', asset: '/monsters/forms/g052-awakening.webp' }), '/monsters/forms/g052-awakening.webp')
+assert.equal(releasedMonsterFormAsset({ id: 'awakening-g054', asset: '/monsters/forms/g054-awakening.webp' }), null, 'unreleased forms keep their normal monster artwork')
 
 let state = grantLearningAnswerXp(migrated, { xpGain: 2, domainId: 'suuji', dayKey: '2026-08-16' })
 const activeId = state.activeCompanionId
@@ -145,7 +147,13 @@ state = {
 assert.equal(formStatus(state, g053Id, 'giga').ready, true)
 state = unlockForm(state, g053Id, 'giga')
 assert.ok(state.companions[g053Id].unlockedFormIds.includes('giga-g053'))
-assert.ok(createCompanion('g053', xpForLevel(12)).selectedMoveIds.includes('signature-g053'), 'level 12 signature move is immediately equipped')
+const g053AtLevel8 = createCompanion('g053', xpForLevel(8))
+const g053AfterLevelUp = normalizeMonsterProgress({
+  version: 3,
+  unlockedMonsters: ['hoshu', 'g053'],
+  companions: { [companionIdFor('g053')]: { ...g053AtLevel8, xp: xpForLevel(12) } }
+})
+assert.ok(g053AfterLevelUp.companions[companionIdFor('g053')].selectedMoveIds.includes('signature-g053'), 'an existing level 8 companion equips its signature move when it reaches level 12')
 state = consumeStarGauge(state)
 assert.equal(state.starGauge, 0, 'using a form consumes a full star gauge')
 

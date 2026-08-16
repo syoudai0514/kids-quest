@@ -12,7 +12,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame, PARTNER_COLORS, equippedWeapon } from '../state/GameContext.jsx'
 import { getPartner, partnerStage, getWildMonsters, MONSTERS, MONSTER_BY_ID } from '../data/monsters.js'
 import { MONSTER_MASTER_BY_ID } from '../data/monsterMaster/monsterMaster.js'
-import { withReleasedMonsterAsset } from '../data/monsterAssets.js'
+import { releasedMonsterFormAsset, withReleasedMonsterAsset } from '../data/monsterAssets.js'
 import { MOVE_BY_ID } from '../data/monsterMaster/moves.js'
 import { activeCompanion, companionLevel, formStatus, PILOT_MONSTER_IDS } from '../engine/monsterProgress.js'
 import { rollScheduledWeaponReward, RARITIES } from '../data/weapons.js'
@@ -124,7 +124,7 @@ export default function BattleScreen({ onBack }) {
   // form is visible and active only while the same companion is back on field.
   const activeBattleForm = battleForm?.companionId === state.activeCompanionId ? battleForm : null
   const formVisual = activeBattleForm?.form
-    ? { ...partner, heroAsset: activeBattleForm.form.asset }
+    ? { ...partner, heroAsset: releasedMonsterFormAsset(activeBattleForm.form) || partner.heroAsset }
     : partner
   const selectedBattleMoveIds = companion
     ? [...new Set([...(activeBattleForm?.form?.moveId ? [activeBattleForm.form.moveId] : []), ...companion.selectedMoveIds])].slice(0, 4)
@@ -438,7 +438,7 @@ export default function BattleScreen({ onBack }) {
                 ? wasNewCatchRef.current
                   ? `${enemy.name}が なかまに なった！（ずかん ${state.unlockedMonsters.length}/${MONSTERS.length}） ✦+${shardGain}・バトルXP +3`
                   : `${enemy.name}に かった！ ✦+${shardGain}・バトルXP +3`
-                : `✦+2・バトルXP +1。つぎは きっと かてるよ！（Lv.${enemyLv}${isElite ? ' ・ つよい てきだった' : ''}）`}
+                : `バトルXP +1。つぎは きっと かてるよ！（Lv.${enemyLv}${isElite ? ' ・ つよい てきだった' : ''}）`}
             </div>
           </div>
 
@@ -525,7 +525,7 @@ export default function BattleScreen({ onBack }) {
           >
             {dmgFloat?.side === 'enemy' && <div className="dmg-float">{dmgFloat.text}</div>}
             {mode === 'catch' && <div className="ring-throw" />}
-            <Monster monster={enemyVisual} size={compactBattle ? 108 : 158} bounce={mode === 'intro'} pose={pose.enemy} />
+            <Monster monster={enemyVisual} size={compactBattle ? 100 : 158} bounce={mode === 'intro'} pose={pose.enemy} />
           </div>
         </div>
 
@@ -533,7 +533,7 @@ export default function BattleScreen({ onBack }) {
         <div className="battle-fighter battle-fighter--partner" style={{ alignSelf: 'flex-start', textAlign: 'center', marginLeft: '5vw', position: 'relative' }}>
           <div style={{ position: 'relative', animation: shake === 'partner' ? 'nudge 0.35s ease' : 'none' }}>
             {dmgFloat?.side === 'partner' && <div className="dmg-float">{dmgFloat.text}</div>}
-            <Monster monster={formVisual} colorsOverride={colors} size={compactBattle ? 112 : 170} bounce={mode === 'intro'} pose={pose.partner} />
+            <Monster monster={formVisual} colorsOverride={colors} size={compactBattle ? 104 : 170} bounce={mode === 'intro'} pose={pose.partner} />
           </div>
           <div style={{ fontWeight: 900, margin: '2px 0' }}>
             {stage.name} <span className="type-chip">Lv.{level}</span>

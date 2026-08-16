@@ -7,6 +7,7 @@ export const RELEASED_MONSTER_FULL_IDS = Object.freeze(new Set([
   'g042', 'g043', 'g044', 'g045', 'g046', 'g047',
   'g048', 'g049', 'g050', 'g051', 'g052', 'g053'
 ]))
+export const RELEASED_MONSTER_FORM_IDS = Object.freeze(new Set(['awakening-g052', 'giga-g053']))
 
 export function releasedMonsterFullAsset(monsterId) {
   if (!RELEASED_MONSTER_FULL_IDS.has(monsterId)) return null
@@ -19,4 +20,8 @@ export function withReleasedMonsterAsset(monster) {
     ...monster,
     heroAsset: releasedMonsterFullAsset(monster.id) || monster.heroAsset
   }
+}
+
+export function releasedMonsterFormAsset(form) {
+  return RELEASED_MONSTER_FORM_IDS.has(form?.id) ? form.asset : null
 }

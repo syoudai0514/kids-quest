@@ -53,13 +53,12 @@ function availableMoveIds(monsterId, xp) {
   return master.learnset.filter((entry) => entry.level <= level).map((entry) => entry.moveId)
 }
 
-function repairedMoveIds(monsterId, xp, selectedMoveIds) {
+function repairedMoveIds(monsterId, xp) {
   const available = availableMoveIds(monsterId, xp)
-  const selected = uniqueStrings(selectedMoveIds).filter((id) => available.includes(id))
-  if (selected.length >= Math.min(4, available.length)) return selected.slice(-4)
   // There is not yet a move-selection screen. Prefer the newest four moves so
   // a level-up signature move is immediately playable instead of being hidden
-  // behind the starter four forever.
+  // behind the starter four forever. This also repairs an older saved four-move
+  // loadout when a fifth move is learned.
   return available.slice(-4)
 }
 
