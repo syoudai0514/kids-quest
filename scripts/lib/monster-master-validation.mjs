@@ -42,7 +42,9 @@ export function canonicalSha256(value) {
 export function normalizedTargetFingerprint(targets) {
   return canonicalSha256(Object.fromEntries(Object.entries(targets)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, ids]) => [key, [...ids].sort()])))
+    // Target order is part of the contract. BOSS_IDS decides tier/campaign,
+    // and SIGNATURE_HOLDER_IDS decides generated move profiles by index.
+    .map(([key, ids]) => [key, [...ids]])))
 }
 
 export function normalizedFamilyFingerprint(plans) {

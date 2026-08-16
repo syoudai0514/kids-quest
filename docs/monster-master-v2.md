@@ -45,7 +45,7 @@ Issue #7 / WP1 #8 の正本。現行の `src/data/monsters.js` を壊さず、�
 
 compact indexは図鑑cardに必要な項目だけを持ち、詳細は100件×10 chunkで取得できる。WP1のchunkは同一module内の**論理chunk**であり、物理ファイル分割ではない。同期経路でchunkが未取得/不正でも`getMonsterDetailOrFallback`がcompact entryを返す。
 
-WP10の物理dynamic importは`loadMonsterDetailOrFallback(monsterId, chunkNumber, loadChunk)`の非同期契約へ接続する。`loadChunk`は該当chunkの配列をresolveする。import拒否、module欠損、配列以外、不正chunkのいずれでも、同じIDのcompact entryまたは未知IDの`null`だけを返し、別monsterを返してはならない。この失敗契約はWP1のmock mutation testで固定する。
+WP10の物理dynamic importは`loadMonsterDetailOrFallback(monsterId, chunkNumber, loadChunk)`の非同期契約へ接続する。`loadChunk`は該当chunkの配列をresolveする。import拒否、module欠損、配列以外、不正chunk、同じIDでもidentity不一致・必須field欠損・旧schemaのdetailでは、同じIDのcompact entryまたは未知IDの`null`だけを返し、破損detailや別monsterを返してはならない。要求chunk範囲、compact identity、runtime必須fieldは`isValidMonsterDetailForChunk`で検証し、この失敗契約をWP1のmock mutation testで固定する。
 
 ## 技schema
 
@@ -109,8 +109,9 @@ validatorは次を確認する。
 - 51〜100デザイン台帳50件と51〜62固有仕様
 - 1〜50の既存asset実在
 - role、rarity、battle type、boss tier、対象数のbaseline差分
-- family member順序と覚醒・ギガ・ボス・固有技対象ID集合のfingerprint
+- family member順序と覚醒・ギガ・ボス・固有技対象ID順序のfingerprint
+- ボスごとのtier、campaignTag、敵技profileのfingerprint
 - rarity別statBudget、進化・覚醒・ギガのLv/日数/教科/勝利tag/turn数の完全一致
 - 技category/effect/target/powerとeffect固有fieldの意味整合
 - 51〜100デザイン台帳の必須field、identity/family/stage一致、10体batchのsilhouette上限
-- 非同期chunk loaderのreject・module欠損・不正chunk・未知ID fallback
+- 非同期chunk loaderのreject・module欠損・不正chunk・破損した同一ID・未知ID fallback

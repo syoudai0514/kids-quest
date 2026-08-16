@@ -49,6 +49,7 @@
   "designPilot": 50,
   "integrity": {
     "familyMembershipSha256": "f213c325b72505c2f282b6e2a8628e8bed9f98947814d952b8e68e63a7584850",
-    "targetsSha256": "56b8e18a6b984e645cec073231e6d9dc0c1714b1f1c45b31af837cc684344cdb"
+    "targetsSha256": "04ce847b49c5cd8f48e2fd065927c3029a1400c8c5b250c2e41783fcf2c4071b",
+    "bossAssignmentsSha256": "6f8483c39566f83d1c0399863c4e1ff584934831f41adacf58e0cf7da88eb0ab"
   }
 }

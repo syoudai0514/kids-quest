@@ -17,6 +17,7 @@ import { FAMILY_ALLOCATION, FAMILY_PLANS } from '../src/data/monsterMaster/famil
 import {
   AWAKENING_IDS,
   BOSS_IDS,
+  BOSS_TARGETS,
   GIGA_IDS,
   MONSTER_TARGET_COUNTS,
   SIGNATURE_HOLDER_IDS
@@ -27,11 +28,13 @@ import {
   MONSTER_MASTER_V2,
   getMonsterDetailOrFallback,
   getMonsterMasterChunk,
+  isValidMonsterDetailForChunk,
   loadMonsterDetailOrFallback
 } from '../src/data/monsterMaster/monsterMaster.js'
 import { DESIGN_MANIFEST_051_100, DESIGN_PROMPT_VERSION } from '../design/monsters/manifest-051-100.js'
 import {
   FIXED_MONSTER_RULES,
+  canonicalSha256,
   normalizedFamilyFingerprint,
   normalizedTargetFingerprint,
   validateDesignEntry,
@@ -232,6 +235,19 @@ const unknownAsyncFallback = await loadMonsterDetailOrFallback('missing-id', 1, 
   throw new Error('simulated missing module')
 })
 requireValue(unknownAsyncFallback.detailAvailable === false && unknownAsyncFallback.monster === null, 'unknown async id fallback')
+const validAsyncDetail = await loadMonsterDetailOrFallback('g042', 1, async () => getMonsterMasterChunk(1))
+requireValue(validAsyncDetail.detailAvailable === true && validAsyncDetail.monster?.id === 'g042', 'valid async detail')
+const brokenSameIdFallback = await loadMonsterDetailOrFallback('g042', 1, async () => [{ id: 'g042', name: 'こわれたデータ' }])
+requireValue(brokenSameIdFallback.detailAvailable === false && brokenSameIdFallback.monster?.id === 'g042', 'broken same-id compact fallback')
+const wrongIdentityDetail = structuredClone(monsterById.g042)
+wrongIdentityDetail.name = 'こわれたデータ'
+requireValue(!isValidMonsterDetailForChunk('g042', 1, wrongIdentityDetail), 'changed detail identity must be invalid')
+const wrongDexDetail = structuredClone(monsterById.g042)
+wrongDexDetail.dexNo = 999
+requireValue(!isValidMonsterDetailForChunk('g042', 1, wrongDexDetail), 'changed detail dexNo must be invalid')
+const oldSchemaDetail = structuredClone(monsterById.g042)
+delete oldSchemaDetail.forms
+requireValue(!isValidMonsterDetailForChunk('g042', 1, oldSchemaDetail), 'old detail schema must be invalid')
 
 const pilotIds = MONSTER_MASTER_V2.slice(50, 100).map((monster) => monster.id)
 requireValue(DESIGN_MANIFEST_051_100.length === 50, `design manifest count: ${DESIGN_MANIFEST_051_100.length}`)
@@ -352,7 +368,18 @@ const currentDistribution = {
       giga: GIGA_IDS,
       boss: BOSS_IDS,
       signatureHolders: SIGNATURE_HOLDER_IDS
-    })
+    }),
+    bossAssignmentsSha256: canonicalSha256(BOSS_IDS.map((id) => ({
+      id,
+      ...BOSS_TARGETS[id],
+      move: {
+        id: moveById[`boss-${id}`]?.id,
+        power: moveById[`boss-${id}`]?.power,
+        priority: moveById[`boss-${id}`]?.priority,
+        effect: moveById[`boss-${id}`]?.effect,
+        enemyTuning: moveById[`boss-${id}`]?.enemyTuning
+      }
+    })))
   }
 }
 if (JSON.stringify(distributionSnapshot) !== JSON.stringify(currentDistribution)) {

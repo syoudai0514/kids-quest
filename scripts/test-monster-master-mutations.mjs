@@ -9,6 +9,7 @@ import { AWAKENING_IDS, BOSS_IDS, GIGA_IDS, SIGNATURE_HOLDER_IDS } from '../src/
 import { MOVE_MASTER } from '../src/data/monsterMaster/moves.js'
 import {
   MONSTER_MASTER_V2,
+  isValidMonsterDetailForChunk,
   loadMonsterDetailOrFallback
 } from '../src/data/monsterMaster/monsterMaster.js'
 import { DESIGN_MANIFEST_051_100 } from '../design/monsters/manifest-051-100.js'
@@ -67,6 +68,9 @@ const originalTargetHash = normalizedTargetFingerprint(targetSets)
 const changedAwakening = [...AWAKENING_IDS]
 changedAwakening[changedAwakening.indexOf('g985')] = 'g083'
 assert.notEqual(normalizedTargetFingerprint({ ...targetSets, awakening: changedAwakening }), originalTargetHash, 'same-count target swap must change fingerprint')
+const reorderedBosses = [...BOSS_IDS]
+;[reorderedBosses[12], reorderedBosses[28]] = [reorderedBosses[28], reorderedBosses[12]]
+assert.notEqual(normalizedTargetFingerprint({ ...targetSets, boss: reorderedBosses }), originalTargetHash, 'same-set boss order swap must change fingerprint')
 
 const changedFamilies = FAMILY_PLANS.map((plan) => ({ ...plan, memberIds: [...plan.memberIds] }))
 const swappable = changedFamilies.filter((plan) => plan.memberIds.length === 3).slice(0, 2)
@@ -137,5 +141,25 @@ assert.equal(wrongChunk.monster.id, 'g042')
 const unknown = await loadMonsterDetailOrFallback('missing-id', 1, async () => Promise.reject(new Error('offline')))
 assert.equal(unknown.detailAvailable, false)
 assert.equal(unknown.monster, null)
+const validDetail = await loadMonsterDetailOrFallback('g042', 1, async () => MONSTER_MASTER_V2.slice(0, 100))
+assert.equal(validDetail.detailAvailable, true)
+assert.equal(validDetail.monster.id, 'g042')
+const brokenSameId = await loadMonsterDetailOrFallback('g042', 1, async () => [{ id: 'g042', name: 'こわれたデータ' }])
+assert.equal(brokenSameId.detailAvailable, false)
+assert.equal(brokenSameId.monster.id, 'g042')
+for (const mutate of [
+  (detail) => { detail.dexNo = 999 },
+  (detail) => { detail.name = 'こわれたデータ' },
+  (detail) => { delete detail.forms },
+  (detail) => { delete detail.learnset }
+]) {
+  const detail = clone(byId.g042)
+  mutate(detail)
+  assert.equal(isValidMonsterDetailForChunk('g042', 1, detail), false, 'corrupt same-id detail must fail validation')
+  const fallback = await loadMonsterDetailOrFallback('g042', 1, async () => [detail])
+  assert.equal(fallback.detailAvailable, false)
+  assert.equal(fallback.monster.id, 'g042')
+}
+assert.equal(isValidMonsterDetailForChunk('g042', 2, clone(byId.g042)), false, 'detail in wrong requested chunk must fail')
 
 console.log('Monster master mutation tests OK')

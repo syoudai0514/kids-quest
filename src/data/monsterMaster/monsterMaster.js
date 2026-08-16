@@ -1,6 +1,6 @@
 import { MONSTERS } from '../monsters.js'
 import { typeOfElement } from '../../engine/battle.js'
-import { BATTLE_TYPES } from './schema.js'
+import { BATTLE_TYPES, BOSS_TIERS, MONSTER_ROLES, RARITIES } from './schema.js'
 import { FAMILY_BY_MONSTER_ID } from './familyPlan.js'
 import {
   AWAKENING_IDS,
@@ -229,6 +229,34 @@ export function getMonsterDetailOrFallback(monsterId, chunkNumber) {
     : Object.freeze({ detailAvailable: false, monster: null })
 }
 
+export function isValidMonsterDetailForChunk(monsterId, chunkNumber, detail) {
+  const compact = MONSTER_INDEX_BY_ID[monsterId]
+  if (!compact || !detail || typeof detail !== 'object' || Array.isArray(detail)) return false
+  const expectedChunk = Math.floor((compact.dexNo - 1) / MONSTER_MASTER_CHUNK_SIZE) + 1
+  if (chunkNumber !== expectedChunk) return false
+
+  for (const field of ['id', 'dexNo', 'name', 'element', 'battleType', 'familyId', 'stage', 'maxStage']) {
+    if (detail[field] !== compact[field]) return false
+  }
+  if (detail.assets?.thumb !== compact.thumb || typeof detail.assets?.full !== 'string' || !detail.assets.full) return false
+  if (typeof detail.description !== 'string' || !detail.description) return false
+  if (!(detail.evolvesFrom === null || typeof detail.evolvesFrom === 'string')) return false
+  if (!Array.isArray(detail.evolvesTo) || !detail.evolvesTo.every((id) => typeof id === 'string')) return false
+  if (!(detail.evolution === null || (typeof detail.evolution === 'object' && !Array.isArray(detail.evolution)))) return false
+  if (!RARITIES.includes(detail.rarity) || !MONSTER_ROLES.includes(detail.role)) return false
+  if (detail.statBudget !== statBudgetFor(detail.rarity)) return false
+  if (detail.growthRole !== detail.role) return false
+  if (!detail.baseStats || !['hp', 'attack', 'guard', 'speed'].every((key) => Number.isInteger(detail.baseStats[key]) && detail.baseStats[key] > 0)) return false
+  if (Object.values(detail.baseStats).reduce((sum, value) => sum + value, 0) !== detail.statBudget) return false
+  if (!Array.isArray(detail.learnset) || detail.learnset.length < 4 || detail.learnset.length > 8 || !detail.learnset.every((entry) => Number.isInteger(entry?.level) && typeof entry?.moveId === 'string')) return false
+  if (!Array.isArray(detail.encounterTags) || !detail.encounterTags.every((tag) => typeof tag === 'string')) return false
+  if (!BOSS_TIERS.includes(detail.bossTier)) return false
+  if (!detail.forms || typeof detail.forms !== 'object' || Array.isArray(detail.forms)) return false
+  if (detail.signatureMoveId !== undefined && typeof detail.signatureMoveId !== 'string') return false
+  if (detail.bossMoveId !== undefined && typeof detail.bossMoveId !== 'string') return false
+  return true
+}
+
 // WP1 keeps logical in-memory chunks.  WP10 may replace the loader with a
 // physical dynamic import, but consumers keep this contract: a rejected,
 // missing, malformed, or wrong chunk can only return the same ID's compact
@@ -247,7 +275,9 @@ export async function loadMonsterDetailOrFallback(
   }
 
   const detail = chunk.find((monster) => monster?.id === monsterId)
-  if (detail) return Object.freeze({ detailAvailable: true, monster: detail })
+  if (isValidMonsterDetailForChunk(monsterId, chunkNumber, detail)) {
+    return Object.freeze({ detailAvailable: true, monster: detail })
+  }
   const compact = MONSTER_INDEX_BY_ID[monsterId]
   return compact
     ? Object.freeze({ detailAvailable: false, monster: compact })
