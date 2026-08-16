@@ -1,0 +1,7007 @@
+{
+  "version": 1,
+  "count": 1000,
+  "sha256": "221dd8507a69c0565a2049f24160e29f80d1373fe4487c01cc4e7ef98e04e53c",
+  "entries": [
+    {
+      "dexNo": 1,
+      "id": "hoshu",
+      "name": "ホッシュ",
+      "element": "ほし",
+      "description": "ほしのかけらから うまれた あいぼうモンスター。いっしょに うちゅうを たびする。"
+    },
+    {
+      "dexNo": 2,
+      "id": "pterry",
+      "name": "プテリィ",
+      "element": "みず",
+      "description": "そらを とぶ よくりゅうの こ。はやさじまんで げんき。"
+    },
+    {
+      "dexNo": 3,
+      "id": "lunaco",
+      "name": "ルナコ",
+      "element": "くさ",
+      "description": "つきの ひかりから うまれた、ふわふわ モンスター。"
+    },
+    {
+      "dexNo": 4,
+      "id": "rexa",
+      "name": "レクサ",
+      "element": "でんき",
+      "description": "ちいさいけど ゆうかんな りくの きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 5,
+      "id": "cometa",
+      "name": "コメタ",
+      "element": "つき",
+      "description": "すいせいの しっぽを もつ、きらきら モンスター。"
+    },
+    {
+      "dexNo": 6,
+      "id": "gokkon",
+      "name": "ゴッコン",
+      "element": "いわ",
+      "description": "いんせきから うまれた がんこな モンスター。"
+    },
+    {
+      "dexNo": 7,
+      "id": "mognyu",
+      "name": "モグニュ",
+      "element": "いわ",
+      "description": "あかい わくせいに すむ あったか モンスター。"
+    },
+    {
+      "dexNo": 8,
+      "id": "shadex",
+      "name": "シャデックス",
+      "element": "やみ",
+      "description": "うちゅうの すきまに かくれる いたずら モンスター。"
+    },
+    {
+      "dexNo": 9,
+      "id": "g000",
+      "name": "ピット",
+      "element": "ほし",
+      "description": "ほしの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 10,
+      "id": "g001",
+      "name": "ポット",
+      "element": "つき",
+      "description": "つきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 11,
+      "id": "g002",
+      "name": "モット",
+      "element": "たいよう",
+      "description": "たいようの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 12,
+      "id": "g003",
+      "name": "ニット",
+      "element": "マグマ",
+      "description": "マグマの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 13,
+      "id": "g004",
+      "name": "クルット",
+      "element": "みず",
+      "description": "みずの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 14,
+      "id": "g005",
+      "name": "ゾット",
+      "element": "くさ",
+      "description": "くさの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 15,
+      "id": "g006",
+      "name": "ラット",
+      "element": "こおり",
+      "description": "こおりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 16,
+      "id": "g007",
+      "name": "ビット",
+      "element": "いわ",
+      "description": "いわの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 17,
+      "id": "g008",
+      "name": "ガット",
+      "element": "やみ",
+      "description": "やみの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 18,
+      "id": "g009",
+      "name": "ジャット",
+      "element": "ほのお",
+      "description": "ほのおの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 19,
+      "id": "g010",
+      "name": "テット",
+      "element": "そら",
+      "description": "そらの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 20,
+      "id": "g011",
+      "name": "ヌット",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 21,
+      "id": "g012",
+      "name": "ベット",
+      "element": "はな",
+      "description": "はなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 22,
+      "id": "g013",
+      "name": "ロット",
+      "element": "ぎんが",
+      "description": "ぎんがの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 23,
+      "id": "g014",
+      "name": "ワット",
+      "element": "すな",
+      "description": "すなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 24,
+      "id": "g015",
+      "name": "キット",
+      "element": "みどり",
+      "description": "みどりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 25,
+      "id": "g016",
+      "name": "チット",
+      "element": "にじ",
+      "description": "にじの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 26,
+      "id": "g017",
+      "name": "ヘット",
+      "element": "うちゅう",
+      "description": "うちゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 27,
+      "id": "g018",
+      "name": "ムット",
+      "element": "ほし",
+      "description": "ほしの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 28,
+      "id": "g019",
+      "name": "ソット",
+      "element": "つき",
+      "description": "つきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 29,
+      "id": "g020",
+      "name": "ダット",
+      "element": "たいよう",
+      "description": "たいようの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 30,
+      "id": "g021",
+      "name": "ヒット",
+      "element": "マグマ",
+      "description": "マグマの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 31,
+      "id": "g022",
+      "name": "メット",
+      "element": "みず",
+      "description": "みずの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 32,
+      "id": "g023",
+      "name": "リット",
+      "element": "くさ",
+      "description": "くさの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 33,
+      "id": "g024",
+      "name": "ヨット",
+      "element": "いわ",
+      "description": "いわの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 34,
+      "id": "g025",
+      "name": "プット",
+      "element": "でんき",
+      "description": "でんきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 35,
+      "id": "g026",
+      "name": "ブット",
+      "element": "やみ",
+      "description": "やみの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 36,
+      "id": "g027",
+      "name": "グット",
+      "element": "ほのお",
+      "description": "ほのおの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 37,
+      "id": "g028",
+      "name": "ズット",
+      "element": "そら",
+      "description": "そらの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 38,
+      "id": "g029",
+      "name": "ネット",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 39,
+      "id": "g030",
+      "name": "ファット",
+      "element": "はな",
+      "description": "はなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 40,
+      "id": "g031",
+      "name": "コット",
+      "element": "ぎんが",
+      "description": "ぎんがの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 41,
+      "id": "g032",
+      "name": "ピリン",
+      "element": "みどり",
+      "description": "みどりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 42,
+      "id": "g033",
+      "name": "ポリン",
+      "element": "ゆき",
+      "description": "ゆきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 43,
+      "id": "g034",
+      "name": "モリン",
+      "element": "にじ",
+      "description": "にじの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 44,
+      "id": "g035",
+      "name": "ニリン",
+      "element": "うちゅう",
+      "description": "うちゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 45,
+      "id": "g036",
+      "name": "クルリン",
+      "element": "ほし",
+      "description": "ほしの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 46,
+      "id": "g037",
+      "name": "ゾリン",
+      "element": "つき",
+      "description": "つきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 47,
+      "id": "g038",
+      "name": "ラリン",
+      "element": "たいよう",
+      "description": "たいようの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 48,
+      "id": "g039",
+      "name": "ビリン",
+      "element": "マグマ",
+      "description": "マグマの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 49,
+      "id": "g040",
+      "name": "ガリン",
+      "element": "くさ",
+      "description": "くさの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 50,
+      "id": "g041",
+      "name": "ジャリン",
+      "element": "こおり",
+      "description": "こおりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 51,
+      "id": "g042",
+      "name": "テリン",
+      "element": "いわ",
+      "description": "いわの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 52,
+      "id": "g043",
+      "name": "ヌリン",
+      "element": "でんき",
+      "description": "でんきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 53,
+      "id": "g044",
+      "name": "ベリン",
+      "element": "やみ",
+      "description": "やみの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 54,
+      "id": "g045",
+      "name": "ロリン",
+      "element": "ほのお",
+      "description": "ほのおの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 55,
+      "id": "g046",
+      "name": "ワリン",
+      "element": "そら",
+      "description": "そらの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 56,
+      "id": "g047",
+      "name": "キリン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 57,
+      "id": "g048",
+      "name": "チリン",
+      "element": "ぎんが",
+      "description": "ぎんがの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 58,
+      "id": "g049",
+      "name": "ヘリン",
+      "element": "すな",
+      "description": "すなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 59,
+      "id": "g050",
+      "name": "ムリン",
+      "element": "みどり",
+      "description": "みどりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 60,
+      "id": "g051",
+      "name": "ソリン",
+      "element": "ゆき",
+      "description": "ゆきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 61,
+      "id": "g052",
+      "name": "ダリン",
+      "element": "にじ",
+      "description": "にじの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 62,
+      "id": "g053",
+      "name": "ヒリン",
+      "element": "うちゅう",
+      "description": "うちゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 63,
+      "id": "g054",
+      "name": "メリン",
+      "element": "ほし",
+      "description": "ほしの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 64,
+      "id": "g055",
+      "name": "リリン",
+      "element": "つき",
+      "description": "つきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 65,
+      "id": "g056",
+      "name": "ヨリン",
+      "element": "マグマ",
+      "description": "マグマの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 66,
+      "id": "g057",
+      "name": "プリン",
+      "element": "みず",
+      "description": "みずの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 67,
+      "id": "g058",
+      "name": "ブリン",
+      "element": "くさ",
+      "description": "くさの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 68,
+      "id": "g059",
+      "name": "グリン",
+      "element": "こおり",
+      "description": "こおりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 69,
+      "id": "g060",
+      "name": "ズリン",
+      "element": "いわ",
+      "description": "いわの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 70,
+      "id": "g061",
+      "name": "ネリン",
+      "element": "でんき",
+      "description": "でんきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 71,
+      "id": "g062",
+      "name": "ファリン",
+      "element": "やみ",
+      "description": "やみの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 72,
+      "id": "g063",
+      "name": "コリン",
+      "element": "ほのお",
+      "description": "ほのおの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 73,
+      "id": "g064",
+      "name": "ピゴン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 74,
+      "id": "g065",
+      "name": "ポゴン",
+      "element": "はな",
+      "description": "はなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 75,
+      "id": "g066",
+      "name": "モゴン",
+      "element": "ぎんが",
+      "description": "ぎんがの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 76,
+      "id": "g067",
+      "name": "ニゴン",
+      "element": "すな",
+      "description": "すなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 77,
+      "id": "g068",
+      "name": "クルゴン",
+      "element": "みどり",
+      "description": "みどりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 78,
+      "id": "g069",
+      "name": "ゾゴン",
+      "element": "ゆき",
+      "description": "ゆきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 79,
+      "id": "g070",
+      "name": "ラゴン",
+      "element": "にじ",
+      "description": "にじの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 80,
+      "id": "g071",
+      "name": "ビゴン",
+      "element": "うちゅう",
+      "description": "うちゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 81,
+      "id": "g072",
+      "name": "ガゴン",
+      "element": "つき",
+      "description": "つきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 82,
+      "id": "g073",
+      "name": "ジャゴン",
+      "element": "たいよう",
+      "description": "たいようの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 83,
+      "id": "g074",
+      "name": "テゴン",
+      "element": "マグマ",
+      "description": "マグマの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 84,
+      "id": "g075",
+      "name": "ヌゴン",
+      "element": "みず",
+      "description": "みずの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 85,
+      "id": "g076",
+      "name": "ベゴン",
+      "element": "くさ",
+      "description": "くさの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 86,
+      "id": "g077",
+      "name": "ロゴン",
+      "element": "こおり",
+      "description": "こおりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 87,
+      "id": "g078",
+      "name": "ワゴン",
+      "element": "いわ",
+      "description": "いわの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 88,
+      "id": "g079",
+      "name": "キゴン",
+      "element": "でんき",
+      "description": "でんきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 89,
+      "id": "g080",
+      "name": "チゴン",
+      "element": "ほのお",
+      "description": "ほのおの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 90,
+      "id": "g081",
+      "name": "ヘゴン",
+      "element": "そら",
+      "description": "そらの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 91,
+      "id": "g082",
+      "name": "ムゴン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 92,
+      "id": "g083",
+      "name": "ソゴン",
+      "element": "はな",
+      "description": "はなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 93,
+      "id": "g084",
+      "name": "ダゴン",
+      "element": "ぎんが",
+      "description": "ぎんがの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 94,
+      "id": "g085",
+      "name": "ヒゴン",
+      "element": "すな",
+      "description": "すなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 95,
+      "id": "g086",
+      "name": "メゴン",
+      "element": "みどり",
+      "description": "みどりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 96,
+      "id": "g087",
+      "name": "リゴン",
+      "element": "ゆき",
+      "description": "ゆきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 97,
+      "id": "g088",
+      "name": "ヨゴン",
+      "element": "うちゅう",
+      "description": "うちゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 98,
+      "id": "g089",
+      "name": "プゴン",
+      "element": "ほし",
+      "description": "ほしの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 99,
+      "id": "g090",
+      "name": "ブゴン",
+      "element": "つき",
+      "description": "つきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 100,
+      "id": "g091",
+      "name": "グゴン",
+      "element": "たいよう",
+      "description": "たいようの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 101,
+      "id": "g092",
+      "name": "ロピー",
+      "element": "マグマ",
+      "description": "マグマの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 102,
+      "id": "g093",
+      "name": "ワピー",
+      "element": "みず",
+      "description": "みずの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 103,
+      "id": "g094",
+      "name": "キピー",
+      "element": "くさ",
+      "description": "くさの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 104,
+      "id": "g095",
+      "name": "チピー",
+      "element": "こおり",
+      "description": "こおりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 105,
+      "id": "g096",
+      "name": "ヘピー",
+      "element": "でんき",
+      "description": "でんきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 106,
+      "id": "g097",
+      "name": "ムピー",
+      "element": "やみ",
+      "description": "やみの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 107,
+      "id": "g098",
+      "name": "ソピー",
+      "element": "ほのお",
+      "description": "ほのおの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 108,
+      "id": "g099",
+      "name": "ダピー",
+      "element": "そら",
+      "description": "そらの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 109,
+      "id": "g100",
+      "name": "ヒピー",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 110,
+      "id": "g101",
+      "name": "メピー",
+      "element": "はな",
+      "description": "はなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 111,
+      "id": "g102",
+      "name": "リピー",
+      "element": "ぎんが",
+      "description": "ぎんがの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 112,
+      "id": "g103",
+      "name": "ヨピー",
+      "element": "すな",
+      "description": "すなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 113,
+      "id": "g104",
+      "name": "プピー",
+      "element": "ゆき",
+      "description": "ゆきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 114,
+      "id": "g105",
+      "name": "ブピー",
+      "element": "にじ",
+      "description": "にじの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 115,
+      "id": "g106",
+      "name": "グピー",
+      "element": "うちゅう",
+      "description": "うちゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 116,
+      "id": "g107",
+      "name": "ズピー",
+      "element": "ほし",
+      "description": "ほしの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 117,
+      "id": "g108",
+      "name": "ズゴン",
+      "element": "つき",
+      "description": "つきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 118,
+      "id": "g109",
+      "name": "ネゴン",
+      "element": "たいよう",
+      "description": "たいようの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 119,
+      "id": "g110",
+      "name": "ファゴン",
+      "element": "マグマ",
+      "description": "マグマの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 120,
+      "id": "g111",
+      "name": "コゴン",
+      "element": "みず",
+      "description": "みずの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 121,
+      "id": "g112",
+      "name": "サゴン",
+      "element": "こおり",
+      "description": "こおりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 122,
+      "id": "g113",
+      "name": "タゴン",
+      "element": "いわ",
+      "description": "いわの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 123,
+      "id": "g114",
+      "name": "ナゴン",
+      "element": "でんき",
+      "description": "でんきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 124,
+      "id": "g115",
+      "name": "ハゴン",
+      "element": "やみ",
+      "description": "やみの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 125,
+      "id": "g116",
+      "name": "マゴン",
+      "element": "ほのお",
+      "description": "ほのおの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 126,
+      "id": "g117",
+      "name": "ヤゴン",
+      "element": "そら",
+      "description": "そらの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 127,
+      "id": "g118",
+      "name": "ルゴン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 128,
+      "id": "g119",
+      "name": "ギゴン",
+      "element": "はな",
+      "description": "はなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 129,
+      "id": "g120",
+      "name": "ピピー",
+      "element": "すな",
+      "description": "すなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 130,
+      "id": "g121",
+      "name": "ポピー",
+      "element": "みどり",
+      "description": "みどりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 131,
+      "id": "g122",
+      "name": "モピー",
+      "element": "ゆき",
+      "description": "ゆきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 132,
+      "id": "g123",
+      "name": "ニピー",
+      "element": "にじ",
+      "description": "にじの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 133,
+      "id": "g124",
+      "name": "クルピー",
+      "element": "うちゅう",
+      "description": "うちゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 134,
+      "id": "g125",
+      "name": "ゾピー",
+      "element": "ほし",
+      "description": "ほしの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 135,
+      "id": "g126",
+      "name": "ラピー",
+      "element": "つき",
+      "description": "つきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 136,
+      "id": "g127",
+      "name": "ビピー",
+      "element": "たいよう",
+      "description": "たいようの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 137,
+      "id": "g128",
+      "name": "ガピー",
+      "element": "みず",
+      "description": "みずの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 138,
+      "id": "g129",
+      "name": "ジャピー",
+      "element": "くさ",
+      "description": "くさの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 139,
+      "id": "g130",
+      "name": "テピー",
+      "element": "こおり",
+      "description": "こおりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 140,
+      "id": "g131",
+      "name": "ヌピー",
+      "element": "いわ",
+      "description": "いわの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 141,
+      "id": "g132",
+      "name": "ベピー",
+      "element": "でんき",
+      "description": "でんきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 142,
+      "id": "g133",
+      "name": "ワモン",
+      "element": "やみ",
+      "description": "やみの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 143,
+      "id": "g134",
+      "name": "キモン",
+      "element": "ほのお",
+      "description": "ほのおの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 144,
+      "id": "g135",
+      "name": "チモン",
+      "element": "そら",
+      "description": "そらの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 145,
+      "id": "g136",
+      "name": "ヘモン",
+      "element": "はな",
+      "description": "はなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 146,
+      "id": "g137",
+      "name": "ムモン",
+      "element": "ぎんが",
+      "description": "ぎんがの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 147,
+      "id": "g138",
+      "name": "ソモン",
+      "element": "すな",
+      "description": "すなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 148,
+      "id": "g139",
+      "name": "ダモン",
+      "element": "みどり",
+      "description": "みどりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 149,
+      "id": "g140",
+      "name": "ヒモン",
+      "element": "ゆき",
+      "description": "ゆきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 150,
+      "id": "g141",
+      "name": "メモン",
+      "element": "にじ",
+      "description": "にじの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 151,
+      "id": "g142",
+      "name": "リモン",
+      "element": "うちゅう",
+      "description": "うちゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 152,
+      "id": "g143",
+      "name": "ヨモン",
+      "element": "ほし",
+      "description": "ほしの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 153,
+      "id": "g144",
+      "name": "プモン",
+      "element": "たいよう",
+      "description": "たいようの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 154,
+      "id": "g145",
+      "name": "ブモン",
+      "element": "マグマ",
+      "description": "マグマの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 155,
+      "id": "g146",
+      "name": "グモン",
+      "element": "みず",
+      "description": "みずの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 156,
+      "id": "g147",
+      "name": "ズモン",
+      "element": "くさ",
+      "description": "くさの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 157,
+      "id": "g148",
+      "name": "ネモン",
+      "element": "こおり",
+      "description": "こおりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 158,
+      "id": "g149",
+      "name": "ネピー",
+      "element": "いわ",
+      "description": "いわの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 159,
+      "id": "g150",
+      "name": "ファピー",
+      "element": "でんき",
+      "description": "でんきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 160,
+      "id": "g151",
+      "name": "コピー",
+      "element": "やみ",
+      "description": "やみの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 161,
+      "id": "g152",
+      "name": "サピー",
+      "element": "そら",
+      "description": "そらの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 162,
+      "id": "g153",
+      "name": "タピー",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 163,
+      "id": "g154",
+      "name": "ナピー",
+      "element": "はな",
+      "description": "はなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 164,
+      "id": "g155",
+      "name": "ハピー",
+      "element": "ぎんが",
+      "description": "ぎんがの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 165,
+      "id": "g156",
+      "name": "マピー",
+      "element": "すな",
+      "description": "すなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 166,
+      "id": "g157",
+      "name": "ヤピー",
+      "element": "みどり",
+      "description": "みどりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 167,
+      "id": "g158",
+      "name": "ルピー",
+      "element": "ゆき",
+      "description": "ゆきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 168,
+      "id": "g159",
+      "name": "ギピー",
+      "element": "にじ",
+      "description": "にじの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 169,
+      "id": "g160",
+      "name": "ピモン",
+      "element": "ほし",
+      "description": "ほしの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 170,
+      "id": "g161",
+      "name": "ポモン",
+      "element": "つき",
+      "description": "つきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 171,
+      "id": "g162",
+      "name": "モモン",
+      "element": "たいよう",
+      "description": "たいようの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 172,
+      "id": "g163",
+      "name": "ニモン",
+      "element": "マグマ",
+      "description": "マグマの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 173,
+      "id": "g164",
+      "name": "クルモン",
+      "element": "みず",
+      "description": "みずの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 174,
+      "id": "g165",
+      "name": "ゾモン",
+      "element": "くさ",
+      "description": "くさの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 175,
+      "id": "g166",
+      "name": "ラモン",
+      "element": "こおり",
+      "description": "こおりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 176,
+      "id": "g167",
+      "name": "ビモン",
+      "element": "いわ",
+      "description": "いわの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 177,
+      "id": "g168",
+      "name": "ガモン",
+      "element": "やみ",
+      "description": "やみの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 178,
+      "id": "g169",
+      "name": "ジャモン",
+      "element": "ほのお",
+      "description": "ほのおの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 179,
+      "id": "g170",
+      "name": "テモン",
+      "element": "そら",
+      "description": "そらの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 180,
+      "id": "g171",
+      "name": "ヌモン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 181,
+      "id": "g172",
+      "name": "ベモン",
+      "element": "はな",
+      "description": "はなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 182,
+      "id": "g173",
+      "name": "ロモン",
+      "element": "ぎんが",
+      "description": "ぎんがの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 183,
+      "id": "g174",
+      "name": "キタン",
+      "element": "すな",
+      "description": "すなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 184,
+      "id": "g175",
+      "name": "チタン",
+      "element": "みどり",
+      "description": "みどりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 185,
+      "id": "g176",
+      "name": "ヘタン",
+      "element": "にじ",
+      "description": "にじの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 186,
+      "id": "g177",
+      "name": "ムタン",
+      "element": "うちゅう",
+      "description": "うちゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 187,
+      "id": "g178",
+      "name": "ソタン",
+      "element": "ほし",
+      "description": "ほしの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 188,
+      "id": "g179",
+      "name": "ダタン",
+      "element": "つき",
+      "description": "つきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 189,
+      "id": "g180",
+      "name": "ヒタン",
+      "element": "たいよう",
+      "description": "たいようの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 190,
+      "id": "g181",
+      "name": "メタン",
+      "element": "マグマ",
+      "description": "マグマの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 191,
+      "id": "g182",
+      "name": "リタン",
+      "element": "みず",
+      "description": "みずの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 192,
+      "id": "g183",
+      "name": "ヨタン",
+      "element": "くさ",
+      "description": "くさの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 193,
+      "id": "g184",
+      "name": "プタン",
+      "element": "いわ",
+      "description": "いわの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 194,
+      "id": "g185",
+      "name": "ブタン",
+      "element": "でんき",
+      "description": "でんきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 195,
+      "id": "g186",
+      "name": "グタン",
+      "element": "やみ",
+      "description": "やみの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 196,
+      "id": "g187",
+      "name": "ズタン",
+      "element": "ほのお",
+      "description": "ほのおの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 197,
+      "id": "g188",
+      "name": "ネタン",
+      "element": "そら",
+      "description": "そらの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 198,
+      "id": "g189",
+      "name": "ファタン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 199,
+      "id": "g190",
+      "name": "ファモン",
+      "element": "はな",
+      "description": "はなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 200,
+      "id": "g191",
+      "name": "コモン",
+      "element": "ぎんが",
+      "description": "ぎんがの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 201,
+      "id": "g192",
+      "name": "サモン",
+      "element": "みどり",
+      "description": "みどりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 202,
+      "id": "g193",
+      "name": "タモン",
+      "element": "ゆき",
+      "description": "ゆきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 203,
+      "id": "g194",
+      "name": "ナモン",
+      "element": "にじ",
+      "description": "にじの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 204,
+      "id": "g195",
+      "name": "ハモン",
+      "element": "うちゅう",
+      "description": "うちゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 205,
+      "id": "g196",
+      "name": "マモン",
+      "element": "ほし",
+      "description": "ほしの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 206,
+      "id": "g197",
+      "name": "ヤモン",
+      "element": "つき",
+      "description": "つきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 207,
+      "id": "g198",
+      "name": "ルモン",
+      "element": "たいよう",
+      "description": "たいようの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 208,
+      "id": "g199",
+      "name": "ギモン",
+      "element": "マグマ",
+      "description": "マグマの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 209,
+      "id": "g200",
+      "name": "ピタン",
+      "element": "くさ",
+      "description": "くさの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 210,
+      "id": "g201",
+      "name": "ポタン",
+      "element": "こおり",
+      "description": "こおりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 211,
+      "id": "g202",
+      "name": "モタン",
+      "element": "いわ",
+      "description": "いわの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 212,
+      "id": "g203",
+      "name": "ニタン",
+      "element": "でんき",
+      "description": "でんきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 213,
+      "id": "g204",
+      "name": "クルタン",
+      "element": "やみ",
+      "description": "やみの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 214,
+      "id": "g205",
+      "name": "ゾタン",
+      "element": "ほのお",
+      "description": "ほのおの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 215,
+      "id": "g206",
+      "name": "ラタン",
+      "element": "そら",
+      "description": "そらの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 216,
+      "id": "g207",
+      "name": "ビタン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 217,
+      "id": "g208",
+      "name": "ガタン",
+      "element": "ぎんが",
+      "description": "ぎんがの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 218,
+      "id": "g209",
+      "name": "ジャタン",
+      "element": "すな",
+      "description": "すなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 219,
+      "id": "g210",
+      "name": "テタン",
+      "element": "みどり",
+      "description": "みどりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 220,
+      "id": "g211",
+      "name": "ヌタン",
+      "element": "ゆき",
+      "description": "ゆきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 221,
+      "id": "g212",
+      "name": "ベタン",
+      "element": "にじ",
+      "description": "にじの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 222,
+      "id": "g213",
+      "name": "ロタン",
+      "element": "うちゅう",
+      "description": "うちゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 223,
+      "id": "g214",
+      "name": "ワタン",
+      "element": "ほし",
+      "description": "ほしの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 224,
+      "id": "g215",
+      "name": "チニャ",
+      "element": "つき",
+      "description": "つきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 225,
+      "id": "g216",
+      "name": "ヘニャ",
+      "element": "マグマ",
+      "description": "マグマの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 226,
+      "id": "g217",
+      "name": "ムニャ",
+      "element": "みず",
+      "description": "みずの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 227,
+      "id": "g218",
+      "name": "ソニャ",
+      "element": "くさ",
+      "description": "くさの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 228,
+      "id": "g219",
+      "name": "ダニャ",
+      "element": "こおり",
+      "description": "こおりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 229,
+      "id": "g220",
+      "name": "ヒニャ",
+      "element": "いわ",
+      "description": "いわの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 230,
+      "id": "g221",
+      "name": "メニャ",
+      "element": "でんき",
+      "description": "でんきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 231,
+      "id": "g222",
+      "name": "リニャ",
+      "element": "やみ",
+      "description": "やみの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 232,
+      "id": "g223",
+      "name": "ヨニャ",
+      "element": "ほのお",
+      "description": "ほのおの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 233,
+      "id": "g224",
+      "name": "プニャ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 234,
+      "id": "g225",
+      "name": "ブニャ",
+      "element": "はな",
+      "description": "はなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 235,
+      "id": "g226",
+      "name": "グニャ",
+      "element": "ぎんが",
+      "description": "ぎんがの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 236,
+      "id": "g227",
+      "name": "ズニャ",
+      "element": "すな",
+      "description": "すなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 237,
+      "id": "g228",
+      "name": "ネニャ",
+      "element": "みどり",
+      "description": "みどりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 238,
+      "id": "g229",
+      "name": "ファニャ",
+      "element": "ゆき",
+      "description": "ゆきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 239,
+      "id": "g230",
+      "name": "コニャ",
+      "element": "にじ",
+      "description": "にじの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 240,
+      "id": "g231",
+      "name": "コタン",
+      "element": "うちゅう",
+      "description": "うちゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 241,
+      "id": "g232",
+      "name": "サタン",
+      "element": "つき",
+      "description": "つきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 242,
+      "id": "g233",
+      "name": "タタン",
+      "element": "たいよう",
+      "description": "たいようの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 243,
+      "id": "g234",
+      "name": "ナタン",
+      "element": "マグマ",
+      "description": "マグマの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 244,
+      "id": "g235",
+      "name": "ハタン",
+      "element": "みず",
+      "description": "みずの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 245,
+      "id": "g236",
+      "name": "マタン",
+      "element": "くさ",
+      "description": "くさの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 246,
+      "id": "g237",
+      "name": "ヤタン",
+      "element": "こおり",
+      "description": "こおりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 247,
+      "id": "g238",
+      "name": "ルタン",
+      "element": "いわ",
+      "description": "いわの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 248,
+      "id": "g239",
+      "name": "ギタン",
+      "element": "でんき",
+      "description": "でんきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 249,
+      "id": "g240",
+      "name": "ピニャ",
+      "element": "ほのお",
+      "description": "ほのおの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 250,
+      "id": "g241",
+      "name": "ポニャ",
+      "element": "そら",
+      "description": "そらの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 251,
+      "id": "g242",
+      "name": "モニャ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 252,
+      "id": "g243",
+      "name": "ニニャ",
+      "element": "はな",
+      "description": "はなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 253,
+      "id": "g244",
+      "name": "クルニャ",
+      "element": "ぎんが",
+      "description": "ぎんがの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 254,
+      "id": "g245",
+      "name": "ゾニャ",
+      "element": "すな",
+      "description": "すなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 255,
+      "id": "g246",
+      "name": "ラニャ",
+      "element": "みどり",
+      "description": "みどりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 256,
+      "id": "g247",
+      "name": "ビニャ",
+      "element": "ゆき",
+      "description": "ゆきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 257,
+      "id": "g248",
+      "name": "ガニャ",
+      "element": "うちゅう",
+      "description": "うちゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 258,
+      "id": "g249",
+      "name": "ジャニャ",
+      "element": "ほし",
+      "description": "ほしの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 259,
+      "id": "g250",
+      "name": "テニャ",
+      "element": "つき",
+      "description": "つきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 260,
+      "id": "g251",
+      "name": "ヌニャ",
+      "element": "たいよう",
+      "description": "たいようの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 261,
+      "id": "g252",
+      "name": "ベニャ",
+      "element": "マグマ",
+      "description": "マグマの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 262,
+      "id": "g253",
+      "name": "ロニャ",
+      "element": "みず",
+      "description": "みずの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 263,
+      "id": "g254",
+      "name": "ワニャ",
+      "element": "くさ",
+      "description": "くさの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 264,
+      "id": "g255",
+      "name": "キニャ",
+      "element": "こおり",
+      "description": "こおりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 265,
+      "id": "g256",
+      "name": "ヘドン",
+      "element": "でんき",
+      "description": "でんきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 266,
+      "id": "g257",
+      "name": "ムドン",
+      "element": "やみ",
+      "description": "やみの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 267,
+      "id": "g258",
+      "name": "ソドン",
+      "element": "ほのお",
+      "description": "ほのおの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 268,
+      "id": "g259",
+      "name": "ダドン",
+      "element": "そら",
+      "description": "そらの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 269,
+      "id": "g260",
+      "name": "ヒドン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 270,
+      "id": "g261",
+      "name": "メドン",
+      "element": "はな",
+      "description": "はなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 271,
+      "id": "g262",
+      "name": "リドン",
+      "element": "ぎんが",
+      "description": "ぎんがの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 272,
+      "id": "g263",
+      "name": "ヨドン",
+      "element": "すな",
+      "description": "すなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 273,
+      "id": "g264",
+      "name": "プドン",
+      "element": "ゆき",
+      "description": "ゆきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 274,
+      "id": "g265",
+      "name": "ブドン",
+      "element": "にじ",
+      "description": "にじの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 275,
+      "id": "g266",
+      "name": "グドン",
+      "element": "うちゅう",
+      "description": "うちゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 276,
+      "id": "g267",
+      "name": "ズドン",
+      "element": "ほし",
+      "description": "ほしの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 277,
+      "id": "g268",
+      "name": "ネドン",
+      "element": "つき",
+      "description": "つきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 278,
+      "id": "g269",
+      "name": "ファドン",
+      "element": "たいよう",
+      "description": "たいようの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 279,
+      "id": "g270",
+      "name": "コドン",
+      "element": "マグマ",
+      "description": "マグマの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 280,
+      "id": "g271",
+      "name": "サドン",
+      "element": "みず",
+      "description": "みずの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 281,
+      "id": "g272",
+      "name": "サニャ",
+      "element": "こおり",
+      "description": "こおりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 282,
+      "id": "g273",
+      "name": "タニャ",
+      "element": "いわ",
+      "description": "いわの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 283,
+      "id": "g274",
+      "name": "ナニャ",
+      "element": "でんき",
+      "description": "でんきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 284,
+      "id": "g275",
+      "name": "ハニャ",
+      "element": "やみ",
+      "description": "やみの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 285,
+      "id": "g276",
+      "name": "マニャ",
+      "element": "ほのお",
+      "description": "ほのおの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 286,
+      "id": "g277",
+      "name": "ヤニャ",
+      "element": "そら",
+      "description": "そらの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 287,
+      "id": "g278",
+      "name": "ルニャ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 288,
+      "id": "g279",
+      "name": "ギニャ",
+      "element": "はな",
+      "description": "はなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 289,
+      "id": "g280",
+      "name": "ピドン",
+      "element": "すな",
+      "description": "すなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 290,
+      "id": "g281",
+      "name": "ポドン",
+      "element": "みどり",
+      "description": "みどりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 291,
+      "id": "g282",
+      "name": "モドン",
+      "element": "ゆき",
+      "description": "ゆきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 292,
+      "id": "g283",
+      "name": "ニドン",
+      "element": "にじ",
+      "description": "にじの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 293,
+      "id": "g284",
+      "name": "クルドン",
+      "element": "うちゅう",
+      "description": "うちゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 294,
+      "id": "g285",
+      "name": "ゾドン",
+      "element": "ほし",
+      "description": "ほしの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 295,
+      "id": "g286",
+      "name": "ラドン",
+      "element": "つき",
+      "description": "つきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 296,
+      "id": "g287",
+      "name": "ビドン",
+      "element": "たいよう",
+      "description": "たいようの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 297,
+      "id": "g288",
+      "name": "ガドン",
+      "element": "みず",
+      "description": "みずの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 298,
+      "id": "g289",
+      "name": "ジャドン",
+      "element": "くさ",
+      "description": "くさの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 299,
+      "id": "g290",
+      "name": "テドン",
+      "element": "こおり",
+      "description": "こおりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 300,
+      "id": "g291",
+      "name": "ヌドン",
+      "element": "いわ",
+      "description": "いわの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 301,
+      "id": "g292",
+      "name": "ベドン",
+      "element": "でんき",
+      "description": "でんきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 302,
+      "id": "g293",
+      "name": "ロドン",
+      "element": "やみ",
+      "description": "やみの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 303,
+      "id": "g294",
+      "name": "ワドン",
+      "element": "ほのお",
+      "description": "ほのおの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 304,
+      "id": "g295",
+      "name": "キドン",
+      "element": "そら",
+      "description": "そらの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 305,
+      "id": "g296",
+      "name": "チドン",
+      "element": "はな",
+      "description": "はなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 306,
+      "id": "g297",
+      "name": "ムック",
+      "element": "ぎんが",
+      "description": "ぎんがの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 307,
+      "id": "g298",
+      "name": "ソック",
+      "element": "すな",
+      "description": "すなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 308,
+      "id": "g299",
+      "name": "ダック",
+      "element": "みどり",
+      "description": "みどりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 309,
+      "id": "g300",
+      "name": "ヒック",
+      "element": "ゆき",
+      "description": "ゆきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 310,
+      "id": "g301",
+      "name": "メック",
+      "element": "にじ",
+      "description": "にじの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 311,
+      "id": "g302",
+      "name": "リック",
+      "element": "うちゅう",
+      "description": "うちゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 312,
+      "id": "g303",
+      "name": "ヨック",
+      "element": "ほし",
+      "description": "ほしの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 313,
+      "id": "g304",
+      "name": "プック",
+      "element": "たいよう",
+      "description": "たいようの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 314,
+      "id": "g305",
+      "name": "ブック",
+      "element": "マグマ",
+      "description": "マグマの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 315,
+      "id": "g306",
+      "name": "グック",
+      "element": "みず",
+      "description": "みずの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 316,
+      "id": "g307",
+      "name": "ズック",
+      "element": "くさ",
+      "description": "くさの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 317,
+      "id": "g308",
+      "name": "ネック",
+      "element": "こおり",
+      "description": "こおりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 318,
+      "id": "g309",
+      "name": "ファック",
+      "element": "いわ",
+      "description": "いわの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 319,
+      "id": "g310",
+      "name": "コック",
+      "element": "でんき",
+      "description": "でんきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 320,
+      "id": "g311",
+      "name": "サック",
+      "element": "やみ",
+      "description": "やみの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 321,
+      "id": "g312",
+      "name": "タック",
+      "element": "そら",
+      "description": "そらの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 322,
+      "id": "g313",
+      "name": "タドン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 323,
+      "id": "g314",
+      "name": "ナドン",
+      "element": "はな",
+      "description": "はなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 324,
+      "id": "g315",
+      "name": "ハドン",
+      "element": "ぎんが",
+      "description": "ぎんがの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 325,
+      "id": "g316",
+      "name": "マドン",
+      "element": "すな",
+      "description": "すなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 326,
+      "id": "g317",
+      "name": "ヤドン",
+      "element": "みどり",
+      "description": "みどりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 327,
+      "id": "g318",
+      "name": "ルドン",
+      "element": "ゆき",
+      "description": "ゆきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 328,
+      "id": "g319",
+      "name": "ギドン",
+      "element": "にじ",
+      "description": "にじの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 329,
+      "id": "g320",
+      "name": "ピック",
+      "element": "ほし",
+      "description": "ほしの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 330,
+      "id": "g321",
+      "name": "ポック",
+      "element": "つき",
+      "description": "つきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 331,
+      "id": "g322",
+      "name": "モック",
+      "element": "たいよう",
+      "description": "たいようの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 332,
+      "id": "g323",
+      "name": "ニック",
+      "element": "マグマ",
+      "description": "マグマの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 333,
+      "id": "g324",
+      "name": "クルック",
+      "element": "みず",
+      "description": "みずの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 334,
+      "id": "g325",
+      "name": "ゾック",
+      "element": "くさ",
+      "description": "くさの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 335,
+      "id": "g326",
+      "name": "ラック",
+      "element": "こおり",
+      "description": "こおりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 336,
+      "id": "g327",
+      "name": "ビック",
+      "element": "いわ",
+      "description": "いわの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 337,
+      "id": "g328",
+      "name": "ガック",
+      "element": "やみ",
+      "description": "やみの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 338,
+      "id": "g329",
+      "name": "ジャック",
+      "element": "ほのお",
+      "description": "ほのおの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 339,
+      "id": "g330",
+      "name": "テック",
+      "element": "そら",
+      "description": "そらの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 340,
+      "id": "g331",
+      "name": "ヌック",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 341,
+      "id": "g332",
+      "name": "ベック",
+      "element": "はな",
+      "description": "はなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 342,
+      "id": "g333",
+      "name": "ロック",
+      "element": "ぎんが",
+      "description": "ぎんがの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 343,
+      "id": "g334",
+      "name": "ワック",
+      "element": "すな",
+      "description": "すなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 344,
+      "id": "g335",
+      "name": "キック",
+      "element": "みどり",
+      "description": "みどりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 345,
+      "id": "g336",
+      "name": "チック",
+      "element": "にじ",
+      "description": "にじの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 346,
+      "id": "g337",
+      "name": "ヘック",
+      "element": "うちゅう",
+      "description": "うちゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 347,
+      "id": "g338",
+      "name": "ソララ",
+      "element": "ほし",
+      "description": "ほしの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 348,
+      "id": "g339",
+      "name": "ダララ",
+      "element": "つき",
+      "description": "つきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 349,
+      "id": "g340",
+      "name": "ヒララ",
+      "element": "たいよう",
+      "description": "たいようの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 350,
+      "id": "g341",
+      "name": "メララ",
+      "element": "マグマ",
+      "description": "マグマの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 351,
+      "id": "g342",
+      "name": "リララ",
+      "element": "みず",
+      "description": "みずの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 352,
+      "id": "g343",
+      "name": "ヨララ",
+      "element": "くさ",
+      "description": "くさの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 353,
+      "id": "g344",
+      "name": "プララ",
+      "element": "いわ",
+      "description": "いわの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 354,
+      "id": "g345",
+      "name": "ブララ",
+      "element": "でんき",
+      "description": "でんきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 355,
+      "id": "g346",
+      "name": "グララ",
+      "element": "やみ",
+      "description": "やみの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 356,
+      "id": "g347",
+      "name": "ズララ",
+      "element": "ほのお",
+      "description": "ほのおの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 357,
+      "id": "g348",
+      "name": "ネララ",
+      "element": "そら",
+      "description": "そらの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 358,
+      "id": "g349",
+      "name": "ファララ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 359,
+      "id": "g350",
+      "name": "コララ",
+      "element": "はな",
+      "description": "はなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 360,
+      "id": "g351",
+      "name": "サララ",
+      "element": "ぎんが",
+      "description": "ぎんがの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 361,
+      "id": "g352",
+      "name": "タララ",
+      "element": "みどり",
+      "description": "みどりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 362,
+      "id": "g353",
+      "name": "ナララ",
+      "element": "ゆき",
+      "description": "ゆきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 363,
+      "id": "g354",
+      "name": "ナック",
+      "element": "にじ",
+      "description": "にじの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 364,
+      "id": "g355",
+      "name": "ハック",
+      "element": "うちゅう",
+      "description": "うちゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 365,
+      "id": "g356",
+      "name": "マック",
+      "element": "ほし",
+      "description": "ほしの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 366,
+      "id": "g357",
+      "name": "ヤック",
+      "element": "つき",
+      "description": "つきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 367,
+      "id": "g358",
+      "name": "ルック",
+      "element": "たいよう",
+      "description": "たいようの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 368,
+      "id": "g359",
+      "name": "ギック",
+      "element": "マグマ",
+      "description": "マグマの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 369,
+      "id": "g360",
+      "name": "ピララ",
+      "element": "くさ",
+      "description": "くさの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 370,
+      "id": "g361",
+      "name": "ポララ",
+      "element": "こおり",
+      "description": "こおりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 371,
+      "id": "g362",
+      "name": "モララ",
+      "element": "いわ",
+      "description": "いわの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 372,
+      "id": "g363",
+      "name": "ニララ",
+      "element": "でんき",
+      "description": "でんきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 373,
+      "id": "g364",
+      "name": "クルララ",
+      "element": "やみ",
+      "description": "やみの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 374,
+      "id": "g365",
+      "name": "ゾララ",
+      "element": "ほのお",
+      "description": "ほのおの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 375,
+      "id": "g366",
+      "name": "ラララ",
+      "element": "そら",
+      "description": "そらの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 376,
+      "id": "g367",
+      "name": "ビララ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 377,
+      "id": "g368",
+      "name": "ガララ",
+      "element": "ぎんが",
+      "description": "ぎんがの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 378,
+      "id": "g369",
+      "name": "ジャララ",
+      "element": "すな",
+      "description": "すなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 379,
+      "id": "g370",
+      "name": "テララ",
+      "element": "みどり",
+      "description": "みどりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 380,
+      "id": "g371",
+      "name": "ヌララ",
+      "element": "ゆき",
+      "description": "ゆきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 381,
+      "id": "g372",
+      "name": "ベララ",
+      "element": "にじ",
+      "description": "にじの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 382,
+      "id": "g373",
+      "name": "ロララ",
+      "element": "うちゅう",
+      "description": "うちゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 383,
+      "id": "g374",
+      "name": "ワララ",
+      "element": "ほし",
+      "description": "ほしの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 384,
+      "id": "g375",
+      "name": "キララ",
+      "element": "つき",
+      "description": "つきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 385,
+      "id": "g376",
+      "name": "チララ",
+      "element": "マグマ",
+      "description": "マグマの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 386,
+      "id": "g377",
+      "name": "ヘララ",
+      "element": "みず",
+      "description": "みずの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 387,
+      "id": "g378",
+      "name": "ムララ",
+      "element": "くさ",
+      "description": "くさの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 388,
+      "id": "g379",
+      "name": "ダゾン",
+      "element": "こおり",
+      "description": "こおりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 389,
+      "id": "g380",
+      "name": "ヒゾン",
+      "element": "いわ",
+      "description": "いわの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 390,
+      "id": "g381",
+      "name": "メゾン",
+      "element": "でんき",
+      "description": "でんきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 391,
+      "id": "g382",
+      "name": "リゾン",
+      "element": "やみ",
+      "description": "やみの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 392,
+      "id": "g383",
+      "name": "ヨゾン",
+      "element": "ほのお",
+      "description": "ほのおの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 393,
+      "id": "g384",
+      "name": "プゾン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 394,
+      "id": "g385",
+      "name": "ブゾン",
+      "element": "はな",
+      "description": "はなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 395,
+      "id": "g386",
+      "name": "グゾン",
+      "element": "ぎんが",
+      "description": "ぎんがの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 396,
+      "id": "g387",
+      "name": "ズゾン",
+      "element": "すな",
+      "description": "すなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 397,
+      "id": "g388",
+      "name": "ネゾン",
+      "element": "みどり",
+      "description": "みどりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 398,
+      "id": "g389",
+      "name": "ファゾン",
+      "element": "ゆき",
+      "description": "ゆきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 399,
+      "id": "g390",
+      "name": "コゾン",
+      "element": "にじ",
+      "description": "にじの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 400,
+      "id": "g391",
+      "name": "サゾン",
+      "element": "うちゅう",
+      "description": "うちゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 401,
+      "id": "g392",
+      "name": "タゾン",
+      "element": "つき",
+      "description": "つきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 402,
+      "id": "g393",
+      "name": "ナゾン",
+      "element": "たいよう",
+      "description": "たいようの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 403,
+      "id": "g394",
+      "name": "ハゾン",
+      "element": "マグマ",
+      "description": "マグマの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 404,
+      "id": "g395",
+      "name": "ハララ",
+      "element": "みず",
+      "description": "みずの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 405,
+      "id": "g396",
+      "name": "マララ",
+      "element": "くさ",
+      "description": "くさの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 406,
+      "id": "g397",
+      "name": "ヤララ",
+      "element": "こおり",
+      "description": "こおりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 407,
+      "id": "g398",
+      "name": "ルララ",
+      "element": "いわ",
+      "description": "いわの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 408,
+      "id": "g399",
+      "name": "ギララ",
+      "element": "でんき",
+      "description": "でんきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 409,
+      "id": "g400",
+      "name": "ピゾン",
+      "element": "ほのお",
+      "description": "ほのおの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 410,
+      "id": "g401",
+      "name": "ポゾン",
+      "element": "そら",
+      "description": "そらの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 411,
+      "id": "g402",
+      "name": "モゾン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 412,
+      "id": "g403",
+      "name": "ニゾン",
+      "element": "はな",
+      "description": "はなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 413,
+      "id": "g404",
+      "name": "クルゾン",
+      "element": "ぎんが",
+      "description": "ぎんがの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 414,
+      "id": "g405",
+      "name": "ゾゾン",
+      "element": "すな",
+      "description": "すなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 415,
+      "id": "g406",
+      "name": "ラゾン",
+      "element": "みどり",
+      "description": "みどりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 416,
+      "id": "g407",
+      "name": "ビゾン",
+      "element": "ゆき",
+      "description": "ゆきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 417,
+      "id": "g408",
+      "name": "ガゾン",
+      "element": "うちゅう",
+      "description": "うちゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 418,
+      "id": "g409",
+      "name": "ジャゾン",
+      "element": "ほし",
+      "description": "ほしの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 419,
+      "id": "g410",
+      "name": "テゾン",
+      "element": "つき",
+      "description": "つきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 420,
+      "id": "g411",
+      "name": "ヌゾン",
+      "element": "たいよう",
+      "description": "たいようの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 421,
+      "id": "g412",
+      "name": "ベゾン",
+      "element": "マグマ",
+      "description": "マグマの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 422,
+      "id": "g413",
+      "name": "ロゾン",
+      "element": "みず",
+      "description": "みずの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 423,
+      "id": "g414",
+      "name": "ワゾン",
+      "element": "くさ",
+      "description": "くさの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 424,
+      "id": "g415",
+      "name": "キゾン",
+      "element": "こおり",
+      "description": "こおりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 425,
+      "id": "g416",
+      "name": "チゾン",
+      "element": "でんき",
+      "description": "でんきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 426,
+      "id": "g417",
+      "name": "ヘゾン",
+      "element": "やみ",
+      "description": "やみの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 427,
+      "id": "g418",
+      "name": "ムゾン",
+      "element": "ほのお",
+      "description": "ほのおの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 428,
+      "id": "g419",
+      "name": "ソゾン",
+      "element": "そら",
+      "description": "そらの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 429,
+      "id": "g420",
+      "name": "ヒピョン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 430,
+      "id": "g421",
+      "name": "メピョン",
+      "element": "はな",
+      "description": "はなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 431,
+      "id": "g422",
+      "name": "リピョン",
+      "element": "ぎんが",
+      "description": "ぎんがの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 432,
+      "id": "g423",
+      "name": "ヨピョン",
+      "element": "すな",
+      "description": "すなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 433,
+      "id": "g424",
+      "name": "プピョン",
+      "element": "ゆき",
+      "description": "ゆきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 434,
+      "id": "g425",
+      "name": "ブピョン",
+      "element": "にじ",
+      "description": "にじの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 435,
+      "id": "g426",
+      "name": "グピョン",
+      "element": "うちゅう",
+      "description": "うちゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 436,
+      "id": "g427",
+      "name": "ズピョン",
+      "element": "ほし",
+      "description": "ほしの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 437,
+      "id": "g428",
+      "name": "ネピョン",
+      "element": "つき",
+      "description": "つきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 438,
+      "id": "g429",
+      "name": "ファピョン",
+      "element": "たいよう",
+      "description": "たいようの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 439,
+      "id": "g430",
+      "name": "コピョン",
+      "element": "マグマ",
+      "description": "マグマの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 440,
+      "id": "g431",
+      "name": "サピョン",
+      "element": "みず",
+      "description": "みずの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 441,
+      "id": "g432",
+      "name": "タピョン",
+      "element": "こおり",
+      "description": "こおりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 442,
+      "id": "g433",
+      "name": "ナピョン",
+      "element": "いわ",
+      "description": "いわの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 443,
+      "id": "g434",
+      "name": "ハピョン",
+      "element": "でんき",
+      "description": "でんきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 444,
+      "id": "g435",
+      "name": "マピョン",
+      "element": "やみ",
+      "description": "やみの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 445,
+      "id": "g436",
+      "name": "マゾン",
+      "element": "ほのお",
+      "description": "ほのおの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 446,
+      "id": "g437",
+      "name": "ヤゾン",
+      "element": "そら",
+      "description": "そらの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 447,
+      "id": "g438",
+      "name": "ルゾン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 448,
+      "id": "g439",
+      "name": "ギゾン",
+      "element": "はな",
+      "description": "はなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 449,
+      "id": "g440",
+      "name": "ピピョン",
+      "element": "すな",
+      "description": "すなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 450,
+      "id": "g441",
+      "name": "ポピョン",
+      "element": "みどり",
+      "description": "みどりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 451,
+      "id": "g442",
+      "name": "モピョン",
+      "element": "ゆき",
+      "description": "ゆきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 452,
+      "id": "g443",
+      "name": "ニピョン",
+      "element": "にじ",
+      "description": "にじの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 453,
+      "id": "g444",
+      "name": "クルピョン",
+      "element": "うちゅう",
+      "description": "うちゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 454,
+      "id": "g445",
+      "name": "ゾピョン",
+      "element": "ほし",
+      "description": "ほしの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 455,
+      "id": "g446",
+      "name": "ラピョン",
+      "element": "つき",
+      "description": "つきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 456,
+      "id": "g447",
+      "name": "ビピョン",
+      "element": "たいよう",
+      "description": "たいようの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 457,
+      "id": "g448",
+      "name": "ガピョン",
+      "element": "みず",
+      "description": "みずの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 458,
+      "id": "g449",
+      "name": "ジャピョン",
+      "element": "くさ",
+      "description": "くさの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 459,
+      "id": "g450",
+      "name": "テピョン",
+      "element": "こおり",
+      "description": "こおりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 460,
+      "id": "g451",
+      "name": "ヌピョン",
+      "element": "いわ",
+      "description": "いわの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 461,
+      "id": "g452",
+      "name": "ベピョン",
+      "element": "でんき",
+      "description": "でんきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 462,
+      "id": "g453",
+      "name": "ロピョン",
+      "element": "やみ",
+      "description": "やみの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 463,
+      "id": "g454",
+      "name": "ワピョン",
+      "element": "ほのお",
+      "description": "ほのおの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 464,
+      "id": "g455",
+      "name": "キピョン",
+      "element": "そら",
+      "description": "そらの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 465,
+      "id": "g456",
+      "name": "チピョン",
+      "element": "はな",
+      "description": "はなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 466,
+      "id": "g457",
+      "name": "ヘピョン",
+      "element": "ぎんが",
+      "description": "ぎんがの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 467,
+      "id": "g458",
+      "name": "ムピョン",
+      "element": "すな",
+      "description": "すなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 468,
+      "id": "g459",
+      "name": "ソピョン",
+      "element": "みどり",
+      "description": "みどりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 469,
+      "id": "g460",
+      "name": "ダピョン",
+      "element": "ゆき",
+      "description": "ゆきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 470,
+      "id": "g461",
+      "name": "メポン",
+      "element": "にじ",
+      "description": "にじの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 471,
+      "id": "g462",
+      "name": "リポン",
+      "element": "うちゅう",
+      "description": "うちゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 472,
+      "id": "g463",
+      "name": "ヨポン",
+      "element": "ほし",
+      "description": "ほしの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 473,
+      "id": "g464",
+      "name": "プポン",
+      "element": "たいよう",
+      "description": "たいようの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 474,
+      "id": "g465",
+      "name": "ブポン",
+      "element": "マグマ",
+      "description": "マグマの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 475,
+      "id": "g466",
+      "name": "グポン",
+      "element": "みず",
+      "description": "みずの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 476,
+      "id": "g467",
+      "name": "ズポン",
+      "element": "くさ",
+      "description": "くさの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 477,
+      "id": "g468",
+      "name": "ネポン",
+      "element": "こおり",
+      "description": "こおりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 478,
+      "id": "g469",
+      "name": "ファポン",
+      "element": "いわ",
+      "description": "いわの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 479,
+      "id": "g470",
+      "name": "コポン",
+      "element": "でんき",
+      "description": "でんきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 480,
+      "id": "g471",
+      "name": "サポン",
+      "element": "やみ",
+      "description": "やみの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 481,
+      "id": "g472",
+      "name": "タポン",
+      "element": "そら",
+      "description": "そらの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 482,
+      "id": "g473",
+      "name": "ナポン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 483,
+      "id": "g474",
+      "name": "ハポン",
+      "element": "はな",
+      "description": "はなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 484,
+      "id": "g475",
+      "name": "マポン",
+      "element": "ぎんが",
+      "description": "ぎんがの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 485,
+      "id": "g476",
+      "name": "ヤポン",
+      "element": "すな",
+      "description": "すなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 486,
+      "id": "g477",
+      "name": "ヤピョン",
+      "element": "みどり",
+      "description": "みどりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 487,
+      "id": "g478",
+      "name": "ルピョン",
+      "element": "ゆき",
+      "description": "ゆきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 488,
+      "id": "g479",
+      "name": "ギピョン",
+      "element": "にじ",
+      "description": "にじの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 489,
+      "id": "g480",
+      "name": "ピポン",
+      "element": "ほし",
+      "description": "ほしの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 490,
+      "id": "g481",
+      "name": "ポポン",
+      "element": "つき",
+      "description": "つきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 491,
+      "id": "g482",
+      "name": "モポン",
+      "element": "たいよう",
+      "description": "たいようの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 492,
+      "id": "g483",
+      "name": "ニポン",
+      "element": "マグマ",
+      "description": "マグマの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 493,
+      "id": "g484",
+      "name": "クルポン",
+      "element": "みず",
+      "description": "みずの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 494,
+      "id": "g485",
+      "name": "ゾポン",
+      "element": "くさ",
+      "description": "くさの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 495,
+      "id": "g486",
+      "name": "ラポン",
+      "element": "こおり",
+      "description": "こおりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 496,
+      "id": "g487",
+      "name": "ビポン",
+      "element": "いわ",
+      "description": "いわの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 497,
+      "id": "g488",
+      "name": "ガポン",
+      "element": "やみ",
+      "description": "やみの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 498,
+      "id": "g489",
+      "name": "ジャポン",
+      "element": "ほのお",
+      "description": "ほのおの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 499,
+      "id": "g490",
+      "name": "テポン",
+      "element": "そら",
+      "description": "そらの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 500,
+      "id": "g491",
+      "name": "ヌポン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 501,
+      "id": "g492",
+      "name": "ベポン",
+      "element": "はな",
+      "description": "はなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 502,
+      "id": "g493",
+      "name": "ロポン",
+      "element": "ぎんが",
+      "description": "ぎんがの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 503,
+      "id": "g494",
+      "name": "ワポン",
+      "element": "すな",
+      "description": "すなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 504,
+      "id": "g495",
+      "name": "キポン",
+      "element": "みどり",
+      "description": "みどりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 505,
+      "id": "g496",
+      "name": "チポン",
+      "element": "にじ",
+      "description": "にじの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 506,
+      "id": "g497",
+      "name": "ヘポン",
+      "element": "うちゅう",
+      "description": "うちゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 507,
+      "id": "g498",
+      "name": "ムポン",
+      "element": "ほし",
+      "description": "ほしの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 508,
+      "id": "g499",
+      "name": "ソポン",
+      "element": "つき",
+      "description": "つきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 509,
+      "id": "g500",
+      "name": "ダポン",
+      "element": "たいよう",
+      "description": "たいようの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 510,
+      "id": "g501",
+      "name": "ヒポン",
+      "element": "マグマ",
+      "description": "マグマの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 511,
+      "id": "g502",
+      "name": "リミィ",
+      "element": "みず",
+      "description": "みずの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 512,
+      "id": "g503",
+      "name": "ヨミィ",
+      "element": "くさ",
+      "description": "くさの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 513,
+      "id": "g504",
+      "name": "プミィ",
+      "element": "いわ",
+      "description": "いわの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 514,
+      "id": "g505",
+      "name": "ブミィ",
+      "element": "でんき",
+      "description": "でんきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 515,
+      "id": "g506",
+      "name": "グミィ",
+      "element": "やみ",
+      "description": "やみの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 516,
+      "id": "g507",
+      "name": "ズミィ",
+      "element": "ほのお",
+      "description": "ほのおの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 517,
+      "id": "g508",
+      "name": "ネミィ",
+      "element": "そら",
+      "description": "そらの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 518,
+      "id": "g509",
+      "name": "ファミィ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 519,
+      "id": "g510",
+      "name": "コミィ",
+      "element": "はな",
+      "description": "はなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 520,
+      "id": "g511",
+      "name": "サミィ",
+      "element": "ぎんが",
+      "description": "ぎんがの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 521,
+      "id": "g512",
+      "name": "タミィ",
+      "element": "みどり",
+      "description": "みどりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 522,
+      "id": "g513",
+      "name": "ナミィ",
+      "element": "ゆき",
+      "description": "ゆきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 523,
+      "id": "g514",
+      "name": "ハミィ",
+      "element": "にじ",
+      "description": "にじの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 524,
+      "id": "g515",
+      "name": "マミィ",
+      "element": "うちゅう",
+      "description": "うちゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 525,
+      "id": "g516",
+      "name": "ヤミィ",
+      "element": "ほし",
+      "description": "ほしの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 526,
+      "id": "g517",
+      "name": "ルミィ",
+      "element": "つき",
+      "description": "つきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 527,
+      "id": "g518",
+      "name": "ルポン",
+      "element": "たいよう",
+      "description": "たいようの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 528,
+      "id": "g519",
+      "name": "ギポン",
+      "element": "マグマ",
+      "description": "マグマの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 529,
+      "id": "g520",
+      "name": "ピミィ",
+      "element": "くさ",
+      "description": "くさの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 530,
+      "id": "g521",
+      "name": "ポミィ",
+      "element": "こおり",
+      "description": "こおりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 531,
+      "id": "g522",
+      "name": "モミィ",
+      "element": "いわ",
+      "description": "いわの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 532,
+      "id": "g523",
+      "name": "ニミィ",
+      "element": "でんき",
+      "description": "でんきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 533,
+      "id": "g524",
+      "name": "クルミィ",
+      "element": "やみ",
+      "description": "やみの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 534,
+      "id": "g525",
+      "name": "ゾミィ",
+      "element": "ほのお",
+      "description": "ほのおの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 535,
+      "id": "g526",
+      "name": "ラミィ",
+      "element": "そら",
+      "description": "そらの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 536,
+      "id": "g527",
+      "name": "ビミィ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 537,
+      "id": "g528",
+      "name": "ガミィ",
+      "element": "ぎんが",
+      "description": "ぎんがの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 538,
+      "id": "g529",
+      "name": "ジャミィ",
+      "element": "すな",
+      "description": "すなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 539,
+      "id": "g530",
+      "name": "テミィ",
+      "element": "みどり",
+      "description": "みどりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 540,
+      "id": "g531",
+      "name": "ヌミィ",
+      "element": "ゆき",
+      "description": "ゆきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 541,
+      "id": "g532",
+      "name": "ベミィ",
+      "element": "にじ",
+      "description": "にじの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 542,
+      "id": "g533",
+      "name": "ロミィ",
+      "element": "うちゅう",
+      "description": "うちゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 543,
+      "id": "g534",
+      "name": "ワミィ",
+      "element": "ほし",
+      "description": "ほしの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 544,
+      "id": "g535",
+      "name": "キミィ",
+      "element": "つき",
+      "description": "つきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 545,
+      "id": "g536",
+      "name": "チミィ",
+      "element": "マグマ",
+      "description": "マグマの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 546,
+      "id": "g537",
+      "name": "ヘミィ",
+      "element": "みず",
+      "description": "みずの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 547,
+      "id": "g538",
+      "name": "ムミィ",
+      "element": "くさ",
+      "description": "くさの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 548,
+      "id": "g539",
+      "name": "ソミィ",
+      "element": "こおり",
+      "description": "こおりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 549,
+      "id": "g540",
+      "name": "ダミィ",
+      "element": "いわ",
+      "description": "いわの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 550,
+      "id": "g541",
+      "name": "ヒミィ",
+      "element": "でんき",
+      "description": "でんきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 551,
+      "id": "g542",
+      "name": "メミィ",
+      "element": "やみ",
+      "description": "やみの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 552,
+      "id": "g543",
+      "name": "ヨズー",
+      "element": "ほのお",
+      "description": "ほのおの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 553,
+      "id": "g544",
+      "name": "プズー",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 554,
+      "id": "g545",
+      "name": "ブズー",
+      "element": "はな",
+      "description": "はなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 555,
+      "id": "g546",
+      "name": "グズー",
+      "element": "ぎんが",
+      "description": "ぎんがの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 556,
+      "id": "g547",
+      "name": "ズズー",
+      "element": "すな",
+      "description": "すなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 557,
+      "id": "g548",
+      "name": "ネズー",
+      "element": "みどり",
+      "description": "みどりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 558,
+      "id": "g549",
+      "name": "ファズー",
+      "element": "ゆき",
+      "description": "ゆきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 559,
+      "id": "g550",
+      "name": "コズー",
+      "element": "にじ",
+      "description": "にじの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 560,
+      "id": "g551",
+      "name": "サズー",
+      "element": "うちゅう",
+      "description": "うちゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 561,
+      "id": "g552",
+      "name": "タズー",
+      "element": "つき",
+      "description": "つきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 562,
+      "id": "g553",
+      "name": "ナズー",
+      "element": "たいよう",
+      "description": "たいようの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 563,
+      "id": "g554",
+      "name": "ハズー",
+      "element": "マグマ",
+      "description": "マグマの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 564,
+      "id": "g555",
+      "name": "マズー",
+      "element": "みず",
+      "description": "みずの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 565,
+      "id": "g556",
+      "name": "ヤズー",
+      "element": "くさ",
+      "description": "くさの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 566,
+      "id": "g557",
+      "name": "ルズー",
+      "element": "こおり",
+      "description": "こおりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 567,
+      "id": "g558",
+      "name": "ギズー",
+      "element": "いわ",
+      "description": "いわの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 568,
+      "id": "g559",
+      "name": "ギミィ",
+      "element": "でんき",
+      "description": "でんきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 569,
+      "id": "g560",
+      "name": "ピズー",
+      "element": "ほのお",
+      "description": "ほのおの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 570,
+      "id": "g561",
+      "name": "ポズー",
+      "element": "そら",
+      "description": "そらの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 571,
+      "id": "g562",
+      "name": "モズー",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 572,
+      "id": "g563",
+      "name": "ニズー",
+      "element": "はな",
+      "description": "はなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 573,
+      "id": "g564",
+      "name": "クルズー",
+      "element": "ぎんが",
+      "description": "ぎんがの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 574,
+      "id": "g565",
+      "name": "ゾズー",
+      "element": "すな",
+      "description": "すなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 575,
+      "id": "g566",
+      "name": "ラズー",
+      "element": "みどり",
+      "description": "みどりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 576,
+      "id": "g567",
+      "name": "ビズー",
+      "element": "ゆき",
+      "description": "ゆきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 577,
+      "id": "g568",
+      "name": "ガズー",
+      "element": "うちゅう",
+      "description": "うちゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 578,
+      "id": "g569",
+      "name": "ジャズー",
+      "element": "ほし",
+      "description": "ほしの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 579,
+      "id": "g570",
+      "name": "テズー",
+      "element": "つき",
+      "description": "つきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 580,
+      "id": "g571",
+      "name": "ヌズー",
+      "element": "たいよう",
+      "description": "たいようの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 581,
+      "id": "g572",
+      "name": "ベズー",
+      "element": "マグマ",
+      "description": "マグマの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 582,
+      "id": "g573",
+      "name": "ロズー",
+      "element": "みず",
+      "description": "みずの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 583,
+      "id": "g574",
+      "name": "ワズー",
+      "element": "くさ",
+      "description": "くさの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 584,
+      "id": "g575",
+      "name": "キズー",
+      "element": "こおり",
+      "description": "こおりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 585,
+      "id": "g576",
+      "name": "チズー",
+      "element": "でんき",
+      "description": "でんきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 586,
+      "id": "g577",
+      "name": "ヘズー",
+      "element": "やみ",
+      "description": "やみの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 587,
+      "id": "g578",
+      "name": "ムズー",
+      "element": "ほのお",
+      "description": "ほのおの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 588,
+      "id": "g579",
+      "name": "ソズー",
+      "element": "そら",
+      "description": "そらの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 589,
+      "id": "g580",
+      "name": "ダズー",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 590,
+      "id": "g581",
+      "name": "ヒズー",
+      "element": "はな",
+      "description": "はなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 591,
+      "id": "g582",
+      "name": "メズー",
+      "element": "ぎんが",
+      "description": "ぎんがの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 592,
+      "id": "g583",
+      "name": "リズー",
+      "element": "すな",
+      "description": "すなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 593,
+      "id": "g584",
+      "name": "プバウ",
+      "element": "ゆき",
+      "description": "ゆきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 594,
+      "id": "g585",
+      "name": "ブバウ",
+      "element": "にじ",
+      "description": "にじの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 595,
+      "id": "g586",
+      "name": "グバウ",
+      "element": "うちゅう",
+      "description": "うちゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 596,
+      "id": "g587",
+      "name": "ズバウ",
+      "element": "ほし",
+      "description": "ほしの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 597,
+      "id": "g588",
+      "name": "ネバウ",
+      "element": "つき",
+      "description": "つきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 598,
+      "id": "g589",
+      "name": "ファバウ",
+      "element": "たいよう",
+      "description": "たいようの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 599,
+      "id": "g590",
+      "name": "コバウ",
+      "element": "マグマ",
+      "description": "マグマの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 600,
+      "id": "g591",
+      "name": "サバウ",
+      "element": "みず",
+      "description": "みずの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 601,
+      "id": "g592",
+      "name": "タバウ",
+      "element": "こおり",
+      "description": "こおりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 602,
+      "id": "g593",
+      "name": "ナバウ",
+      "element": "いわ",
+      "description": "いわの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 603,
+      "id": "g594",
+      "name": "ハバウ",
+      "element": "でんき",
+      "description": "でんきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 604,
+      "id": "g595",
+      "name": "マバウ",
+      "element": "やみ",
+      "description": "やみの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 605,
+      "id": "g596",
+      "name": "ヤバウ",
+      "element": "ほのお",
+      "description": "ほのおの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 606,
+      "id": "g597",
+      "name": "ルバウ",
+      "element": "そら",
+      "description": "そらの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 607,
+      "id": "g598",
+      "name": "ギバウ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 608,
+      "id": "g599",
+      "name": "ピバウ",
+      "element": "はな",
+      "description": "はなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 609,
+      "id": "g600",
+      "name": "ポゴロ",
+      "element": "すな",
+      "description": "すなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 610,
+      "id": "g601",
+      "name": "ポバウ",
+      "element": "みどり",
+      "description": "みどりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 611,
+      "id": "g602",
+      "name": "モバウ",
+      "element": "ゆき",
+      "description": "ゆきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 612,
+      "id": "g603",
+      "name": "ニバウ",
+      "element": "にじ",
+      "description": "にじの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 613,
+      "id": "g604",
+      "name": "クルバウ",
+      "element": "うちゅう",
+      "description": "うちゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 614,
+      "id": "g605",
+      "name": "ゾバウ",
+      "element": "ほし",
+      "description": "ほしの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 615,
+      "id": "g606",
+      "name": "ラバウ",
+      "element": "つき",
+      "description": "つきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 616,
+      "id": "g607",
+      "name": "ビバウ",
+      "element": "たいよう",
+      "description": "たいようの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 617,
+      "id": "g608",
+      "name": "ガバウ",
+      "element": "みず",
+      "description": "みずの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 618,
+      "id": "g609",
+      "name": "ジャバウ",
+      "element": "くさ",
+      "description": "くさの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 619,
+      "id": "g610",
+      "name": "テバウ",
+      "element": "こおり",
+      "description": "こおりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 620,
+      "id": "g611",
+      "name": "ヌバウ",
+      "element": "いわ",
+      "description": "いわの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 621,
+      "id": "g612",
+      "name": "ベバウ",
+      "element": "でんき",
+      "description": "でんきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 622,
+      "id": "g613",
+      "name": "ロバウ",
+      "element": "やみ",
+      "description": "やみの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 623,
+      "id": "g614",
+      "name": "ワバウ",
+      "element": "ほのお",
+      "description": "ほのおの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 624,
+      "id": "g615",
+      "name": "キバウ",
+      "element": "そら",
+      "description": "そらの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 625,
+      "id": "g616",
+      "name": "チバウ",
+      "element": "はな",
+      "description": "はなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 626,
+      "id": "g617",
+      "name": "ヘバウ",
+      "element": "ぎんが",
+      "description": "ぎんがの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 627,
+      "id": "g618",
+      "name": "ムバウ",
+      "element": "すな",
+      "description": "すなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 628,
+      "id": "g619",
+      "name": "ソバウ",
+      "element": "みどり",
+      "description": "みどりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 629,
+      "id": "g620",
+      "name": "ダバウ",
+      "element": "ゆき",
+      "description": "ゆきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 630,
+      "id": "g621",
+      "name": "ヒバウ",
+      "element": "にじ",
+      "description": "にじの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 631,
+      "id": "g622",
+      "name": "メバウ",
+      "element": "うちゅう",
+      "description": "うちゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 632,
+      "id": "g623",
+      "name": "リバウ",
+      "element": "ほし",
+      "description": "ほしの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 633,
+      "id": "g624",
+      "name": "ヨバウ",
+      "element": "たいよう",
+      "description": "たいようの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 634,
+      "id": "g625",
+      "name": "ブゴロ",
+      "element": "マグマ",
+      "description": "マグマの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 635,
+      "id": "g626",
+      "name": "グゴロ",
+      "element": "みず",
+      "description": "みずの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 636,
+      "id": "g627",
+      "name": "ズゴロ",
+      "element": "くさ",
+      "description": "くさの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 637,
+      "id": "g628",
+      "name": "ネゴロ",
+      "element": "こおり",
+      "description": "こおりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 638,
+      "id": "g629",
+      "name": "ファゴロ",
+      "element": "いわ",
+      "description": "いわの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 639,
+      "id": "g630",
+      "name": "コゴロ",
+      "element": "でんき",
+      "description": "でんきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 640,
+      "id": "g631",
+      "name": "サゴロ",
+      "element": "やみ",
+      "description": "やみの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 641,
+      "id": "g632",
+      "name": "タゴロ",
+      "element": "そら",
+      "description": "そらの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 642,
+      "id": "g633",
+      "name": "ナゴロ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 643,
+      "id": "g634",
+      "name": "ハゴロ",
+      "element": "はな",
+      "description": "はなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 644,
+      "id": "g635",
+      "name": "マゴロ",
+      "element": "ぎんが",
+      "description": "ぎんがの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 645,
+      "id": "g636",
+      "name": "ヤゴロ",
+      "element": "すな",
+      "description": "すなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 646,
+      "id": "g637",
+      "name": "ルゴロ",
+      "element": "みどり",
+      "description": "みどりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 647,
+      "id": "g638",
+      "name": "ギゴロ",
+      "element": "ゆき",
+      "description": "ゆきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 648,
+      "id": "g639",
+      "name": "ピゴロ",
+      "element": "にじ",
+      "description": "にじの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 649,
+      "id": "g640",
+      "name": "ポクス",
+      "element": "ほし",
+      "description": "ほしの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 650,
+      "id": "g641",
+      "name": "モクス",
+      "element": "つき",
+      "description": "つきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 651,
+      "id": "g642",
+      "name": "モゴロ",
+      "element": "たいよう",
+      "description": "たいようの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 652,
+      "id": "g643",
+      "name": "ニゴロ",
+      "element": "マグマ",
+      "description": "マグマの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 653,
+      "id": "g644",
+      "name": "クルゴロ",
+      "element": "みず",
+      "description": "みずの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 654,
+      "id": "g645",
+      "name": "ゾゴロ",
+      "element": "くさ",
+      "description": "くさの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 655,
+      "id": "g646",
+      "name": "ラゴロ",
+      "element": "こおり",
+      "description": "こおりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 656,
+      "id": "g647",
+      "name": "ビゴロ",
+      "element": "いわ",
+      "description": "いわの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 657,
+      "id": "g648",
+      "name": "ガゴロ",
+      "element": "やみ",
+      "description": "やみの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 658,
+      "id": "g649",
+      "name": "ジャゴロ",
+      "element": "ほのお",
+      "description": "ほのおの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 659,
+      "id": "g650",
+      "name": "テゴロ",
+      "element": "そら",
+      "description": "そらの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 660,
+      "id": "g651",
+      "name": "ヌゴロ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 661,
+      "id": "g652",
+      "name": "ベゴロ",
+      "element": "はな",
+      "description": "はなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 662,
+      "id": "g653",
+      "name": "ロゴロ",
+      "element": "ぎんが",
+      "description": "ぎんがの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 663,
+      "id": "g654",
+      "name": "ワゴロ",
+      "element": "すな",
+      "description": "すなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 664,
+      "id": "g655",
+      "name": "キゴロ",
+      "element": "みどり",
+      "description": "みどりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 665,
+      "id": "g656",
+      "name": "チゴロ",
+      "element": "にじ",
+      "description": "にじの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 666,
+      "id": "g657",
+      "name": "ヘゴロ",
+      "element": "うちゅう",
+      "description": "うちゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 667,
+      "id": "g658",
+      "name": "ムゴロ",
+      "element": "ほし",
+      "description": "ほしの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 668,
+      "id": "g659",
+      "name": "ソゴロ",
+      "element": "つき",
+      "description": "つきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 669,
+      "id": "g660",
+      "name": "ダゴロ",
+      "element": "たいよう",
+      "description": "たいようの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 670,
+      "id": "g661",
+      "name": "ヒゴロ",
+      "element": "マグマ",
+      "description": "マグマの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 671,
+      "id": "g662",
+      "name": "メゴロ",
+      "element": "みず",
+      "description": "みずの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 672,
+      "id": "g663",
+      "name": "リゴロ",
+      "element": "くさ",
+      "description": "くさの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 673,
+      "id": "g664",
+      "name": "ヨゴロ",
+      "element": "いわ",
+      "description": "いわの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 674,
+      "id": "g665",
+      "name": "プゴロ",
+      "element": "でんき",
+      "description": "でんきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 675,
+      "id": "g666",
+      "name": "グクス",
+      "element": "やみ",
+      "description": "やみの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 676,
+      "id": "g667",
+      "name": "ズクス",
+      "element": "ほのお",
+      "description": "ほのおの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 677,
+      "id": "g668",
+      "name": "ネクス",
+      "element": "そら",
+      "description": "そらの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 678,
+      "id": "g669",
+      "name": "ファクス",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 679,
+      "id": "g670",
+      "name": "コクス",
+      "element": "はな",
+      "description": "はなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 680,
+      "id": "g671",
+      "name": "サクス",
+      "element": "ぎんが",
+      "description": "ぎんがの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 681,
+      "id": "g672",
+      "name": "タクス",
+      "element": "みどり",
+      "description": "みどりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 682,
+      "id": "g673",
+      "name": "ナクス",
+      "element": "ゆき",
+      "description": "ゆきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 683,
+      "id": "g674",
+      "name": "ハクス",
+      "element": "にじ",
+      "description": "にじの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 684,
+      "id": "g675",
+      "name": "マクス",
+      "element": "うちゅう",
+      "description": "うちゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 685,
+      "id": "g676",
+      "name": "ヤクス",
+      "element": "ほし",
+      "description": "ほしの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 686,
+      "id": "g677",
+      "name": "ルクス",
+      "element": "つき",
+      "description": "つきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 687,
+      "id": "g678",
+      "name": "ギクス",
+      "element": "たいよう",
+      "description": "たいようの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 688,
+      "id": "g679",
+      "name": "ピクス",
+      "element": "マグマ",
+      "description": "マグマの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 689,
+      "id": "g680",
+      "name": "ポノン",
+      "element": "くさ",
+      "description": "くさの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 690,
+      "id": "g681",
+      "name": "モノン",
+      "element": "こおり",
+      "description": "こおりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 691,
+      "id": "g682",
+      "name": "ニノン",
+      "element": "いわ",
+      "description": "いわの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 692,
+      "id": "g683",
+      "name": "ニクス",
+      "element": "でんき",
+      "description": "でんきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 693,
+      "id": "g684",
+      "name": "クルクス",
+      "element": "やみ",
+      "description": "やみの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 694,
+      "id": "g685",
+      "name": "ゾクス",
+      "element": "ほのお",
+      "description": "ほのおの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 695,
+      "id": "g686",
+      "name": "ラクス",
+      "element": "そら",
+      "description": "そらの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 696,
+      "id": "g687",
+      "name": "ビクス",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 697,
+      "id": "g688",
+      "name": "ガクス",
+      "element": "ぎんが",
+      "description": "ぎんがの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 698,
+      "id": "g689",
+      "name": "ジャクス",
+      "element": "すな",
+      "description": "すなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 699,
+      "id": "g690",
+      "name": "テクス",
+      "element": "みどり",
+      "description": "みどりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 700,
+      "id": "g691",
+      "name": "ヌクス",
+      "element": "ゆき",
+      "description": "ゆきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 701,
+      "id": "g692",
+      "name": "ベクス",
+      "element": "にじ",
+      "description": "にじの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 702,
+      "id": "g693",
+      "name": "ロクス",
+      "element": "うちゅう",
+      "description": "うちゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 703,
+      "id": "g694",
+      "name": "ワクス",
+      "element": "ほし",
+      "description": "ほしの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 704,
+      "id": "g695",
+      "name": "キクス",
+      "element": "つき",
+      "description": "つきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 705,
+      "id": "g696",
+      "name": "チクス",
+      "element": "マグマ",
+      "description": "マグマの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 706,
+      "id": "g697",
+      "name": "ヘクス",
+      "element": "みず",
+      "description": "みずの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 707,
+      "id": "g698",
+      "name": "ムクス",
+      "element": "くさ",
+      "description": "くさの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 708,
+      "id": "g699",
+      "name": "ソクス",
+      "element": "こおり",
+      "description": "こおりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 709,
+      "id": "g700",
+      "name": "ダクス",
+      "element": "いわ",
+      "description": "いわの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 710,
+      "id": "g701",
+      "name": "ヒクス",
+      "element": "でんき",
+      "description": "でんきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 711,
+      "id": "g702",
+      "name": "メクス",
+      "element": "やみ",
+      "description": "やみの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 712,
+      "id": "g703",
+      "name": "リクス",
+      "element": "ほのお",
+      "description": "ほのおの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 713,
+      "id": "g704",
+      "name": "ヨクス",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 714,
+      "id": "g705",
+      "name": "プクス",
+      "element": "はな",
+      "description": "はなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 715,
+      "id": "g706",
+      "name": "ブクス",
+      "element": "ぎんが",
+      "description": "ぎんがの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 716,
+      "id": "g707",
+      "name": "ズノン",
+      "element": "すな",
+      "description": "すなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 717,
+      "id": "g708",
+      "name": "ネノン",
+      "element": "みどり",
+      "description": "みどりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 718,
+      "id": "g709",
+      "name": "ファノン",
+      "element": "ゆき",
+      "description": "ゆきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 719,
+      "id": "g710",
+      "name": "コノン",
+      "element": "にじ",
+      "description": "にじの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 720,
+      "id": "g711",
+      "name": "サノン",
+      "element": "うちゅう",
+      "description": "うちゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 721,
+      "id": "g712",
+      "name": "タノン",
+      "element": "つき",
+      "description": "つきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 722,
+      "id": "g713",
+      "name": "ナノン",
+      "element": "たいよう",
+      "description": "たいようの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 723,
+      "id": "g714",
+      "name": "ハノン",
+      "element": "マグマ",
+      "description": "マグマの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 724,
+      "id": "g715",
+      "name": "マノン",
+      "element": "みず",
+      "description": "みずの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 725,
+      "id": "g716",
+      "name": "ヤノン",
+      "element": "くさ",
+      "description": "くさの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 726,
+      "id": "g717",
+      "name": "ルノン",
+      "element": "こおり",
+      "description": "こおりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 727,
+      "id": "g718",
+      "name": "ギノン",
+      "element": "いわ",
+      "description": "いわの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 728,
+      "id": "g719",
+      "name": "ピノン",
+      "element": "でんき",
+      "description": "でんきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 729,
+      "id": "g720",
+      "name": "ポピコ",
+      "element": "ほのお",
+      "description": "ほのおの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 730,
+      "id": "g721",
+      "name": "モピコ",
+      "element": "そら",
+      "description": "そらの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 731,
+      "id": "g722",
+      "name": "ニピコ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 732,
+      "id": "g723",
+      "name": "クルピコ",
+      "element": "はな",
+      "description": "はなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 733,
+      "id": "g724",
+      "name": "クルノン",
+      "element": "ぎんが",
+      "description": "ぎんがの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 734,
+      "id": "g725",
+      "name": "ゾノン",
+      "element": "すな",
+      "description": "すなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 735,
+      "id": "g726",
+      "name": "ラノン",
+      "element": "みどり",
+      "description": "みどりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 736,
+      "id": "g727",
+      "name": "ビノン",
+      "element": "ゆき",
+      "description": "ゆきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 737,
+      "id": "g728",
+      "name": "ガノン",
+      "element": "うちゅう",
+      "description": "うちゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 738,
+      "id": "g729",
+      "name": "ジャノン",
+      "element": "ほし",
+      "description": "ほしの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 739,
+      "id": "g730",
+      "name": "テノン",
+      "element": "つき",
+      "description": "つきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 740,
+      "id": "g731",
+      "name": "ヌノン",
+      "element": "たいよう",
+      "description": "たいようの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 741,
+      "id": "g732",
+      "name": "ベノン",
+      "element": "マグマ",
+      "description": "マグマの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 742,
+      "id": "g733",
+      "name": "ロノン",
+      "element": "みず",
+      "description": "みずの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 743,
+      "id": "g734",
+      "name": "ワノン",
+      "element": "くさ",
+      "description": "くさの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 744,
+      "id": "g735",
+      "name": "キノン",
+      "element": "こおり",
+      "description": "こおりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 745,
+      "id": "g736",
+      "name": "チノン",
+      "element": "でんき",
+      "description": "でんきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 746,
+      "id": "g737",
+      "name": "ヘノン",
+      "element": "やみ",
+      "description": "やみの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 747,
+      "id": "g738",
+      "name": "ムノン",
+      "element": "ほのお",
+      "description": "ほのおの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 748,
+      "id": "g739",
+      "name": "ソノン",
+      "element": "そら",
+      "description": "そらの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 749,
+      "id": "g740",
+      "name": "ダノン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 750,
+      "id": "g741",
+      "name": "ヒノン",
+      "element": "はな",
+      "description": "はなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 751,
+      "id": "g742",
+      "name": "メノン",
+      "element": "ぎんが",
+      "description": "ぎんがの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 752,
+      "id": "g743",
+      "name": "リノン",
+      "element": "すな",
+      "description": "すなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 753,
+      "id": "g744",
+      "name": "ヨノン",
+      "element": "ゆき",
+      "description": "ゆきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 754,
+      "id": "g745",
+      "name": "プノン",
+      "element": "にじ",
+      "description": "にじの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 755,
+      "id": "g746",
+      "name": "ブノン",
+      "element": "うちゅう",
+      "description": "うちゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 756,
+      "id": "g747",
+      "name": "グノン",
+      "element": "ほし",
+      "description": "ほしの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 757,
+      "id": "g748",
+      "name": "ネピコ",
+      "element": "つき",
+      "description": "つきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 758,
+      "id": "g749",
+      "name": "ファピコ",
+      "element": "たいよう",
+      "description": "たいようの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 759,
+      "id": "g750",
+      "name": "コピコ",
+      "element": "マグマ",
+      "description": "マグマの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 760,
+      "id": "g751",
+      "name": "サピコ",
+      "element": "みず",
+      "description": "みずの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 761,
+      "id": "g752",
+      "name": "タピコ",
+      "element": "こおり",
+      "description": "こおりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 762,
+      "id": "g753",
+      "name": "ナピコ",
+      "element": "いわ",
+      "description": "いわの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 763,
+      "id": "g754",
+      "name": "ハピコ",
+      "element": "でんき",
+      "description": "でんきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 764,
+      "id": "g755",
+      "name": "マピコ",
+      "element": "やみ",
+      "description": "やみの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 765,
+      "id": "g756",
+      "name": "ヤピコ",
+      "element": "ほのお",
+      "description": "ほのおの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 766,
+      "id": "g757",
+      "name": "ルピコ",
+      "element": "そら",
+      "description": "そらの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 767,
+      "id": "g758",
+      "name": "ギピコ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 768,
+      "id": "g759",
+      "name": "ピピコ",
+      "element": "はな",
+      "description": "はなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 769,
+      "id": "g760",
+      "name": "ポルル",
+      "element": "すな",
+      "description": "すなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 770,
+      "id": "g761",
+      "name": "モルル",
+      "element": "みどり",
+      "description": "みどりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 771,
+      "id": "g762",
+      "name": "ニルル",
+      "element": "ゆき",
+      "description": "ゆきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 772,
+      "id": "g763",
+      "name": "クルルル",
+      "element": "にじ",
+      "description": "にじの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 773,
+      "id": "g764",
+      "name": "ゾルル",
+      "element": "うちゅう",
+      "description": "うちゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 774,
+      "id": "g765",
+      "name": "ゾピコ",
+      "element": "ほし",
+      "description": "ほしの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 775,
+      "id": "g766",
+      "name": "ラピコ",
+      "element": "つき",
+      "description": "つきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 776,
+      "id": "g767",
+      "name": "ビピコ",
+      "element": "たいよう",
+      "description": "たいようの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 777,
+      "id": "g768",
+      "name": "ガピコ",
+      "element": "みず",
+      "description": "みずの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 778,
+      "id": "g769",
+      "name": "ジャピコ",
+      "element": "くさ",
+      "description": "くさの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 779,
+      "id": "g770",
+      "name": "テピコ",
+      "element": "こおり",
+      "description": "こおりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 780,
+      "id": "g771",
+      "name": "ヌピコ",
+      "element": "いわ",
+      "description": "いわの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 781,
+      "id": "g772",
+      "name": "ベピコ",
+      "element": "でんき",
+      "description": "でんきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 782,
+      "id": "g773",
+      "name": "ロピコ",
+      "element": "やみ",
+      "description": "やみの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 783,
+      "id": "g774",
+      "name": "ワピコ",
+      "element": "ほのお",
+      "description": "ほのおの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 784,
+      "id": "g775",
+      "name": "キピコ",
+      "element": "そら",
+      "description": "そらの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 785,
+      "id": "g776",
+      "name": "チピコ",
+      "element": "はな",
+      "description": "はなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 786,
+      "id": "g777",
+      "name": "ヘピコ",
+      "element": "ぎんが",
+      "description": "ぎんがの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 787,
+      "id": "g778",
+      "name": "ムピコ",
+      "element": "すな",
+      "description": "すなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 788,
+      "id": "g779",
+      "name": "ソピコ",
+      "element": "みどり",
+      "description": "みどりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 789,
+      "id": "g780",
+      "name": "ダピコ",
+      "element": "ゆき",
+      "description": "ゆきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 790,
+      "id": "g781",
+      "name": "ヒピコ",
+      "element": "にじ",
+      "description": "にじの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 791,
+      "id": "g782",
+      "name": "メピコ",
+      "element": "うちゅう",
+      "description": "うちゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 792,
+      "id": "g783",
+      "name": "リピコ",
+      "element": "ほし",
+      "description": "ほしの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 793,
+      "id": "g784",
+      "name": "ヨピコ",
+      "element": "たいよう",
+      "description": "たいようの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 794,
+      "id": "g785",
+      "name": "プピコ",
+      "element": "マグマ",
+      "description": "マグマの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 795,
+      "id": "g786",
+      "name": "ブピコ",
+      "element": "みず",
+      "description": "みずの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 796,
+      "id": "g787",
+      "name": "グピコ",
+      "element": "くさ",
+      "description": "くさの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 797,
+      "id": "g788",
+      "name": "ズピコ",
+      "element": "こおり",
+      "description": "こおりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 798,
+      "id": "g789",
+      "name": "ファルル",
+      "element": "いわ",
+      "description": "いわの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 799,
+      "id": "g790",
+      "name": "コルル",
+      "element": "でんき",
+      "description": "でんきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 800,
+      "id": "g791",
+      "name": "サルル",
+      "element": "やみ",
+      "description": "やみの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 801,
+      "id": "g792",
+      "name": "タルル",
+      "element": "そら",
+      "description": "そらの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 802,
+      "id": "g793",
+      "name": "ナルル",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 803,
+      "id": "g794",
+      "name": "ハルル",
+      "element": "はな",
+      "description": "はなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 804,
+      "id": "g795",
+      "name": "マルル",
+      "element": "ぎんが",
+      "description": "ぎんがの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 805,
+      "id": "g796",
+      "name": "ヤルル",
+      "element": "すな",
+      "description": "すなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 806,
+      "id": "g797",
+      "name": "ルルル",
+      "element": "みどり",
+      "description": "みどりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 807,
+      "id": "g798",
+      "name": "ギルル",
+      "element": "ゆき",
+      "description": "ゆきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 808,
+      "id": "g799",
+      "name": "ピルル",
+      "element": "にじ",
+      "description": "にじの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 809,
+      "id": "g800",
+      "name": "ポボン",
+      "element": "ほし",
+      "description": "ほしの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 810,
+      "id": "g801",
+      "name": "モボン",
+      "element": "つき",
+      "description": "つきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 811,
+      "id": "g802",
+      "name": "ニボン",
+      "element": "たいよう",
+      "description": "たいようの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 812,
+      "id": "g803",
+      "name": "クルボン",
+      "element": "マグマ",
+      "description": "マグマの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 813,
+      "id": "g804",
+      "name": "ゾボン",
+      "element": "みず",
+      "description": "みずの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 814,
+      "id": "g805",
+      "name": "ラボン",
+      "element": "くさ",
+      "description": "くさの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 815,
+      "id": "g806",
+      "name": "ラルル",
+      "element": "こおり",
+      "description": "こおりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 816,
+      "id": "g807",
+      "name": "ビルル",
+      "element": "いわ",
+      "description": "いわの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 817,
+      "id": "g808",
+      "name": "ガルル",
+      "element": "やみ",
+      "description": "やみの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 818,
+      "id": "g809",
+      "name": "ジャルル",
+      "element": "ほのお",
+      "description": "ほのおの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 819,
+      "id": "g810",
+      "name": "テルル",
+      "element": "そら",
+      "description": "そらの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 820,
+      "id": "g811",
+      "name": "ヌルル",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 821,
+      "id": "g812",
+      "name": "ベルル",
+      "element": "はな",
+      "description": "はなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 822,
+      "id": "g813",
+      "name": "ロルル",
+      "element": "ぎんが",
+      "description": "ぎんがの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 823,
+      "id": "g814",
+      "name": "ワルル",
+      "element": "すな",
+      "description": "すなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 824,
+      "id": "g815",
+      "name": "キルル",
+      "element": "みどり",
+      "description": "みどりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 825,
+      "id": "g816",
+      "name": "チルル",
+      "element": "にじ",
+      "description": "にじの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 826,
+      "id": "g817",
+      "name": "ヘルル",
+      "element": "うちゅう",
+      "description": "うちゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 827,
+      "id": "g818",
+      "name": "ムルル",
+      "element": "ほし",
+      "description": "ほしの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 828,
+      "id": "g819",
+      "name": "ソルル",
+      "element": "つき",
+      "description": "つきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 829,
+      "id": "g820",
+      "name": "ダルル",
+      "element": "たいよう",
+      "description": "たいようの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 830,
+      "id": "g821",
+      "name": "ヒルル",
+      "element": "マグマ",
+      "description": "マグマの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 831,
+      "id": "g822",
+      "name": "メルル",
+      "element": "みず",
+      "description": "みずの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 832,
+      "id": "g823",
+      "name": "リルル",
+      "element": "くさ",
+      "description": "くさの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 833,
+      "id": "g824",
+      "name": "ヨルル",
+      "element": "いわ",
+      "description": "いわの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 834,
+      "id": "g825",
+      "name": "プルル",
+      "element": "でんき",
+      "description": "でんきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 835,
+      "id": "g826",
+      "name": "ブルル",
+      "element": "やみ",
+      "description": "やみの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 836,
+      "id": "g827",
+      "name": "グルル",
+      "element": "ほのお",
+      "description": "ほのおの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 837,
+      "id": "g828",
+      "name": "ズルル",
+      "element": "そら",
+      "description": "そらの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 838,
+      "id": "g829",
+      "name": "ネルル",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 839,
+      "id": "g830",
+      "name": "コボン",
+      "element": "はな",
+      "description": "はなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 840,
+      "id": "g831",
+      "name": "サボン",
+      "element": "ぎんが",
+      "description": "ぎんがの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 841,
+      "id": "g832",
+      "name": "タボン",
+      "element": "みどり",
+      "description": "みどりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 842,
+      "id": "g833",
+      "name": "ナボン",
+      "element": "ゆき",
+      "description": "ゆきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 843,
+      "id": "g834",
+      "name": "ハボン",
+      "element": "にじ",
+      "description": "にじの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 844,
+      "id": "g835",
+      "name": "マボン",
+      "element": "うちゅう",
+      "description": "うちゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 845,
+      "id": "g836",
+      "name": "ヤボン",
+      "element": "ほし",
+      "description": "ほしの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 846,
+      "id": "g837",
+      "name": "ルボン",
+      "element": "つき",
+      "description": "つきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 847,
+      "id": "g838",
+      "name": "ギボン",
+      "element": "たいよう",
+      "description": "たいようの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 848,
+      "id": "g839",
+      "name": "ピボン",
+      "element": "マグマ",
+      "description": "マグマの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 849,
+      "id": "g840",
+      "name": "ポキング",
+      "element": "くさ",
+      "description": "くさの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 850,
+      "id": "g841",
+      "name": "モキング",
+      "element": "こおり",
+      "description": "こおりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 851,
+      "id": "g842",
+      "name": "ニキング",
+      "element": "いわ",
+      "description": "いわの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 852,
+      "id": "g843",
+      "name": "クルキング",
+      "element": "でんき",
+      "description": "でんきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 853,
+      "id": "g844",
+      "name": "ゾキング",
+      "element": "やみ",
+      "description": "やみの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 854,
+      "id": "g845",
+      "name": "ラキング",
+      "element": "ほのお",
+      "description": "ほのおの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 855,
+      "id": "g846",
+      "name": "ビキング",
+      "element": "そら",
+      "description": "そらの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 856,
+      "id": "g847",
+      "name": "ビボン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 857,
+      "id": "g848",
+      "name": "ガボン",
+      "element": "ぎんが",
+      "description": "ぎんがの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 858,
+      "id": "g849",
+      "name": "ジャボン",
+      "element": "すな",
+      "description": "すなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 859,
+      "id": "g850",
+      "name": "テボン",
+      "element": "みどり",
+      "description": "みどりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 860,
+      "id": "g851",
+      "name": "ヌボン",
+      "element": "ゆき",
+      "description": "ゆきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 861,
+      "id": "g852",
+      "name": "ベボン",
+      "element": "にじ",
+      "description": "にじの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 862,
+      "id": "g853",
+      "name": "ロボン",
+      "element": "うちゅう",
+      "description": "うちゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 863,
+      "id": "g854",
+      "name": "ワボン",
+      "element": "ほし",
+      "description": "ほしの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 864,
+      "id": "g855",
+      "name": "キボン",
+      "element": "つき",
+      "description": "つきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 865,
+      "id": "g856",
+      "name": "チボン",
+      "element": "マグマ",
+      "description": "マグマの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 866,
+      "id": "g857",
+      "name": "ヘボン",
+      "element": "みず",
+      "description": "みずの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 867,
+      "id": "g858",
+      "name": "ムボン",
+      "element": "くさ",
+      "description": "くさの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 868,
+      "id": "g859",
+      "name": "ソボン",
+      "element": "こおり",
+      "description": "こおりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 869,
+      "id": "g860",
+      "name": "ダボン",
+      "element": "いわ",
+      "description": "いわの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 870,
+      "id": "g861",
+      "name": "ヒボン",
+      "element": "でんき",
+      "description": "でんきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 871,
+      "id": "g862",
+      "name": "メボン",
+      "element": "やみ",
+      "description": "やみの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 872,
+      "id": "g863",
+      "name": "リボン",
+      "element": "ほのお",
+      "description": "ほのおの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 873,
+      "id": "g864",
+      "name": "ヨボン",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 874,
+      "id": "g865",
+      "name": "プボン",
+      "element": "はな",
+      "description": "はなの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 875,
+      "id": "g866",
+      "name": "ブボン",
+      "element": "ぎんが",
+      "description": "ぎんがの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 876,
+      "id": "g867",
+      "name": "グボン",
+      "element": "すな",
+      "description": "すなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 877,
+      "id": "g868",
+      "name": "ズボン",
+      "element": "みどり",
+      "description": "みどりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 878,
+      "id": "g869",
+      "name": "ネボン",
+      "element": "ゆき",
+      "description": "ゆきの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 879,
+      "id": "g870",
+      "name": "ファボン",
+      "element": "にじ",
+      "description": "にじの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 880,
+      "id": "g871",
+      "name": "サキング",
+      "element": "うちゅう",
+      "description": "うちゅうの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 881,
+      "id": "g872",
+      "name": "タキング",
+      "element": "つき",
+      "description": "つきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 882,
+      "id": "g873",
+      "name": "ナキング",
+      "element": "たいよう",
+      "description": "たいようの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 883,
+      "id": "g874",
+      "name": "ハキング",
+      "element": "マグマ",
+      "description": "マグマの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 884,
+      "id": "g875",
+      "name": "マキング",
+      "element": "みず",
+      "description": "みずの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 885,
+      "id": "g876",
+      "name": "ヤキング",
+      "element": "くさ",
+      "description": "くさの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 886,
+      "id": "g877",
+      "name": "ルキング",
+      "element": "こおり",
+      "description": "こおりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 887,
+      "id": "g878",
+      "name": "ギキング",
+      "element": "いわ",
+      "description": "いわの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 888,
+      "id": "g879",
+      "name": "ピキング",
+      "element": "でんき",
+      "description": "でんきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 889,
+      "id": "g880",
+      "name": "ポスター",
+      "element": "ほのお",
+      "description": "ほのおの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 890,
+      "id": "g881",
+      "name": "モスター",
+      "element": "そら",
+      "description": "そらの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 891,
+      "id": "g882",
+      "name": "ニスター",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 892,
+      "id": "g883",
+      "name": "クルスター",
+      "element": "はな",
+      "description": "はなの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 893,
+      "id": "g884",
+      "name": "ゾスター",
+      "element": "ぎんが",
+      "description": "ぎんがの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 894,
+      "id": "g885",
+      "name": "ラスター",
+      "element": "すな",
+      "description": "すなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 895,
+      "id": "g886",
+      "name": "ビスター",
+      "element": "みどり",
+      "description": "みどりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 896,
+      "id": "g887",
+      "name": "ガスター",
+      "element": "ゆき",
+      "description": "ゆきの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 897,
+      "id": "g888",
+      "name": "ガキング",
+      "element": "うちゅう",
+      "description": "うちゅうの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 898,
+      "id": "g889",
+      "name": "ジャキング",
+      "element": "ほし",
+      "description": "ほしの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 899,
+      "id": "g890",
+      "name": "テキング",
+      "element": "つき",
+      "description": "つきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 900,
+      "id": "g891",
+      "name": "ヌキング",
+      "element": "たいよう",
+      "description": "たいようの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 901,
+      "id": "g892",
+      "name": "ベキング",
+      "element": "マグマ",
+      "description": "マグマの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 902,
+      "id": "g893",
+      "name": "ロキング",
+      "element": "みず",
+      "description": "みずの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 903,
+      "id": "g894",
+      "name": "ワキング",
+      "element": "くさ",
+      "description": "くさの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 904,
+      "id": "g895",
+      "name": "キキング",
+      "element": "こおり",
+      "description": "こおりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 905,
+      "id": "g896",
+      "name": "チキング",
+      "element": "でんき",
+      "description": "でんきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 906,
+      "id": "g897",
+      "name": "ヘキング",
+      "element": "やみ",
+      "description": "やみの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 907,
+      "id": "g898",
+      "name": "ムキング",
+      "element": "ほのお",
+      "description": "ほのおの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 908,
+      "id": "g899",
+      "name": "ソキング",
+      "element": "そら",
+      "description": "そらの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 909,
+      "id": "g900",
+      "name": "ダキング",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 910,
+      "id": "g901",
+      "name": "ヒキング",
+      "element": "はな",
+      "description": "はなの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 911,
+      "id": "g902",
+      "name": "メキング",
+      "element": "ぎんが",
+      "description": "ぎんがの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 912,
+      "id": "g903",
+      "name": "リキング",
+      "element": "すな",
+      "description": "すなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 913,
+      "id": "g904",
+      "name": "ヨキング",
+      "element": "ゆき",
+      "description": "ゆきの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 914,
+      "id": "g905",
+      "name": "プキング",
+      "element": "にじ",
+      "description": "にじの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 915,
+      "id": "g906",
+      "name": "ブキング",
+      "element": "うちゅう",
+      "description": "うちゅうの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 916,
+      "id": "g907",
+      "name": "グキング",
+      "element": "ほし",
+      "description": "ほしの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 917,
+      "id": "g908",
+      "name": "ズキング",
+      "element": "つき",
+      "description": "つきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 918,
+      "id": "g909",
+      "name": "ネキング",
+      "element": "たいよう",
+      "description": "たいようの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 919,
+      "id": "g910",
+      "name": "ファキング",
+      "element": "マグマ",
+      "description": "マグマの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 920,
+      "id": "g911",
+      "name": "コキング",
+      "element": "みず",
+      "description": "みずの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 921,
+      "id": "g912",
+      "name": "タスター",
+      "element": "こおり",
+      "description": "こおりの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 922,
+      "id": "g913",
+      "name": "ナスター",
+      "element": "いわ",
+      "description": "いわの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 923,
+      "id": "g914",
+      "name": "ハスター",
+      "element": "でんき",
+      "description": "でんきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 924,
+      "id": "g915",
+      "name": "マスター",
+      "element": "やみ",
+      "description": "やみの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 925,
+      "id": "g916",
+      "name": "ヤスター",
+      "element": "ほのお",
+      "description": "ほのおの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 926,
+      "id": "g917",
+      "name": "ルスター",
+      "element": "そら",
+      "description": "そらの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 927,
+      "id": "g918",
+      "name": "ギスター",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 928,
+      "id": "g919",
+      "name": "ピスター",
+      "element": "はな",
+      "description": "はなの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 929,
+      "id": "g920",
+      "name": "ポニョロ",
+      "element": "すな",
+      "description": "すなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 930,
+      "id": "g921",
+      "name": "モニョロ",
+      "element": "みどり",
+      "description": "みどりの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 931,
+      "id": "g922",
+      "name": "ニニョロ",
+      "element": "ゆき",
+      "description": "ゆきの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 932,
+      "id": "g923",
+      "name": "クルニョロ",
+      "element": "にじ",
+      "description": "にじの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 933,
+      "id": "g924",
+      "name": "ゾニョロ",
+      "element": "うちゅう",
+      "description": "うちゅうの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 934,
+      "id": "g925",
+      "name": "ラニョロ",
+      "element": "ほし",
+      "description": "ほしの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 935,
+      "id": "g926",
+      "name": "ビニョロ",
+      "element": "つき",
+      "description": "つきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 936,
+      "id": "g927",
+      "name": "ガニョロ",
+      "element": "たいよう",
+      "description": "たいようの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 937,
+      "id": "g928",
+      "name": "ジャニョロ",
+      "element": "みず",
+      "description": "みずの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 938,
+      "id": "g929",
+      "name": "ジャスター",
+      "element": "くさ",
+      "description": "くさの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 939,
+      "id": "g930",
+      "name": "テスター",
+      "element": "こおり",
+      "description": "こおりの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 940,
+      "id": "g931",
+      "name": "ヌスター",
+      "element": "いわ",
+      "description": "いわの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 941,
+      "id": "g932",
+      "name": "ベスター",
+      "element": "でんき",
+      "description": "でんきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 942,
+      "id": "g933",
+      "name": "ロスター",
+      "element": "やみ",
+      "description": "やみの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 943,
+      "id": "g934",
+      "name": "ワスター",
+      "element": "ほのお",
+      "description": "ほのおの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 944,
+      "id": "g935",
+      "name": "キスター",
+      "element": "そら",
+      "description": "そらの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 945,
+      "id": "g936",
+      "name": "チスター",
+      "element": "はな",
+      "description": "はなの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 946,
+      "id": "g937",
+      "name": "ヘスター",
+      "element": "ぎんが",
+      "description": "ぎんがの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 947,
+      "id": "g938",
+      "name": "ムスター",
+      "element": "すな",
+      "description": "すなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 948,
+      "id": "g939",
+      "name": "ソスター",
+      "element": "みどり",
+      "description": "みどりの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 949,
+      "id": "g940",
+      "name": "ダスター",
+      "element": "ゆき",
+      "description": "ゆきの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 950,
+      "id": "g941",
+      "name": "ヒスター",
+      "element": "にじ",
+      "description": "にじの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 951,
+      "id": "g942",
+      "name": "メスター",
+      "element": "うちゅう",
+      "description": "うちゅうの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 952,
+      "id": "g943",
+      "name": "リスター",
+      "element": "ほし",
+      "description": "ほしの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 953,
+      "id": "g944",
+      "name": "ヨスター",
+      "element": "たいよう",
+      "description": "たいようの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 954,
+      "id": "g945",
+      "name": "プスター",
+      "element": "マグマ",
+      "description": "マグマの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 955,
+      "id": "g946",
+      "name": "ブスター",
+      "element": "みず",
+      "description": "みずの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 956,
+      "id": "g947",
+      "name": "グスター",
+      "element": "くさ",
+      "description": "くさの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 957,
+      "id": "g948",
+      "name": "ズスター",
+      "element": "こおり",
+      "description": "こおりの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 958,
+      "id": "g949",
+      "name": "ネスター",
+      "element": "いわ",
+      "description": "いわの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 959,
+      "id": "g950",
+      "name": "ファスター",
+      "element": "でんき",
+      "description": "でんきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 960,
+      "id": "g951",
+      "name": "コスター",
+      "element": "やみ",
+      "description": "やみの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 961,
+      "id": "g952",
+      "name": "サスター",
+      "element": "そら",
+      "description": "そらの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 962,
+      "id": "g953",
+      "name": "ナニョロ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 963,
+      "id": "g954",
+      "name": "ハニョロ",
+      "element": "はな",
+      "description": "はなの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 964,
+      "id": "g955",
+      "name": "マニョロ",
+      "element": "ぎんが",
+      "description": "ぎんがの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 965,
+      "id": "g956",
+      "name": "ヤニョロ",
+      "element": "すな",
+      "description": "すなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 966,
+      "id": "g957",
+      "name": "ルニョロ",
+      "element": "みどり",
+      "description": "みどりの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 967,
+      "id": "g958",
+      "name": "ギニョロ",
+      "element": "ゆき",
+      "description": "ゆきの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 968,
+      "id": "g959",
+      "name": "ピニョロ",
+      "element": "にじ",
+      "description": "にじの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 969,
+      "id": "g960",
+      "name": "ポムム",
+      "element": "ほし",
+      "description": "ほしの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 970,
+      "id": "g961",
+      "name": "モムム",
+      "element": "つき",
+      "description": "つきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 971,
+      "id": "g962",
+      "name": "ニムム",
+      "element": "たいよう",
+      "description": "たいようの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 972,
+      "id": "g963",
+      "name": "クルムム",
+      "element": "マグマ",
+      "description": "マグマの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 973,
+      "id": "g964",
+      "name": "ゾムム",
+      "element": "みず",
+      "description": "みずの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 974,
+      "id": "g965",
+      "name": "ラムム",
+      "element": "くさ",
+      "description": "くさの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 975,
+      "id": "g966",
+      "name": "ビムム",
+      "element": "こおり",
+      "description": "こおりの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 976,
+      "id": "g967",
+      "name": "ガムム",
+      "element": "いわ",
+      "description": "いわの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 977,
+      "id": "g968",
+      "name": "ジャムム",
+      "element": "やみ",
+      "description": "やみの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 978,
+      "id": "g969",
+      "name": "テムム",
+      "element": "ほのお",
+      "description": "ほのおの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 979,
+      "id": "g970",
+      "name": "テニョロ",
+      "element": "そら",
+      "description": "そらの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 980,
+      "id": "g971",
+      "name": "ヌニョロ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 981,
+      "id": "g972",
+      "name": "ベニョロ",
+      "element": "はな",
+      "description": "はなの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 982,
+      "id": "g973",
+      "name": "ロニョロ",
+      "element": "ぎんが",
+      "description": "ぎんがの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 983,
+      "id": "g974",
+      "name": "ワニョロ",
+      "element": "すな",
+      "description": "すなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 984,
+      "id": "g975",
+      "name": "キニョロ",
+      "element": "みどり",
+      "description": "みどりの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 985,
+      "id": "g976",
+      "name": "チニョロ",
+      "element": "にじ",
+      "description": "にじの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 986,
+      "id": "g977",
+      "name": "ヘニョロ",
+      "element": "うちゅう",
+      "description": "うちゅうの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 987,
+      "id": "g978",
+      "name": "ムニョロ",
+      "element": "ほし",
+      "description": "ほしの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 988,
+      "id": "g979",
+      "name": "ソニョロ",
+      "element": "つき",
+      "description": "つきの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 989,
+      "id": "g980",
+      "name": "ダニョロ",
+      "element": "たいよう",
+      "description": "たいようの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 990,
+      "id": "g981",
+      "name": "ヒニョロ",
+      "element": "マグマ",
+      "description": "マグマの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 991,
+      "id": "g982",
+      "name": "メニョロ",
+      "element": "みず",
+      "description": "みずの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 992,
+      "id": "g983",
+      "name": "リニョロ",
+      "element": "くさ",
+      "description": "くさの とろりと のびちぢみする モンスター。"
+    },
+    {
+      "dexNo": 993,
+      "id": "g984",
+      "name": "ヨニョロ",
+      "element": "いわ",
+      "description": "いわの ぷにぷにの からだを もつ モンスター。"
+    },
+    {
+      "dexNo": 994,
+      "id": "g985",
+      "name": "プニョロ",
+      "element": "でんき",
+      "description": "でんきの こだいから いきる きょうりゅうモンスター。"
+    },
+    {
+      "dexNo": 995,
+      "id": "g986",
+      "name": "ブニョロ",
+      "element": "やみ",
+      "description": "やみの ほしの ひかりを あつめる モンスター。"
+    },
+    {
+      "dexNo": 996,
+      "id": "g987",
+      "name": "グニョロ",
+      "element": "ほのお",
+      "description": "ほのおの がんじょうな からだの モンスター。"
+    },
+    {
+      "dexNo": 997,
+      "id": "g988",
+      "name": "ズニョロ",
+      "element": "そら",
+      "description": "そらの ふわふわ うかぶ ふしぎな モンスター。"
+    },
+    {
+      "dexNo": 998,
+      "id": "g989",
+      "name": "ネニョロ",
+      "element": "きょうりゅう",
+      "description": "きょうりゅうの そらを とぶのが だいすきな モンスター。"
+    },
+    {
+      "dexNo": 999,
+      "id": "g990",
+      "name": "ファニョロ",
+      "element": "はな",
+      "description": "はなの すばしっこい むしの モンスター。"
+    },
+    {
+      "dexNo": 1000,
+      "id": "g991",
+      "name": "コニョロ",
+      "element": "ぎんが",
+      "description": "ぎんがの とろりと のびちぢみする モンスター。"
+    }
+  ]
+}

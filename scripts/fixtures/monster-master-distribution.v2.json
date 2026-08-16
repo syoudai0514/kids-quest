@@ -1,0 +1,50 @@
+{
+  "families": {
+    "total": 475,
+    "expansion": {
+      "three": 200,
+      "two": 125,
+      "standalone": 100
+    }
+  },
+  "roles": {
+    "attacker": 169,
+    "balanced": 166,
+    "control": 166,
+    "guard": 167,
+    "healer": 165,
+    "support": 167
+  },
+  "rarities": {
+    "common": 816,
+    "epic": 67,
+    "legend": 36,
+    "rare": 81
+  },
+  "battleTypes": {
+    "hi": 200,
+    "hoshi": 250,
+    "kusa": 301,
+    "mizu": 249
+  },
+  "bossTiers": {
+    "grand": 5,
+    "none": 964,
+    "planet": 27,
+    "special": 4
+  },
+  "targets": {
+    "awakening": 60,
+    "giga": 24,
+    "boss": 36,
+    "signatureHolders": 120
+  },
+  "moves": {
+    "shared": 48,
+    "signature": 120,
+    "boss": 36,
+    "total": 204
+  },
+  "chunks": [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+  "designPilot": 50
+}
