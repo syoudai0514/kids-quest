@@ -25,7 +25,7 @@ import { advanceEnglishProgress, emptyEnglishProgress, englishDueEntries } from 
 import { recordUnitResult, promotionResult, unitLedger, unitReady } from '../engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../engine/englishMigration.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../engine/progressMigration.js'
-import { grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../engine/battleTickets.js'
+import { basicBattlePlaysLeft, dailyBattleUnlocked, grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../engine/battleTickets.js'
 import { freshDailyMission, lowerGradeProgress } from '../engine/gradeReset.js'
 import { activeReviewSrs, activeStatsDomainId } from '../engine/reviewMode.js'
 import {
@@ -35,6 +35,7 @@ import {
   grantBattleResult,
   grantLearningAnswerXp,
   grantLearningTaskXp,
+  movePartyCompanion,
   normalizeMonsterProgress,
   setActiveCompanion,
   togglePartyCompanion,
@@ -300,9 +301,15 @@ function normalizeProfileSaved(saved) {
       battleTutorialsSeen: base.rewardProgress.battleTutorialsSeen || 0
     }
   }
+  const normalizedDaily = { ...freshDailyMission(base.daily?.date || todayKey(), base.grade || 0), ...(base.daily || {}) }
   base = {
     ...base,
-    daily: { ...freshDailyMission(base.daily?.date || todayKey(), base.grade || 0), ...(base.daily || {}) },
+    // coreDone がなかった古い当日セーブも、すでに最後まで終えていれば
+    // 今日の基本3戦を失わないように補完する。
+    daily: {
+      ...normalizedDaily,
+      coreDone: normalizedDaily.coreDone === true || normalizedDaily.coreIndex >= normalizedDaily.coreTasks.length
+    },
     battle: { ...freshBattle(base.battle?.date || todayKey()), ...(base.battle || {}), dailyLimit: BATTLE_DAILY_LIMIT }
   }
   base = { ...base, battle: normalizeBattleTickets(base.battle, todayKey()) }
@@ -607,19 +614,12 @@ function reduceProfile(state, action) {
       if (kind === 'core') {
         const coreIndex = state.daily.coreIndex + 1
         daily = { ...daily, coreIndex, coreDone: coreIndex >= state.daily.coreTasks.length }
-        // 1日3戦は自由。2教科・5教科を終えると追加戦を1回ずつ解放する。
-        // 「正解数」ではなく教科を最後までやった行動に対して渡すので、連打の近道にならない。
-        if ([2, state.daily.coreTasks.length].includes(coreIndex) && !(daily.battleUnlocks || []).includes(coreIndex)) {
-          battle = grantBattleTicket(battle, todayKey())
-          daily = {
-            ...daily,
-            ticketsEarnedToday: daily.ticketsEarnedToday + 1,
-            battleUnlocks: [...(daily.battleUnlocks || []), coreIndex]
-          }
-          celebration.ticket = true
-          celebration.ticketMessage = coreIndex === 2
-            ? '2つの きょうかを がんばったから、ついかバトルが あそべるよ！'
-            : 'きょうの きょうかを ぜんぶ がんばったから、ついかバトルが あそべるよ！'
+        // きょうのノルマを全部終えたら、はじめて基本3戦を解放する。
+        // コア途中でチケットを渡すと、追加問題を経由してゲームだけを
+        // 先に遊べてしまうため、チケットは「ノルマ後の追加問題」専用にする。
+        if (daily.coreDone && !dailyBattleUnlocked(state.daily)) {
+          daily = { ...daily, battleUnlocks: [...(daily.battleUnlocks || []), coreIndex] }
+          celebration.battleUnlocked = true
         }
       } else if (kind === 'okawari') {
         daily = { ...daily, okawariIndex: state.daily.okawariIndex + 1 }
@@ -630,7 +630,9 @@ function reduceProfile(state, action) {
         // 能力ではなく行動だけを調整するため、苦手でも安心して取り組める。
         daily = { ...daily, extraIndex: state.daily.extraIndex + 1 }
         const acc = typeof action.accuracy === 'number' ? action.accuracy : 0
-        if (action.suspicious) {
+        if (!dailyBattleUnlocked(state.daily)) {
+          celebration.ticketReason = 'まずは きょうの ミッションを クリアしよう！ クリアしたら ついかもんだいで チケットが もらえるよ'
+        } else if (action.suspicious) {
           const lost = Math.min(1, battle.tickets)
           battle = lost ? spendBattleTicket(battle, todayKey()) : battle
           celebration.ticketPenalty = lost > 0 ? lost : 0
@@ -694,7 +696,8 @@ function reduceProfile(state, action) {
 
     case 'CONSUME_BATTLE_PLAY': {
       const b = state.battle
-      if (b.playsUsed < b.dailyLimit) {
+      if (!dailyBattleUnlocked(state.daily)) return state
+      if (basicBattlePlaysLeft(b, state.daily) > 0) {
         return {
           ...state,
           battle: { ...b, playsUsed: b.playsUsed + 1 },
@@ -763,6 +766,9 @@ function reduceProfile(state, action) {
 
     case 'TOGGLE_PARTY_COMPANION':
       return togglePartyCompanion(state, action.companionId)
+
+    case 'MOVE_PARTY_COMPANION':
+      return movePartyCompanion(state, action.companionId, action.direction)
 
     case 'EVOLVE_COMPANION':
       return evolveCompanion(state, action.companionId)
