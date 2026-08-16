@@ -1,0 +1,63 @@
+name: 保留作業・改善
+description: 今後対応する機能、改善、技術的負債、判断待ちを記録します
+title: "[Follow-up] "
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: 種別
+      options:
+        - 機能追加
+        - 改善
+        - 技術的負債
+        - 調査
+        - ユーザー判断待ち
+        - 外部条件待ち
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - P1 - 次の作業で優先
+        - P2 - 近いうちに対応
+        - P3 - バックログ
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 目的・問題
+      description: 誰の何を改善するのか、放置すると何が起きるのか。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 発見した根拠
+      description: 関連コード、実測、会話上の決定、既知の制約など。
+    validations:
+      required: true
+  - type: textarea
+    id: deferred
+    attributes:
+      label: 今回対応しない理由
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 推奨する対応
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完了条件
+    validations:
+      required: true
+  - type: input
+    id: related
+    attributes:
+      label: 関連Issue・PR・コミット
