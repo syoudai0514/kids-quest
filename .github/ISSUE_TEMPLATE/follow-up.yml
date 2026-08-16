@@ -25,6 +25,50 @@ body:
         - P3 - バックログ
     validations:
       required: true
+  - type: dropdown
+    id: ai_platform
+    attributes:
+      label: 推奨AI基盤
+      options:
+        - 自動選定
+        - Codex
+        - Claude Code
+        - Codex実装 + Claude Codeレビュー
+        - Claude Code実装 + Codexレビュー
+    validations:
+      required: true
+  - type: dropdown
+    id: ai_model
+    attributes:
+      label: 推奨モデル
+      options:
+        - 自動選定
+        - Sol
+        - Terra
+        - Luna
+        - Opus
+        - Sonnet
+        - opusplan
+    validations:
+      required: true
+  - type: dropdown
+    id: ai_risk
+    attributes:
+      label: 作業リスク
+      options:
+        - Low - 限定的・容易に戻せる
+        - Medium - 通常実装
+        - High - 保存・依存・公開・重要判定
+        - Critical - データ損失・認証・課金・セキュリティ
+    validations:
+      required: true
+  - type: textarea
+    id: ai_reason
+    attributes:
+      label: AI・モデルの選定理由と切替条件
+      description: なぜ適するか、失敗・上限・利用不可時に何へ切り替えるか。
+    validations:
+      required: true
   - type: textarea
     id: purpose
     attributes:
