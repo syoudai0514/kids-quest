@@ -75,3 +75,16 @@ g045が変態した横長の高速飛行虫。3房冠を3枚の風切りフィ�
 - g042: 初回は余白不足。再編集で縮小したがalphaが市松模様として焼き込まれたため、採用造形を保持して背景連結領域を機械除去した
 - g049: 初回は四足だったため不採用。「2本の後脚」「前腕は地面につかない」を明記して再生成し採用
 - そのほか: 生成結果の市松背景をalphaと誤認しないよう全件を機械検査し、背景除去後に白/暗背景で再確認した
+
+## 採用画像の変換
+
+画像生成結果を直接`public/`へ置かない。Codexが造形を採用した後、次の同一工程でsource/full/thumbを作る。
+
+```bash
+python -m pip install -r scripts/requirements-monster-art.txt
+python scripts/process-generated-monster-art.py INPUT.png g042
+python scripts/process-generated-monster-art.py INPUT.png g052 --form awakening
+node scripts/verify-monster-art.mjs
+```
+
+変換は、既存alphaを保持する。alphaがない場合だけ、画像端へ連結する明るい無彩色領域を背景として除去する。小さなノイズを除き、12%余白へ正規化し、容量上限までWebP品質を段階調整する。変換後は必ず白/暗背景で目視し、髪・翼・煙・半透明部の欠けやhaloがあれば採用しない。
