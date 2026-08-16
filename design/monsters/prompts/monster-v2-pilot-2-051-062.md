@@ -84,7 +84,10 @@ g045が変態した横長の高速飛行虫。3房冠を3枚の風切りフィ�
 python -m pip install -r scripts/requirements-monster-art.txt
 python scripts/process-generated-monster-art.py INPUT.png g042
 python scripts/process-generated-monster-art.py INPUT.png g052 --form awakening
-node scripts/verify-monster-art.mjs
+npm run test:monster-art-converter
+npm run test:monster-art
 ```
 
-変換は、既存alphaを保持する。alphaがない場合だけ、画像端へ連結する明るい無彩色領域を背景として除去する。小さなノイズを除き、12%余白へ正規化し、容量上限までWebP品質を段階調整する。変換後は必ず白/暗背景で目視し、髪・翼・煙・半透明部の欠けやhaloがあれば採用しない。
+Python依存は再現性のため完全固定する。変換は、既存alphaを保持する。alphaがない場合だけ、画像端へ連結する明るい無彩色領域を背景として除去する。小さなノイズを除き、12%余白へ正規化し、容量上限までWebP品質を段階調整する。変換後は必ず白/暗背景で目視し、髪・翼・煙・半透明部の欠けやhaloがあれば採用しない。
+
+コンタクトシートは`node scripts/generate-monster-art-contact-sheets.mjs --write`で同じ順序・背景・ラベルから再生成する。CIは`--check`で承認済みシートとの完全一致を確認する。画像を再承認した場合のみ、再生成後にID別SHA fixtureもレビュー結果へ合わせて更新する。

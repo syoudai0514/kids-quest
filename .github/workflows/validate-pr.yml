@@ -27,8 +27,19 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/requirements-monster-art.txt
+
+      - name: Install dependencies and verify image tools
+        run: |
+          npm ci
+          python -m pip install -r scripts/requirements-monster-art.txt
+          convert -version
+          montage -version
 
       - name: Check identity policy, data, tests, and build
         env:
