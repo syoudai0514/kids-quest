@@ -16,10 +16,12 @@
     "test:tts-patch": "node scripts/verify-piper-speaker-feed.mjs",
     "test:tts-full": "node scripts/verify-piper-dictionary-synthesis.mjs",
     "test:monster-master": "node scripts/verify-monster-master.mjs && node scripts/test-monster-master-mutations.mjs",
+    "test:monster-art": "node scripts/verify-monster-art.mjs && node scripts/generate-monster-art-contact-sheets.mjs --check && node scripts/test-monster-art-mutations.mjs",
+    "test:monster-art-converter": "python scripts/test-monster-art-converter.py",
     "test:monster-identity-gate": "node scripts/verify-monster-identity-base.mjs",
     "test:content": "node scripts/verify-content.mjs",
     "test:english": "node scripts/verify-english.mjs",
-    "check": "npm run test:monster-identity-gate && npm run test:monster-master && npm run test:content && npm run test:english && npm run test:learning-integrity && npm run test:tts-cache && npm run build"
+    "check": "npm run test:monster-identity-gate && npm run test:monster-master && npm run test:monster-art && npm run test:monster-art-converter && npm run test:content && npm run test:english && npm run test:learning-integrity && npm run test:tts-cache && npm run build"
   },
   "dependencies": {
     "onnxruntime-web": "^1.24.3",
