@@ -15,9 +15,9 @@ import { sfx } from '../engine/sfx.js'
 
 export default function CelebrationOverlay({ celebration, onClose }) {
   const { dispatch } = useGame()
-  const { planet, monster, ticket, partnerStageUp, gradeUp, ticketReason, ticketPenalty, ticketMessage } = celebration
+  const { planet, monster, ticket, battleUnlocked, partnerStageUp, gradeUp, ticketReason, ticketPenalty, ticketMessage } = celebration
   const hasBig =
-    planet || monster || ticket || partnerStageUp || gradeUp != null || !!ticketReason
+    planet || monster || ticket || battleUnlocked || partnerStageUp || gradeUp != null || !!ticketReason
   const newMonster = monster ? MONSTER_BY_ID[monster] : null
   const newGrade = gradeUp != null ? gradeOf(gradeUp) : null
 
@@ -27,9 +27,10 @@ export default function CelebrationOverlay({ celebration, onClose }) {
     if (monster) return 'あたらしい なかま！'
     if (planet) return 'あたらしい ほしに とうちゃく！'
     if (partnerStageUp) return 'あいぼうが おおきく なった！'
+    if (battleUnlocked) return '⚔️ きょうのバトル 解放！'
     if (ticket) return 'バトルチケット ゲット！'
     return ''
-  }, [newGrade, monster, planet, partnerStageUp, ticket])
+  }, [battleUnlocked, newGrade, monster, planet, partnerStageUp, ticket, ticketPenalty, ticketReason])
 
   useEffect(() => {
     if (!hasBig) {
@@ -45,6 +46,7 @@ export default function CelebrationOverlay({ celebration, onClose }) {
     if (planet) lines.push(`${planet.name}に とうちゃく！ ${planet.story}`)
     if (newMonster) lines.push(`${newMonster.name}が なかまに なったよ！`)
     if (partnerStageUp) lines.push('あいぼうが せいちょうしたよ！')
+    if (battleUnlocked) lines.push('きょうの ミッション クリア！ バトルが 3かい あそべるように なったよ！')
     if (ticket && !planet && !monster && !newGrade)
       lines.push(ticketMessage || 'バトルチケットを ゲット！ いきぬきバトルが あそべるよ')
     if (ticketReason) lines.push(ticketReason)
@@ -114,6 +116,10 @@ export default function CelebrationOverlay({ celebration, onClose }) {
               </div>
             )}
           </>
+        )}
+
+        {battleUnlocked && !planet && !newMonster && !newGrade && !ticket && (
+          <div style={{ fontSize: 'clamp(60px,14vw,120px)' }}>⚔️</div>
         )}
 
         {/* チケットが もらえなかった／へった とき（不正な連打への やさしい注意） */}
