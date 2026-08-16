@@ -30,7 +30,8 @@
 //   優先する。
 // ============================================================
 
-import { generateHardPuzzleQuestion, HARD_PUZZLE_LABELS } from './suuji-puzzle-hard.js'
+import { generateHardPuzzleQuestion, HARD_PUZZLE_KINDS, HARD_PUZZLE_LABELS } from './suuji-puzzle-hard.js'
+import { generateHardAdvanceQuestion, HARD_ADVANCE_KINDS, HARD_ADVANCE_LABELS } from './suuji-advance-hard.js'
 
 function rng(min, max) {
   return Math.floor(min + Math.random() * (max - min + 1))
@@ -917,10 +918,19 @@ export const HARD_NUMBERS_KINDS_BY_GRADE = {
 export function generateHardNumbersQuestion(params, reviewKey = null) {
   const grade = params.grade || 4
   // 小1〜3は特殊算の前提知識（比・割合など）がまだ無いため、中学受験
-  // レベルの特殊算ではなく、ひらめきで解くパズル（suuji-puzzle-hard.js）
-  // を出す。itemKeyの名前空間（hard:n:xxx）とkind名はどちらも重ならない
-  // ため、この時点で振り分けても指定復習（reviewKey）の取り違えは起きない。
-  if (grade <= 3) return generateHardPuzzleQuestion(params, reviewKey)
+  // レベルの特殊算ではなく、(a)ひらめきで解くパズル（suuji-puzzle-hard.js）
+  // と (b)1つ先の学年の考え方を先取りする問題（suuji-advance-hard.js）を
+  // 半々くらいの割合で混ぜて出す。itemKeyの名前空間（hard:n:xxx）とkind名は
+  // 3ファイルとも重ならないため、reviewKeyのkind名から正しいモジュールへ
+  // 振り分ければ、指定復習の取り違えは起きない。
+  if (grade <= 3) {
+    if (reviewKey && reviewKey.startsWith('hard:n:')) {
+      const kind = reviewKey.slice(7).split('#')[0]
+      if (HARD_ADVANCE_KINDS.includes(kind)) return generateHardAdvanceQuestion(params, reviewKey)
+      if (HARD_PUZZLE_KINDS.includes(kind)) return generateHardPuzzleQuestion(params, reviewKey)
+    }
+    return Math.random() < 0.5 ? generateHardAdvanceQuestion(params) : generateHardPuzzleQuestion(params)
+  }
   if (reviewKey && reviewKey.startsWith('hard:n:')) {
     const kind = reviewKey.slice(7).split('#')[0]
     if (HARD_BUILDERS[kind]) return HARD_BUILDERS[kind]()
@@ -944,7 +954,8 @@ export const HARD_NUMBERS_LABELS = {
   jrSeisuuTsukuru: 'カードで整数を作る', jrSoutotal: '総当たり戦の試合数',
   jrTsuuka: '通過算', jrSurechigai: '通過算（すれちがい）',
   jrRyuusuiKudari: '流水算（下り）', jrRyuusuiJousui: '流水算（静水時の速さ）', jrTokei: '時計算',
-  // 小1〜3のパズル（suuji-puzzle-hard.js）も、ReviewScreenの
-  // 'skill:hard:math:' 分岐がそのまま拾えるよう、ここに合流させる。
-  ...HARD_PUZZLE_LABELS
+  // 小1〜3のパズル・先取り（suuji-puzzle-hard.js/suuji-advance-hard.js）も、
+  // ReviewScreenの 'skill:hard:math:' 分岐がそのまま拾えるよう合流させる。
+  ...HARD_PUZZLE_LABELS,
+  ...HARD_ADVANCE_LABELS
 }

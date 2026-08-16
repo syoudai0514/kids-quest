@@ -15,6 +15,7 @@ import { generateWritingQuestion, WRITING_GROUPS_BY_GRADE } from '../src/data/co
 import { questionIds } from '../src/engine/reviewKey.js'
 import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_GRADE } from '../src/data/content/hard/numbers-hard.js'
 import { generateHardPuzzleQuestion, HARD_PUZZLE_KINDS } from '../src/data/content/hard/suuji-puzzle-hard.js'
+import { generateHardAdvanceQuestion, HARD_ADVANCE_KINDS, HARD_ADVANCE_KINDS_BY_GRADE } from '../src/data/content/hard/suuji-advance-hard.js'
 import { generateHardReadingQuestion, HARD_READING_FORMS } from '../src/data/content/hard/reading-hard.js'
 import { generateHardRikaQuestion, HARD_RIKA_QUESTIONS } from '../src/data/content/hard/rika-hard.js'
 import { generateHardShakaiQuestion, HARD_SHAKAI_QUESTIONS } from '../src/data/content/hard/shakai-hard.js'
@@ -539,12 +540,13 @@ for (const grade of [1, 2, 3]) {
     requireValue(reached.has(`hard:n:${kind}`), `hardさんすうパズル 小${grade}: 自由生成で一度も出ない (${kind})`)
   }
 }
-// numbers.js の mode==='hard' 分岐が、小1〜3でもパズルを返し、通常モードを汚さないこと
+// numbers.js の mode==='hard' 分岐が、小1〜3でもパズル/先取りを返し、通常モードを汚さないこと
 for (const grade of [1, 2, 3]) {
   for (let i = 0; i < 40; i++) {
     const hardQ = generateNumbersQuestion({ grade, mode: 'hard', level: 1, choiceCount: 4 })
     requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:n:'), `さんすう hardモード 小${grade}: hard内容が返らない`)
-    requireValue(HARD_PUZZLE_KINDS.includes(String(hardQ.itemKey).slice(7)), `さんすう hardモード 小${grade}: 特殊算(中学受験レベル)が混入した (${hardQ.itemKey})`)
+    const kind = String(hardQ.itemKey).slice(7)
+    requireValue(HARD_PUZZLE_KINDS.includes(kind) || HARD_ADVANCE_KINDS.includes(kind), `さんすう hardモード 小${grade}: 特殊算(中学受験レベル)が混入した (${hardQ.itemKey})`)
     const normalQ = generateNumbersQuestion({ grade, mode: 'normal', level: 3, choiceCount: 4 })
     requireValue(normalQ && !String(normalQ.itemKey).startsWith('hard:'), `さんすう normalモード 小${grade}: hard内容が混入`)
   }
@@ -601,6 +603,81 @@ for (const kind of ['jrNakamahazure', 'jrChieAsobi']) {
   if (total) {
     const rate = uniquelyLongest / total
     requireValue(rate <= 0.3, `さんすうパズル(hard) ${kind}: 正解が単独で最長になる割合が${Math.round(rate * 100)}%（上限30%）`)
+  }
+}
+
+// ---- 低学年むずかしいモード（小1〜3・さんすう先取りチャレンジ）----
+// パズル（上）とは別バンク。1つ先の学年で新しく出てくる考え方だけを対象にし、
+// itemKey/kind名は3ファイル（numbers-hard.js/suuji-puzzle-hard.js/
+// suuji-advance-hard.js）で重ならない。
+for (const grade of [1, 2, 3]) {
+  const expectedKinds = new Set(HARD_ADVANCE_KINDS_BY_GRADE[grade] || [])
+  const reached = new Set()
+  for (let i = 0; i < 300; i++) {
+    const q = generateHardAdvanceQuestion({ grade, choiceCount: 4 })
+    if (!q) continue
+    reached.add(q.itemKey)
+    requireValue(expectedKinds.has(String(q.itemKey).slice(7)), `hardさんすう先取り 小${grade}: 別学年のkindが出た (${q.itemKey})`)
+    requireValue(q.domain === 'suuji', `hardさんすう先取り 小${grade} ${q.itemKey}: domainが不正 (${q.domain})`)
+    requireValue(String(q.itemKey).startsWith('hard:n:'), `hardさんすう先取り 小${grade}: itemKeyが不正 (${q.itemKey})`)
+    requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hardさんすう先取り ${q.itemKey}: explainがない`)
+    requireValue((q.choices || []).length >= 2, `hardさんすう先取り ${q.itemKey}: 選択肢が足りない`)
+    requireValue((q.choices || []).some((c) => c.id === q.answerId), `hardさんすう先取り ${q.itemKey}: 正解が選択肢にない`)
+    requireValue(new Set((q.choices || []).map((c) => c.id)).size === (q.choices || []).length, `hardさんすう先取り ${q.itemKey}: 選択肢が重複`)
+    const unitId = unitIdFor(q, grade)
+    requireValue(String(unitId).startsWith('hard:'), `hardさんすう先取り ${q.itemKey}: unitIdが通常名前空間に漏れている (${unitId})`)
+  }
+  for (const kind of expectedKinds) {
+    requireValue(reached.has(`hard:n:${kind}`), `hardさんすう先取り 小${grade}: 自由生成で一度も出ない (${kind})`)
+  }
+}
+// 指定復習（reviewKey）でkindを渡したときに、同じkindへ戻ること。
+for (const kind of HARD_ADVANCE_KINDS) {
+  const key = `hard:n:${kind}`
+  const grade = Object.entries(HARD_ADVANCE_KINDS_BY_GRADE).find(([, kinds]) => kinds.includes(kind))[0]
+  const q = generateHardAdvanceQuestion({ grade: Number(grade), choiceCount: 4 }, key)
+  requireValue(q?.itemKey === key, `hardさんすう先取り: 指定復習が別のkindへ化けた (${kind})`)
+}
+// numbers-hard.jsのgrade<=3分岐が、パズル・先取りどちらのreviewKeyも
+// 正しいモジュールへ振り分けること（取り違えるとwrongReviewItemで
+// 毎回「じゅんび中」になり、その項目が二度と復習できなくなる）。
+for (const [grade, kinds] of Object.entries(HARD_ADVANCE_KINDS_BY_GRADE)) {
+  for (const kind of kinds) {
+    const key = `hard:n:${kind}`
+    const q = generateHardNumbersQuestion({ grade: Number(grade), choiceCount: 4 }, key)
+    requireValue(q?.itemKey === key, `さんすう hard小${grade}: 先取りの指定復習(${kind})が別内容へ化けた`)
+  }
+}
+for (let i = 0; i < 200; i++) {
+  const grade = [1, 2, 3][Math.floor(Math.random() * 3)]
+  const q = generateHardNumbersQuestion({ grade, mode: 'hard', choiceCount: 4 })
+  requireValue(q && String(q.itemKey).startsWith('hard:n:'), `さんすう hardモード 小${grade}: 低学年で内容が返らない`)
+  const kind = String(q.itemKey).slice(7)
+  requireValue(HARD_ADVANCE_KINDS.includes(kind) || HARD_PUZZLE_KINDS.includes(kind), `さんすう hardモード 小${grade}: 未知のkindが出た (${kind})`)
+}
+// 計算問題（3けたのたし算・3けた×1けたのかけ算・小数のたし算・わり算の先取り）は、
+// visual.textの式を実際に計算して答えと一致することを確認する
+// （解説文だけでなく、出題そのものの計算ミスを検出する）。
+{
+  const EXPR = /([\d.]+)\s*([＋×])\s*([\d.]+)\s*＝/
+  for (const kind of ['jr3DigitAddPreview', 'jrMul3x1Preview', 'jrDecimalAddPreview']) {
+    for (let i = 0; i < 100; i++) {
+      const q = generateHardAdvanceQuestion({ grade: 3, choiceCount: 4 }, `hard:n:${kind}`)
+      const match = q.visual.text.match(EXPR)
+      requireValue(match, `hardさんすう先取り ${kind}: 式の形式が想定と違う (${q.visual.text})`)
+      if (!match) continue
+      const [, a, op, b] = match
+      const expected = op === '＋' ? Number(a) + Number(b) : Number(a) * Number(b)
+      const actual = Number(q.answerId)
+      requireValue(Math.abs(expected - actual) < 1e-9, `hardさんすう先取り ${kind}: 計算が合わない (${a}${op}${b}＝${q.answerId}、正しくは${expected})`)
+    }
+  }
+  for (let i = 0; i < 100; i++) {
+    const q = generateHardAdvanceQuestion({ grade: 2, choiceCount: 4 }, 'hard:n:jrWarizanPreview')
+    const m = q.visual.text.match(/(\d+)こを (\d+)人で/)
+    requireValue(m, `hardさんすう先取り jrWarizanPreview: 文の形式が想定と違う (${q.visual.text})`)
+    if (!m) continue
+    requireValue(Number(m[1]) === Number(q.answerId) * Number(m[2]), `hardさんすう先取り jrWarizanPreview: わり算が合わない (${m[1]}÷${m[2]}＝${q.answerId})`)
   }
 }
 
