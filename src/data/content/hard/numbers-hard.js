@@ -30,6 +30,8 @@
 //   優先する。
 // ============================================================
 
+import { generateHardPuzzleQuestion, HARD_PUZZLE_LABELS } from './suuji-puzzle-hard.js'
+
 function rng(min, max) {
   return Math.floor(min + Math.random() * (max - min + 1))
 }
@@ -914,6 +916,11 @@ export const HARD_NUMBERS_KINDS_BY_GRADE = {
 
 export function generateHardNumbersQuestion(params, reviewKey = null) {
   const grade = params.grade || 4
+  // 小1〜3は特殊算の前提知識（比・割合など）がまだ無いため、中学受験
+  // レベルの特殊算ではなく、ひらめきで解くパズル（suuji-puzzle-hard.js）
+  // を出す。itemKeyの名前空間（hard:n:xxx）とkind名はどちらも重ならない
+  // ため、この時点で振り分けても指定復習（reviewKey）の取り違えは起きない。
+  if (grade <= 3) return generateHardPuzzleQuestion(params, reviewKey)
   if (reviewKey && reviewKey.startsWith('hard:n:')) {
     const kind = reviewKey.slice(7).split('#')[0]
     if (HARD_BUILDERS[kind]) return HARD_BUILDERS[kind]()
@@ -936,5 +943,8 @@ export const HARD_NUMBERS_LABELS = {
   jrJunretsu: '順列（並べ方）', jrKumiawase: '組合せ（選び方）', jrMichijun: '道順',
   jrSeisuuTsukuru: 'カードで整数を作る', jrSoutotal: '総当たり戦の試合数',
   jrTsuuka: '通過算', jrSurechigai: '通過算（すれちがい）',
-  jrRyuusuiKudari: '流水算（下り）', jrRyuusuiJousui: '流水算（静水時の速さ）', jrTokei: '時計算'
+  jrRyuusuiKudari: '流水算（下り）', jrRyuusuiJousui: '流水算（静水時の速さ）', jrTokei: '時計算',
+  // 小1〜3のパズル（suuji-puzzle-hard.js）も、ReviewScreenの
+  // 'skill:hard:math:' 分岐がそのまま拾えるよう、ここに合流させる。
+  ...HARD_PUZZLE_LABELS
 }

@@ -2,11 +2,15 @@
 // 教材の無い教科をここに入れると、統計だけ 'hard:xxx' 側へ切り替わって
 // 通常の習熟度（skillOf）が空の状態から始まってしまうため、
 // 実際にhardコンテンツを持つ教科だけを明示的に列挙する。
-const DOMAINS_WITH_HARD_CONTENT = new Set(['suuji', 'yomu', 'rika', 'shakai', 'english'])
+// さんすうだけ小1〜3向けのパズルバンク（suuji-puzzle-hard.js）を持つため
+// 最低学年が低い。他の教科はまだ小4〜6の発展内容のみ。
+const HARD_CONTENT_MIN_GRADE = { suuji: 1, yomu: 4, rika: 4, shakai: 4, english: 4 }
+const DOMAINS_WITH_HARD_CONTENT = new Set(Object.keys(HARD_CONTENT_MIN_GRADE))
 
 // ふつう／むずかしいで分離した学習台帳のうち、いま表示・出題する側を選ぶ。
 export function activeStatsDomainId(state, domainId, grade = state.grade) {
-  return state.settings?.mode === 'hard' && DOMAINS_WITH_HARD_CONTENT.has(domainId) && grade >= 4
+  const minGrade = HARD_CONTENT_MIN_GRADE[domainId] ?? 4
+  return state.settings?.mode === 'hard' && DOMAINS_WITH_HARD_CONTENT.has(domainId) && grade >= minGrade
     ? `hard:${domainId}`
     : domainId
 }

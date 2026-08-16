@@ -14,6 +14,7 @@ import { hasStrokeData } from '../src/data/strokeOrder.js'
 import { generateWritingQuestion, WRITING_GROUPS_BY_GRADE } from '../src/data/content/writing.js'
 import { questionIds } from '../src/engine/reviewKey.js'
 import { generateHardNumbersQuestion, HARD_NUMBERS_KINDS, HARD_NUMBERS_KINDS_BY_GRADE } from '../src/data/content/hard/numbers-hard.js'
+import { generateHardPuzzleQuestion, HARD_PUZZLE_KINDS } from '../src/data/content/hard/suuji-puzzle-hard.js'
 import { generateHardReadingQuestion, HARD_READING_FORMS } from '../src/data/content/hard/reading-hard.js'
 import { generateHardRikaQuestion, HARD_RIKA_QUESTIONS } from '../src/data/content/hard/rika-hard.js'
 import { generateHardShakaiQuestion, HARD_SHAKAI_QUESTIONS } from '../src/data/content/hard/shakai-hard.js'
@@ -512,6 +513,95 @@ for (const grade of [4, 5, 6]) {
 for (let grade = 0; grade <= 6; grade++) {
   const polluted = unitLedger(grade).filter((entry) => String(entry.unitId).startsWith('hard:'))
   requireValue(polluted.length === 0, `unitLedger 小${grade}: hard系unitIdが混入 (${polluted.map((e) => e.unitId).join(',')})`)
+}
+
+// ---- 低学年むずかしいモード（小1〜3・さんすうパズル）----
+// 特殊算（中学受験レベル）は前提知識が無い小1〜3には合わないため、
+// generateHardNumbersQuestionはgrade<=3でsuuji-puzzle-hard.jsへ委譲する。
+// itemKeyの名前空間（hard:n:xxx）はnumbers-hard.jsと共有するが、kind名は
+// 重ならないため、指定復習（reviewKey）の取り違えは起きない。
+for (const grade of [1, 2, 3]) {
+  const reached = new Set()
+  for (let i = 0; i < 500; i++) {
+    const q = generateHardPuzzleQuestion({ grade, choiceCount: 4 })
+    if (!q) continue
+    reached.add(q.itemKey)
+    requireValue(q.domain === 'suuji', `hardさんすうパズル 小${grade} ${q.itemKey}: domainが不正 (${q.domain})`)
+    requireValue(String(q.itemKey).startsWith('hard:n:'), `hardさんすうパズル 小${grade}: itemKeyが不正 (${q.itemKey})`)
+    requireValue(typeof q.explain === 'string' && q.explain.length > 0, `hardさんすうパズル ${q.itemKey}: explainがない`)
+    requireValue((q.choices || []).length >= 2, `hardさんすうパズル ${q.itemKey}: 選択肢が足りない`)
+    requireValue((q.choices || []).some((c) => c.id === q.answerId), `hardさんすうパズル ${q.itemKey}: 正解が選択肢にない`)
+    requireValue(new Set((q.choices || []).map((c) => c.id)).size === (q.choices || []).length, `hardさんすうパズル ${q.itemKey}: 選択肢が重複`)
+    const unitId = unitIdFor(q, grade)
+    requireValue(String(unitId).startsWith('hard:'), `hardさんすうパズル ${q.itemKey}: unitIdが通常名前空間に漏れている (${unitId})`)
+  }
+  for (const kind of HARD_PUZZLE_KINDS) {
+    requireValue(reached.has(`hard:n:${kind}`), `hardさんすうパズル 小${grade}: 自由生成で一度も出ない (${kind})`)
+  }
+}
+// numbers.js の mode==='hard' 分岐が、小1〜3でもパズルを返し、通常モードを汚さないこと
+for (const grade of [1, 2, 3]) {
+  for (let i = 0; i < 40; i++) {
+    const hardQ = generateNumbersQuestion({ grade, mode: 'hard', level: 1, choiceCount: 4 })
+    requireValue(hardQ && String(hardQ.itemKey).startsWith('hard:n:'), `さんすう hardモード 小${grade}: hard内容が返らない`)
+    requireValue(HARD_PUZZLE_KINDS.includes(String(hardQ.itemKey).slice(7)), `さんすう hardモード 小${grade}: 特殊算(中学受験レベル)が混入した (${hardQ.itemKey})`)
+    const normalQ = generateNumbersQuestion({ grade, mode: 'normal', level: 3, choiceCount: 4 })
+    requireValue(normalQ && !String(normalQ.itemKey).startsWith('hard:'), `さんすう normalモード 小${grade}: hard内容が混入`)
+  }
+}
+// 指定復習（reviewKey）でパズルのkindを渡したときに、同じkindへ戻ること。
+for (const kind of HARD_PUZZLE_KINDS) {
+  const key = `hard:n:${kind}`
+  for (const grade of [1, 2, 3]) {
+    const q = generateHardPuzzleQuestion({ grade, choiceCount: 4 }, key)
+    requireValue(q?.itemKey === key, `hardさんすうパズル 小${grade}: 指定復習が別のkindへ化けた (${kind})`)
+  }
+}
+// 数値パターン（jrSuuretsuKids）は学年が上がるほど数の範囲が広がること。
+{
+  const rangesByGrade = {}
+  for (const grade of [1, 2, 3]) {
+    let maxSeen = 0
+    for (let i = 0; i < 200; i++) {
+      const q = generateHardPuzzleQuestion({ grade }, 'hard:n:jrSuuretsuKids')
+      const n = Number(q.answerId)
+      if (Number.isFinite(n)) maxSeen = Math.max(maxSeen, n)
+    }
+    rangesByGrade[grade] = maxSeen
+  }
+  requireValue(rangesByGrade[3] > rangesByGrade[1], `hardさんすうパズル 数のパターン: 小3が小1より数の範囲が広くない (小1:${rangesByGrade[1]} 小3:${rangesByGrade[3]})`)
+}
+// numbers-hard.js等の verifyNoLengthTell/verifyLengthDistribution は
+// 「質問文そのものがreviewKeyになる」固定バンク（りか/しゃかい）向けで、
+// kind名がreviewKeyになるこのパズル（同じkind内で毎回ランダムに別の
+// 数・絵・バンク項目を選ぶ）には合わない（kindにつき1サンプルしか
+// 見ないため、統計的にノイズが大きく誤検知する）。数値・絵文字の選択肢
+// （jrSuuretsuKids/jrKurikaeshiMoyou/jrOokisaKurabe）は文字数の偏りで
+// 当てられる余地がそもそも小さいため、固定バンクを持つ2種類
+// （なかまはずれ・ちえあそび）だけを、りか/しゃかいと同じ集計方式で
+// 多数回生成してバンク全体の偏りを確認する（実測: りかは正解が単独最長に
+// なる割合が43%あった前例があるため、固定バンクは必ずこの集計を通す）。
+for (const kind of ['jrNakamahazure', 'jrChieAsobi']) {
+  let total = 0
+  let uniquelyLongest = 0
+  for (let i = 0; i < 800; i++) {
+    const q = generateHardPuzzleQuestion({ grade: 3 }, `hard:n:${kind}`)
+    const choices = q?.choices ?? []
+    const answer = choices.find((c) => c.id === q.answerId)
+    if (!answer || choices.length < 3) continue
+    total++
+    const lengths = choices.map((c) => String(c.label ?? c.id).replace(/\s/g, '').length)
+    const answerLength = String(answer.label ?? answer.id).replace(/\s/g, '').length
+    const longest = Math.max(...lengths)
+    if (answerLength === longest && lengths.filter((l) => l === longest).length === 1) uniquelyLongest++
+    const wrongLengths = choices.filter((c) => c.id !== q.answerId).map((c) => String(c.label ?? c.id).replace(/\s/g, '').length)
+    const gap = answerLength - Math.max(...wrongLengths)
+    requireValue(gap <= 3, `さんすうパズル(hard) ${kind}: 正解が全誤答より${gap}文字長く、見ただけで選べる (${q.instruction})`)
+  }
+  if (total) {
+    const rate = uniquelyLongest / total
+    requireValue(rate <= 0.3, `さんすうパズル(hard) ${kind}: 正解が単独で最長になる割合が${Math.round(rate * 100)}%（上限30%）`)
+  }
 }
 
 // ---- hard算数: 解説の式が、書いてあるとおりに計算して答えに合うこと ----
