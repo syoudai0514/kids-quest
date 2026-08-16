@@ -39,7 +39,7 @@ jobs:
           npm ci
           python -m pip install -r scripts/requirements-monster-art.txt
           sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes imagemagick
+          sudo apt-get install --no-install-recommends --yes imagemagick fonts-urw-base35
           convert -version
           montage -version
 

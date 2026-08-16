@@ -26,6 +26,7 @@ function render(outputPath, theme) {
     '-thumbnail', '220x220',
     '-background', theme.background,
     '-fill', theme.fill,
+    '-font', 'Helvetica',
     '-pointsize', '18',
     '-set', 'label', '%t',
     '-geometry', '220x250+10+10',
