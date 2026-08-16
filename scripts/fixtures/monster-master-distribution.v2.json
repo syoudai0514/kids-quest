@@ -46,5 +46,9 @@
     "total": 204
   },
   "chunks": [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-  "designPilot": 50
+  "designPilot": 50,
+  "integrity": {
+    "familyMembershipSha256": "f213c325b72505c2f282b6e2a8628e8bed9f98947814d952b8e68e63a7584850",
+    "targetsSha256": "56b8e18a6b984e645cec073231e6d9dc0c1714b1f1c45b31af837cc684344cdb"
+  }
 }

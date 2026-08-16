@@ -142,7 +142,11 @@ function assetsFor(monster, dexNo) {
 function encounterTagsFor(monster, dexNo, family) {
   const tags = [monster.role, family.source]
   if (dexNo >= 51) tags.push(`region-${Math.floor((dexNo - 51) / 90) + 1}`)
-  if (monster.id === 'g051' || monster.id === 'g052' || dexNo % 13 === 0) tags.push('elite-candidate')
+  // Dex 51-62 is the fixed vertical slice.  Keep its elite set explicit so
+  // the global sampling rule cannot silently add another pilot encounter.
+  if (monster.id === 'g051' || monster.id === 'g052' || (dexNo >= 63 && dexNo % 13 === 0)) {
+    tags.push('elite-candidate')
+  }
   const boss = BOSS_TARGETS[monster.id]
   if (boss) tags.push('boss', boss.campaignTag)
   return Object.freeze([...new Set(tags)])
@@ -218,6 +222,31 @@ export function getMonsterMasterChunk(chunkNumber) {
 // unavailable offline.  Callers can distinguish it through detailAvailable.
 export function getMonsterDetailOrFallback(monsterId, chunkNumber) {
   const detail = getMonsterMasterChunk(chunkNumber).find((monster) => monster.id === monsterId)
+  if (detail) return Object.freeze({ detailAvailable: true, monster: detail })
+  const compact = MONSTER_INDEX_BY_ID[monsterId]
+  return compact
+    ? Object.freeze({ detailAvailable: false, monster: compact })
+    : Object.freeze({ detailAvailable: false, monster: null })
+}
+
+// WP1 keeps logical in-memory chunks.  WP10 may replace the loader with a
+// physical dynamic import, but consumers keep this contract: a rejected,
+// missing, malformed, or wrong chunk can only return the same ID's compact
+// entry (or null for an unknown ID), never another monster.
+export async function loadMonsterDetailOrFallback(
+  monsterId,
+  chunkNumber,
+  loadChunk = async (number) => getMonsterMasterChunk(number)
+) {
+  let chunk = []
+  try {
+    const loaded = await loadChunk(chunkNumber)
+    if (Array.isArray(loaded)) chunk = loaded
+  } catch {
+    // Offline/cache/import failure is an expected fallback path.
+  }
+
+  const detail = chunk.find((monster) => monster?.id === monsterId)
   if (detail) return Object.freeze({ detailAvailable: true, monster: detail })
   const compact = MONSTER_INDEX_BY_ID[monsterId]
   return compact

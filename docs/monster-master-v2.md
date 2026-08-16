@@ -43,7 +43,9 @@ Issue #7 / WP1 #8 の正本。現行の `src/data/monsters.js` を壊さず、�
 - `bossTier`と`bossMoveId`は敵用の階層/技。捕獲後の能力へ倍率を保存しない
 - `assets`は1〜50が既存asset、51以降が`thumb`/`full`の将来path
 
-compact indexは図鑑cardに必要な項目だけを持ち、詳細は100件×10 chunkで取得できる。chunkが未取得/不正でも`getMonsterDetailOrFallback`がcompact entryを返す。
+compact indexは図鑑cardに必要な項目だけを持ち、詳細は100件×10 chunkで取得できる。WP1のchunkは同一module内の**論理chunk**であり、物理ファイル分割ではない。同期経路でchunkが未取得/不正でも`getMonsterDetailOrFallback`がcompact entryを返す。
+
+WP10の物理dynamic importは`loadMonsterDetailOrFallback(monsterId, chunkNumber, loadChunk)`の非同期契約へ接続する。`loadChunk`は該当chunkの配列をresolveする。import拒否、module欠損、配列以外、不正chunkのいずれでも、同じIDのcompact entryまたは未知IDの`null`だけを返し、別monsterを返してはならない。この失敗契約はWP1のmock mutation testで固定する。
 
 ## 技schema
 
@@ -82,17 +84,19 @@ XP式と付与処理はWP5/WP8で実装する。WP1では条件値と参照だ�
 
 ```bash
 npm run test:monster-master
+node scripts/test-monster-master-mutations.mjs
+node scripts/verify-monster-identity-base.mjs
 node scripts/verify-monster-master.mjs --json
 npm run check
 ```
 
-identityを意図的に変更する場合だけ、影響と移行を別Issueで承認した後に次を実行する。
+通常PRでは`src/data/monsters.js`の既存1000 identity変更をbase差分gateで拒否する。snapshotを再生成してもこのgateは回避できない。identityを意図的に変更する場合だけ、既存図鑑・画像・捕獲・保存への影響と移行を別Issueで承認し、通常PRとは分離したmigration経路で次を実行する。
 
 ```bash
-node scripts/generate-monster-identity-snapshot.mjs
+node scripts/generate-monster-identity-snapshot.mjs --approved-identity-migration
 ```
 
-通常のmaster編集でsnapshotを再生成してテストを通してはいけない。
+通常のmaster編集でsnapshotを再生成してテストを通してはいけない。PRでは`.github/workflows/validate-pr.yml`がbase SHAを`MONSTER_IDENTITY_BASE_REF`へ渡し、identity gate・master mutation test・既存check・production buildを実行する。
 
 validatorは次を確認する。
 
@@ -105,3 +109,8 @@ validatorは次を確認する。
 - 51〜100デザイン台帳50件と51〜62固有仕様
 - 1〜50の既存asset実在
 - role、rarity、battle type、boss tier、対象数のbaseline差分
+- family member順序と覚醒・ギガ・ボス・固有技対象ID集合のfingerprint
+- rarity別statBudget、進化・覚醒・ギガのLv/日数/教科/勝利tag/turn数の完全一致
+- 技category/effect/target/powerとeffect固有fieldの意味整合
+- 51〜100デザイン台帳の必須field、identity/family/stage一致、10体batchのsilhouette上限
+- 非同期chunk loaderのreject・module欠損・不正chunk・未知ID fallback

@@ -4,7 +4,7 @@ import { MONSTER_BY_ID } from '../../src/data/monsters.js'
 import { MONSTER_MASTER_BY_ID } from '../../src/data/monsterMaster/monsterMaster.js'
 import { FAMILY_PLANS } from '../../src/data/monsterMaster/familyPlan.js'
 
-export const DESIGN_PROMPT_VERSION = 'monster-v2-pilot-1'
+export const DESIGN_PROMPT_VERSION = 'monster-v2-pilot-2'
 
 const FAMILY_ART = Object.freeze({
   'family-core-orbit': ['軌道を回る星核と岩装甲', ['光る菱形の核', '3枚の軌道石', '角ばった眉'], ['小さな岩灯', '電気を帯びた装甲輪', '闇に浮く完成軌道']],
@@ -65,6 +65,40 @@ const PERSONALITIES = Object.freeze([
   '堂々として近寄りがたい'
 ])
 
+const ELEMENT_STRUCTURE_CUE = Object.freeze({
+  いわ: '肩から背中へ粗い六角岩板が段差をつくる',
+  でんき: '関節を結ぶ黄色い稲妻線が脈のように発光する',
+  やみ: '胸の暗い空洞から紫の輪郭光だけが漏れる',
+  ほのお: '額の炎角から尾へ赤橙の温度グラデーションが走る',
+  そら: '空色の薄膜と白い風切り突起が左右へ広がる',
+  きょうりゅう: '骨質の眉角と太い後脚が古代獣の重さを見せる',
+  ぎんが: '腹部の渦紋に青紫の星粒が奥行きをもって浮かぶ',
+  すな: '背面の砂層が風下へ崩れる非対称な段丘をつくる',
+  みどり: '葉脈の通る芽板が背骨に沿って上向きに並ぶ',
+  ゆき: '半透明の六角雪板が片側の肩と腕を厚く覆う',
+  にじ: 'プリズム面ごとに赤青緑の反射位置が少しずれる',
+  うちゅう: '胸の深紺空間を細い軌道輪と微小な星が巡る',
+  ほし: '中心核から長短の違う光条が五方向へ伸びる',
+  つき: '欠け月形の淡い核が片側だけを銀色に照らす',
+  マグマ: '黒い外殻の割れ目から橙色の溶岩光がのぞく',
+  みず: '体側を一周する水流線に真珠状の泡が連なる',
+  くさ: '胸元の種核から二色の蔓と若葉が枝分かれする',
+  こおり: '青白い氷柱が先端ほど透明になる層構造を持つ',
+  はな: '角のつぼみから大小の花弁が螺旋状に開く',
+  たいよう: '背板の放射溝が中心から金橙色へ順に輝く'
+})
+
+const BODY_DETAIL_CUE = Object.freeze({
+  blob: '丸い胴の左右で大きさの違うひれが浮遊方向を示す',
+  dino: '太い後脚と低い頭、接地する尾先で三角の重心をつくる',
+  star: '長さの異なる五本の突起と小さな下脚で放射輪郭をつくる',
+  rock: '大きな盾腕と小さな握り腕を対比させ台形の輪郭をつくる',
+  ghost: '割れた仮面から細い裾が三方向へ流れる輪郭をつくる',
+  bird: '三日月形の翼端と長短二層の尾羽で飛行線をつくる',
+  bug: '二股触角と節ごとに太さの違う脚で横長の輪郭をつくる',
+  slime: '低い接地面から一方へ伸びる透明な尾で流動感をつくる'
+})
+
 function artForFamily(familyId) {
   const art = FAMILY_ART[familyId]
   if (!art) throw new Error(`Missing pilot family art direction: ${familyId}`)
@@ -93,14 +127,14 @@ export const DESIGN_MANIFEST_051_100 = Object.freeze(pilotPlans.flatMap((plan, f
       personality: PERSONALITIES[(familyIndex + stageIndex) % PERSONALITIES.length],
       inheritedDesignCues: Object.freeze([...art.inheritedDesignCues]),
       uniqueDesignCues: Object.freeze([
-        art.stageArc[Math.min(stageIndex, art.stageArc.length - 1)],
-        `${identity.element}を貼り付けでなく身体構造へ組み込む`,
-        `${identity.art}のfallback輪郭をそのまま再利用しない`
+        `${identity.name}は${art.stageArc[Math.min(stageIndex, art.stageArc.length - 1)]}の姿を取る`,
+        ELEMENT_STRUCTURE_CUE[identity.element],
+        BODY_DETAIL_CUE[identity.art]
       ]),
       forbiddenSimilarityNotes: Object.freeze([
         '既存ゲーム・アニメの特定キャラクター、捕獲道具、ロゴに似せない',
-        '目を大きくしすぎず、星形ハイライトを常用しない',
-        '単純な拡大・色替え・同じ顔の再利用をしない'
+        `${art.motif}を単純な丸顔マスコットへ置き換えない`,
+        `${identity.name}の${BODY_ARCHETYPE[identity.art]}は同じ顔・輪郭の色替えにしない`
       ]),
       framing: Object.freeze({ ratio: '1:1', safeMarginPercent: 12, pose: '正面〜少し斜めの全身単体' }),
       assetTargets: Object.freeze({

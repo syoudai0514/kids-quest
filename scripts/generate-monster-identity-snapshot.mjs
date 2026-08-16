@@ -4,6 +4,12 @@ import { fileURLToPath } from 'node:url'
 import { MONSTERS } from '../src/data/monsters.js'
 import { MONSTER_IDENTITY_VERSION } from '../src/data/monsterMaster/schema.js'
 
+if (!process.argv.includes('--approved-identity-migration')) {
+  console.error('Identity snapshot generation is locked for normal work.')
+  console.error('Use --approved-identity-migration only from a separately approved migration issue/workflow.')
+  process.exit(1)
+}
+
 const entries = MONSTERS.map((monster, index) => ({
   dexNo: index + 1,
   id: monster.id,

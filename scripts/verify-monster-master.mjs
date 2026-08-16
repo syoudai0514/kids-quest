@@ -26,9 +26,18 @@ import {
   MONSTER_MASTER_CHUNKS,
   MONSTER_MASTER_V2,
   getMonsterDetailOrFallback,
-  getMonsterMasterChunk
+  getMonsterMasterChunk,
+  loadMonsterDetailOrFallback
 } from '../src/data/monsterMaster/monsterMaster.js'
 import { DESIGN_MANIFEST_051_100, DESIGN_PROMPT_VERSION } from '../design/monsters/manifest-051-100.js'
+import {
+  FIXED_MONSTER_RULES,
+  normalizedFamilyFingerprint,
+  normalizedTargetFingerprint,
+  validateDesignEntry,
+  validateMonsterProgressionRules,
+  validateMoveSemantics
+} from './lib/monster-master-validation.mjs'
 
 const errors = []
 const requireValue = (condition, message) => {
@@ -68,6 +77,7 @@ requireValue(dexNumbers.every((dexNo, index) => dexNo === index + 1), 'dexNo mus
 
 const monsterById = Object.fromEntries(MONSTER_MASTER_V2.map((monster) => [monster.id, monster]))
 const moveById = Object.fromEntries(MOVE_MASTER.map((move) => [move.id, move]))
+const identityById = Object.fromEntries(MONSTERS.map((monster) => [monster.id, monster]))
 
 for (const [index, monster] of MONSTER_MASTER_V2.entries()) {
   const identity = identityEntries[index]
@@ -84,7 +94,7 @@ for (const [index, monster] of MONSTER_MASTER_V2.entries()) {
   requireValue(RARITIES.includes(monster.rarity), `${label}: rarity ${monster.rarity}`)
   requireValue(BOSS_TIERS.includes(monster.bossTier), `${label}: bossTier ${monster.bossTier}`)
   requireValue(monster.growthRole === monster.role, `${label}: growthRole differs from role`)
-  requireValue([240, 248, 256, 264].includes(monster.statBudget), `${label}: statBudget ${monster.statBudget}`)
+  requireValue(monster.statBudget === FIXED_MONSTER_RULES.statBudgetByRarity[monster.rarity], `${label}: rarity/statBudget ${monster.rarity}/${monster.statBudget}`)
   requireValue(Object.values(monster.baseStats).every((value) => Number.isInteger(value) && value > 0), `${label}: invalid baseStats`)
   requireValue(Object.values(monster.baseStats).reduce((sum, value) => sum + value, 0) === monster.statBudget, `${label}: stat budget sum`)
   requireValue(Array.isArray(monster.learnset) && monster.learnset.length >= 4 && monster.learnset.length <= 8, `${label}: learnset count`)
@@ -114,11 +124,6 @@ for (const [index, monster] of MONSTER_MASTER_V2.entries()) {
     requireValue(next?.dexNo > monster.dexNo, `${label}: evolution dexNo must increase (${next?.dexNo})`)
   }
   requireValue((monster.evolvesTo.length > 0) === Boolean(monster.evolution), `${label}: evolution condition mismatch`)
-  if (monster.evolution) {
-    requireValue(monster.evolution.minLevel >= 2, `${label}: evolution minLevel`)
-    requireValue(monster.evolution.minTrainedDays >= 1, `${label}: evolution minTrainedDays`)
-    requireValue(monster.evolution.minSubjectCount >= 1 && monster.evolution.minSubjectCount <= 5, `${label}: evolution minSubjectCount`)
-  }
 
   for (const [kind, form] of Object.entries(monster.forms)) {
     requireValue(form.kind === kind, `${label}: form kind mismatch ${kind}`)
@@ -127,6 +132,7 @@ for (const [index, monster] of MONSTER_MASTER_V2.entries()) {
     requireValue(form.minSubjectCount === 5, `${label}: form subjects`)
     requireValue(kind === 'awakening' ? form.durationTurns === null : form.durationTurns === 3, `${label}: form duration ${kind}`)
   }
+  for (const error of validateMonsterProgressionRules(monster)) errors.push(`${label}: ${error}`)
 }
 
 // A linear chain should never revisit a node.  This catches future branching
@@ -200,6 +206,7 @@ for (const move of MOVE_MASTER) {
   requireValue(typeof move.description === 'string' && move.description, `${label}: description`)
   requireValue(typeof move.animationKey === 'string' && move.animationKey, `${label}: animationKey`)
   requireValue(typeof move.sfxKey === 'string' && move.sfxKey, `${label}: sfxKey`)
+  for (const error of validateMoveSemantics(move)) errors.push(`${label}: ${error}`)
   if (move.id.startsWith('boss-')) {
     requireValue(move.telegraph?.message && move.telegraph?.icon, `${label}: telegraph`)
     requireValue(move.enemyTuning?.powerMultiplier > 1, `${label}: enemyTuning`)
@@ -213,6 +220,18 @@ requireValue(getMonsterMasterChunk(11).length === 0, 'chunk 11 must safely fall 
 const missingChunkFallback = getMonsterDetailOrFallback('g042', 10)
 requireValue(missingChunkFallback.detailAvailable === false && missingChunkFallback.monster?.id === 'g042', 'missing chunk compact fallback')
 requireValue(getMonsterDetailOrFallback('missing-id', 1).monster === null, 'unknown id fallback')
+const rejectedChunkFallback = await loadMonsterDetailOrFallback('g042', 1, async () => {
+  throw new Error('simulated dynamic import failure')
+})
+requireValue(rejectedChunkFallback.detailAvailable === false && rejectedChunkFallback.monster?.id === 'g042', 'rejected loader compact fallback')
+const malformedChunkFallback = await loadMonsterDetailOrFallback('g042', 1, async () => ({ default: [] }))
+requireValue(malformedChunkFallback.detailAvailable === false && malformedChunkFallback.monster?.id === 'g042', 'malformed loader compact fallback')
+const wrongAsyncChunkFallback = await loadMonsterDetailOrFallback('g042', 1, async () => getMonsterMasterChunk(10))
+requireValue(wrongAsyncChunkFallback.detailAvailable === false && wrongAsyncChunkFallback.monster?.id === 'g042', 'wrong async chunk compact fallback')
+const unknownAsyncFallback = await loadMonsterDetailOrFallback('missing-id', 1, async () => {
+  throw new Error('simulated missing module')
+})
+requireValue(unknownAsyncFallback.detailAvailable === false && unknownAsyncFallback.monster === null, 'unknown async id fallback')
 
 const pilotIds = MONSTER_MASTER_V2.slice(50, 100).map((monster) => monster.id)
 requireValue(DESIGN_MANIFEST_051_100.length === 50, `design manifest count: ${DESIGN_MANIFEST_051_100.length}`)
@@ -220,6 +239,9 @@ requireValue(new Set(DESIGN_MANIFEST_051_100.map((entry) => entry.monsterId)).si
 requireValue(pilotIds.every((id) => DESIGN_MANIFEST_051_100.some((entry) => entry.monsterId === id)), 'design manifest does not cover dex 51-100')
 for (const entry of DESIGN_MANIFEST_051_100) {
   const label = `design ${entry.monsterId}`
+  for (const error of validateDesignEntry(entry, monsterById[entry.monsterId], identityById[entry.monsterId])) {
+    errors.push(`${label}: ${error}`)
+  }
   requireValue(entry.promptVersion === DESIGN_PROMPT_VERSION, `${label}: promptVersion`)
   requireValue(entry.inheritedDesignCues.length >= 3, `${label}: inherited cues`)
   requireValue(entry.uniqueDesignCues.length >= 3, `${label}: unique cues`)
@@ -228,6 +250,13 @@ for (const entry of DESIGN_MANIFEST_051_100) {
   requireValue(entry.assetTargets.thumb === monsterById[entry.monsterId].assets.thumb, `${label}: thumb mismatch`)
   requireValue(entry.assetTargets.full === monsterById[entry.monsterId].assets.full, `${label}: full mismatch`)
   requireValue(JSON.stringify(entry.assetTargets.forms) === JSON.stringify(Object.fromEntries(Object.entries(monsterById[entry.monsterId].forms).map(([kind, form]) => [kind, form.asset]))), `${label}: form asset mismatch`)
+}
+requireValue(new Set(DESIGN_MANIFEST_051_100.map((entry) => JSON.stringify(entry.uniqueDesignCues))).size === 50, 'design unique cue sets must differ for all 50 monsters')
+requireValue(new Set(DESIGN_MANIFEST_051_100.map((entry) => JSON.stringify(entry.forbiddenSimilarityNotes))).size === 50, 'design forbidden notes must be family/monster specific')
+for (let start = 51; start <= 100; start += 10) {
+  const batch = DESIGN_MANIFEST_051_100.filter((entry) => entry.dexNo >= start && entry.dexNo < start + 10)
+  const silhouetteCounts = countBy(batch, 'silhouetteGroup')
+  requireValue(Math.max(...Object.values(silhouetteCounts)) <= 2, `design dex ${start}-${start + 9}: silhouette group exceeds 2`)
 }
 
 const vertical = {
@@ -257,8 +286,10 @@ requireValue(moveById['boss-g053']?.name === 'ビッグバンストーム', 'g05
 requireValue(Boolean(monsterById.g052.forms.awakening), 'g052 awakening target')
 requireValue(Boolean(monsterById.g053.forms.giga), 'g053 giga target')
 requireValue(monsterById.g053.bossTier === 'planet', 'g053 planet boss')
-requireValue(monsterById.g051.encounterTags.includes('elite-candidate'), 'g051 elite candidate')
-requireValue(monsterById.g052.encounterTags.includes('elite-candidate'), 'g052 elite candidate')
+const verticalEliteIds = MONSTER_MASTER_V2.slice(50, 62)
+  .filter((monster) => monster.encounterTags.includes('elite-candidate'))
+  .map((monster) => monster.id)
+requireValue(JSON.stringify(verticalEliteIds) === JSON.stringify(['g051', 'g052']), `vertical elite candidates: ${verticalEliteIds.join(',')}`)
 for (const monster of MONSTER_MASTER_V2.slice(50, 62)) {
   const expectedAwakening = monster.id === 'g052'
   const expectedGiga = monster.id === 'g053'
@@ -313,7 +344,16 @@ const currentDistribution = {
   targets: report.monsters.targets,
   moves: report.moves,
   chunks: report.chunks,
-  designPilot: report.designPilot
+  designPilot: report.designPilot,
+  integrity: {
+    familyMembershipSha256: normalizedFamilyFingerprint(FAMILY_PLANS),
+    targetsSha256: normalizedTargetFingerprint({
+      awakening: AWAKENING_IDS,
+      giga: GIGA_IDS,
+      boss: BOSS_IDS,
+      signatureHolders: SIGNATURE_HOLDER_IDS
+    })
+  }
 }
 if (JSON.stringify(distributionSnapshot) !== JSON.stringify(currentDistribution)) {
   errors.push(
