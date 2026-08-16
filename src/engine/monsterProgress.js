@@ -251,6 +251,35 @@ export function setActiveCompanion(state, companionId) {
   return { ...state, party, activeCompanionId: companionId }
 }
 
+// party は表示順だけではなく、交代候補の並び順でもある。既存セーブにも
+// すでに配列として入っているため、IDや保存形式を増やさず安全に入れ替えられる。
+export function movePartyCompanion(state, companionId, direction) {
+  if (!state.party?.includes(companionId) || !['forward', 'back'].includes(direction)) return state
+  const from = state.party.indexOf(companionId)
+  const to = direction === 'forward' ? from - 1 : from + 1
+  if (to < 0 || to >= state.party.length) return state
+  const party = [...state.party]
+  ;[party[from], party[to]] = [party[to], party[from]]
+  return { ...state, party }
+}
+
+// モンスターマスターの個性を、子どもに見せる小さく分かりやすい数値と
+// 実戦用の補正に変換する。保存しない派生値なので、既存の個体データは変えない。
+export function companionBattleStats(companion) {
+  const level = companionLevel(companion?.xp)
+  const master = MONSTER_MASTER_BY_ID[companion?.currentMonsterId]
+  const base = master?.baseStats || { hp: 70, attack: 65, guard: 60, speed: 45 }
+  const hpBonus = Math.round((base.hp - 70) * 0.22)
+  const attack = base.attack + (level - 1) * 2
+  return {
+    battleType: master?.battleType || 'hoshi',
+    hpBonus,
+    attack,
+    attackBonus: Math.max(0, Math.floor((attack - 52) / 16)),
+    role: master?.role || 'balanced'
+  }
+}
+
 export function togglePartyCompanion(state, companionId) {
   if (!state.companions?.[companionId]) return state
   if (state.party.includes(companionId)) {
