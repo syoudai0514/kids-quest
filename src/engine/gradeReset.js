@@ -30,10 +30,14 @@ export function lowerGradeProgress(state, requestedGradeMax) {
   const gradeMax = Math.max(0, Math.min(state.gradeMax, requestedGradeMax))
   if (gradeMax === state.gradeMax) return state
   const grade = Math.min(state.grade, gradeMax)
+  // 学年えらびの下限（保護者設定）が新しいgradeMaxより上だと、選べる学年が
+  // 1つも無くなってしまう。gradeMaxを下げたら下限も追従して引き下げる。
+  const minSelectableGrade = Math.min(state.settings?.minSelectableGrade ?? 0, gradeMax)
   return {
     ...state,
     gradeMax,
     grade,
+    settings: { ...state.settings, minSelectableGrade },
     // gradeMax と同じ学年の合格も消す。残すと、戻した直後に次の学年を再解放できてしまう。
     testPassed: progressionBelow(state.testPassed, gradeMax),
     starTrials: progressionBelow(state.starTrials, gradeMax),

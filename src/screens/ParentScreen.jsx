@@ -436,6 +436,47 @@ export default function ParentScreen({ onBack }) {
             </div>
           </div>
 
+          {/* 学年えらびの下限（バトルチケット稼ぎ対策） */}
+          <div>
+            <h3 style={{ margin: '4px 0 10px' }}>学年えらびの せいげん</h3>
+            <div className="card">
+              <p className="muted" style={{ fontSize: 13, lineHeight: 1.7, marginTop: 0 }}>
+                解放済みの学年は、子どもがホーム画面からいつでも行き来できます
+                （もどって復習するのはよいことですが、簡単な学年に戻って
+                バトルチケットを稼ぐ抜け道にもなり得ます）。<br />
+                ここで「ここより下は選べない」下限を決めると、それより下の
+                学年はホーム画面の学年えらびで
+                <b>🚫（選択不可）</b>
+                として表示され、子どもは選べなくなります（学習の記録・図鑑・
+                そうびは消えません。とっくんの復習にも影響しません）。<br />
+                現在の学年が新しい下限より下だった場合は、その場で下限まで
+                引き上げます。
+              </p>
+              <div className="row wrap">
+                <button
+                  className={'btn ' + ((state.settings.minSelectableGrade || 0) === 0 ? 'btn--primary' : 'btn--ghost')}
+                  style={{ minHeight: 52, padding: '8px 16px' }}
+                  onClick={() => dispatch({ type: 'SET_MIN_SELECTABLE_GRADE', grade: 0 })}
+                >
+                  せいげんなし
+                </button>
+                {GRADES.filter((g) => g.id <= state.gradeMax && g.id > 0).map((g) => (
+                  <button
+                    key={g.id}
+                    className={'btn ' + (g.id === state.settings.minSelectableGrade ? 'btn--primary' : 'btn--ghost')}
+                    style={{ minHeight: 52, padding: '8px 16px' }}
+                    onClick={() => dispatch({ type: 'SET_MIN_SELECTABLE_GRADE', grade: g.id })}
+                  >
+                    {g.short}より下を 🚫
+                  </button>
+                ))}
+              </div>
+              <p className="muted" style={{ fontSize: 12, marginTop: 10, marginBottom: 0, opacity: 0.8 }}>
+                いま選ばれているボタンが、現在の下限です。
+              </p>
+            </div>
+          </div>
+
           {/* どうとく: 生き物の「いのちの終わり」の話題（既定OFF・保護者設定必須） */}
           <div>
             <h3 style={{ margin: '4px 0 10px' }}>どうとく：いのちの おわりの 話題</h3>

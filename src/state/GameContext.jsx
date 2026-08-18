@@ -149,7 +149,11 @@ function createInitialState() {
     // mode: 'normal' | 'hard'。保護者のみ変更可（ParentScreen）。既定は
     // 'normal'。settingsForCurrentVersion() が fresh を先に展開するため、
     // 既存セーブにも自動で 'normal' が入る（マイグレーション不要）。
-    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true, showLifeEndTopics: false, mode: 'normal' },
+    // minSelectableGrade: 子どもがホーム画面の学年えらびで選べる下限。
+    // 解放済み学年は自由に行き来できる設計だが、簡単な学年へ戻って
+    // バトルチケットを稼ぐ抜け道を保護者がふさげるようにする。既定0
+    // （制限なし）。
+    settings: { tts: true, ttsRate: DEFAULT_TTS_RATE, ttsRateScheme: 'dictionary-v4', ttsVolume: 0.9, ttsVoice: 'neural', sfx: true, bgm: true, showLifeEndTopics: false, mode: 'normal', minSelectableGrade: 0 },
     history: {},
     pendingCelebration: null
   }
@@ -388,6 +392,25 @@ function addDomainTally(perDomain, domainId, correct) {
   }
 }
 
+// 学年を切りかえる（SET_GRADE・SET_MIN_SELECTABLE_GRADEの下限引き上げで共用）。
+// 学年で教科の構成が変わる（生活→理科・社会など）ので、今日のミッションを
+// その学年の教科で作り直す（進んだ数はそのまま）。
+function switchGrade(state, g) {
+  if (g === state.grade) return state
+  const tasks = buildCoreMission(g)
+  return {
+    ...state,
+    grade: g,
+    skills: state.skills[g] ? state.skills : { ...state.skills, [g]: freshSkills() },
+    daily: {
+      ...state.daily,
+      coreTasks: tasks,
+      coreIndex: Math.min(state.daily.coreIndex, tasks.length),
+      coreDone: state.daily.coreIndex >= tasks.length
+    }
+  }
+}
+
 function reduceProfile(state, action) {
   switch (action.type) {
     case 'ROLLOVER':
@@ -398,21 +421,18 @@ function reduceProfile(state, action) {
 
     case 'SET_GRADE': {
       const g = Math.max(0, Math.min(state.gradeMax, action.grade))
-      if (g === state.grade) return state
-      // 学年で教科の構成が変わる（生活→理科・社会など）ので、
-      // 今日のミッションを その学年の教科で作り直す（進んだ数はそのまま）
-      const tasks = buildCoreMission(g)
-      return {
-        ...state,
-        grade: g,
-        skills: state.skills[g] ? state.skills : { ...state.skills, [g]: freshSkills() },
-        daily: {
-          ...state.daily,
-          coreTasks: tasks,
-          coreIndex: Math.min(state.daily.coreIndex, tasks.length),
-          coreDone: state.daily.coreIndex >= tasks.length
-        }
-      }
+      return switchGrade(state, g)
+    }
+
+    // 保護者が「ここより下の学年は選ばせない」下限を設定する。簡単な
+    // 学年に戻ってバトルチケットを稼ぐ抜け道をふさぐための機能。
+    // gradeMaxより上には設定できない（全学年が選べなくなるため）。
+    // 現在の学年が新しい下限より低い場合は、下限まで引き上げる
+    // （SET_GRADEと同じくその場で教科構成・当日ミッションをそろえる）。
+    case 'SET_MIN_SELECTABLE_GRADE': {
+      const minSelectableGrade = Math.max(0, Math.min(state.gradeMax, action.grade))
+      const withSetting = { ...state, settings: { ...state.settings, minSelectableGrade } }
+      return withSetting.grade < minSelectableGrade ? switchGrade(withSetting, minSelectableGrade) : withSetting
     }
 
     // 1問の回答結果

@@ -196,6 +196,14 @@ must(lowered.grade === 0 && lowered.gradeMax === 0 && Object.keys(lowered.testPa
 must(lowered.xp === 4200 && lowered.unlockedMonsters[0] === 'm001' && lowered.weapons[0] === 'w01' && lowered.englishWordStats.ew001.stage === 2 && lowered.srs.yomu.a.due === 5, '学年を戻す操作で既存の報酬・学習履歴を消した')
 must(lowered.daily.coreIndex === 0 && lowered.daily.coreTasks.every((task) => ['yomu', 'suuji', 'kaku', 'seikatsu', 'english', 'doutoku'].includes(task.domainId)), '学年を戻した当日のミッションを年長向けに再構成できない')
 
+// 学年えらびの下限（保護者設定, バトルチケット稼ぎ対策）が、gradeMaxを
+// 下げたときに選べる学年が0件にならないよう追従して下がること。
+const loweredWithFloor = lowerGradeProgress({
+  grade: 3, gradeMax: 5, settings: { minSelectableGrade: 4 },
+  daily: { date: '2026-08-11', coreIndex: 0, coreTasks: [] }
+}, 2)
+must(loweredWithFloor.settings.minSelectableGrade === 2, '学年えらびの下限がgradeMaxの引き下げに追従しない')
+
 // チケットは0時をまたいで残り、期限が過ぎたものだけ消費対象から外れる。
 const ticketToday = '2026-08-11'
 const earnedTicket = grantBattleTicket({ tickets: 0, ticketGrants: [] }, ticketToday)

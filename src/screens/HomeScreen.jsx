@@ -132,6 +132,11 @@ export default function HomeScreen({ onStartTask, onGo }) {
       speak('つぎの がくねんは、いまの がくねんの しょうまつテストに ごうかくすると あくよ！')
       return
     }
+    if (g.id < (state.settings.minSelectableGrade || 0)) {
+      sfx.wrongSoft()
+      speak('この がくねんは、ほごしゃの せっていで えらべないよ。')
+      return
+    }
     sfx.pop()
     dispatch({ type: 'SET_GRADE', grade: g.id })
     speak(`${g.name}の もんだいに きりかえたよ！`)
@@ -434,7 +439,10 @@ export default function HomeScreen({ onStartTask, onGo }) {
             </div>
             <div className="grade-list">
               {GRADES.map((g) => {
-                const locked = g.id > state.gradeMax
+                const notYetUnlocked = g.id > state.gradeMax
+                // 保護者が下限を設定していて、まだ届かない学年（未解放とは別理由の制限）。
+                const blockedByParent = !notYetUnlocked && g.id < (state.settings.minSelectableGrade || 0)
+                const locked = notYetUnlocked || blockedByParent
                 const active = g.id === state.grade
                 return (
                   <button
@@ -444,7 +452,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
                     }
                     onClick={() => pickGrade(g)}
                   >
-                    <span style={{ fontSize: 26 }}>{locked ? '🔒' : g.emoji}</span>
+                    <span style={{ fontSize: 26 }}>{blockedByParent ? '🚫' : locked ? '🔒' : g.emoji}</span>
                     <span>{g.short}</span>
                     {active && <span className="grade-item__now">いまここ</span>}
                   </button>
@@ -453,6 +461,12 @@ export default function HomeScreen({ onStartTask, onGo }) {
             </div>
             <div className="muted" style={{ fontSize: 13, fontWeight: 700, textAlign: 'center', marginTop: 10, lineHeight: 1.6 }}>
               しょうまつテストに ごうかく（80てん いじょう）すると、つぎの がくねんが あくよ！
+              {state.settings.minSelectableGrade > 0 && (
+                <>
+                  <br />
+                  🚫は ほごしゃが えらべないように しているよ。
+                </>
+              )}
             </div>
           </div>
         </div>
