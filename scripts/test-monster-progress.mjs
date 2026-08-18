@@ -25,9 +25,23 @@ import { moveAffinityMultiplier, partnerMaxHp } from '../src/engine/battle.js'
 import { releasedMonsterFormAsset, releasedMonsterFullAsset } from '../src/data/monsterAssets.js'
 
 // GameContext contains JSX, so this small source-level regression tripwire
-// keeps SET_GRADE from ever falling through into the ANSWER reducer branch.
+// keeps SET_GRADE (and any grade-selection case placed alongside it, e.g.
+// SET_MIN_SELECTABLE_GRADE) from ever falling through into the ANSWER
+// reducer branch. Generalized from a single literal `return next` match to
+// scan every case block in this section, since a legitimate second case
+// (parent-controlled minimum selectable grade) now sits between SET_GRADE
+// and ANSWER.
 const gameContextSource = await readFile(new URL('../src/state/GameContext.jsx', import.meta.url), 'utf8')
-assert.match(gameContextSource, /case 'SET_GRADE':[\s\S]*?return next\s*\n\s*}\s*\n\s*\/\/ 1問の回答結果/)
+const gradeSection = gameContextSource.match(/case 'SET_GRADE':[\s\S]*?\/\/ 1問の回答結果/)?.[0]
+assert.ok(gradeSection, 'SET_GRADE case not found before the ANSWER case')
+const caseStarts = [...gradeSection.matchAll(/case '[A-Z_]+':/g)].map((m) => m.index)
+assert.ok(caseStarts.length > 0, 'no case labels found in SET_GRADE section')
+for (let i = 0; i < caseStarts.length; i++) {
+  const start = caseStarts[i]
+  const end = i + 1 < caseStarts.length ? caseStarts[i + 1] : gradeSection.length
+  const block = gradeSection.slice(start, end)
+  assert.match(block, /\breturn\b/, `reducer case "${block.slice(0, 30)}..." has no return (would fall through)`)
+}
 
 const oldSave = {
   version: 3,
