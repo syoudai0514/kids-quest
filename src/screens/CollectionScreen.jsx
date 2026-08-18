@@ -1,12 +1,10 @@
-// ============================================================
-// なかま ずかん（モンスター収集ビュー）
-// 出会ったモンスターは色つき＋説明、まだのモンスターは「？」。
-// タップで名前と説明を読み上げる。
-// ============================================================
-
-import React, { useState } from 'react'
+// なかま図鑑 + 3体チーム + 個体育成
+import React, { useMemo, useState } from 'react'
 import { useGame } from '../state/GameContext.jsx'
-import { MONSTERS } from '../data/monsters.js'
+import { MONSTERS, MONSTER_BY_ID } from '../data/monsters.js'
+import { withReleasedMonsterAsset } from '../data/monsterAssets.js'
+import { companionBattleStats, companionForMonster, companionLevel, evolutionStatus, formStatus, subjectCount, xpForLevel } from '../engine/monsterProgress.js'
+import { TYPES, typeOfElement } from '../engine/battle.js'
 import Monster from '../components/Monster.jsx'
 import { AppHeader, Starfield } from '../components/common.jsx'
 import { speak } from '../engine/tts.js'
@@ -14,110 +12,166 @@ import { sfx } from '../engine/sfx.js'
 
 const PAGE_SIZE = 100
 
+function visualMonster(monsterId, asset = null) {
+  const monster = MONSTER_BY_ID[monsterId]
+  return monster ? withReleasedMonsterAsset({ ...monster, heroAsset: asset || monster.heroAsset }) : null
+}
+
+function requirementText(status) {
+  if (!status?.available) return null
+  return status.ready ? 'じゅんび OK！' : status.missing[0] || 'もうすこし'
+}
+
+function requirementDetails(status) {
+  if (!status?.available) return ''
+  return status.ready ? 'ボタンを おして しんかしよう！' : `あと ${status.missing.join(' ・ ')}`
+}
+
 export default function CollectionScreen({ onBack }) {
-  const { state } = useGame()
+  const { state, dispatch } = useGame()
   const unlocked = new Set(state.unlockedMonsters)
   const [page, setPage] = useState(0)
+  const [selectedMonsterId, setSelectedMonsterId] = useState(null)
   const pageCount = Math.ceil(MONSTERS.length / PAGE_SIZE)
   const pageMonsters = MONSTERS.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-  const unlockedInPage = pageMonsters.filter((m) => unlocked.has(m.id)).length
+  const unlockedInPage = pageMonsters.filter((monster) => unlocked.has(monster.id)).length
 
-  const tap = (m, isUnlocked) => {
-    if (isUnlocked) {
-      // なかまは「鳴き声」つき（idから音程が決まる）
-      let seed = 0
-      for (const ch of m.id) seed += ch.charCodeAt(0)
-      sfx.cry(seed)
-      speak(`${m.name}。 ${m.desc}`)
-    } else {
-      sfx.star()
-      speak('まだ であって いない なかま。バトルで さがそう！')
+  const selectedPair = selectedMonsterId ? companionForMonster(state, selectedMonsterId) : null
+  const selectedCompanionId = selectedPair?.[0] || null
+  const selectedCompanion = selectedPair?.[1] || null
+  const selectedVisual = selectedCompanion
+    ? visualMonster(selectedCompanion.currentMonsterId)
+    : selectedMonsterId ? visualMonster(selectedMonsterId) : null
+  const level = selectedCompanion ? companionLevel(selectedCompanion.xp) : 1
+  const nextXp = level >= 99 ? 0 : xpForLevel(level + 1) - (selectedCompanion?.xp || 0)
+  const evolution = selectedCompanionId ? evolutionStatus(state, selectedCompanionId) : null
+  const awakening = selectedCompanionId ? formStatus(state, selectedCompanionId, 'awakening') : null
+  const giga = selectedCompanionId ? formStatus(state, selectedCompanionId, 'giga') : null
+  const selectedType = selectedVisual ? TYPES[typeOfElement(selectedVisual.element)] : TYPES.hoshi
+  const battleStats = companionBattleStats(selectedCompanion)
+  const selectedInParty = selectedCompanionId ? state.party.includes(selectedCompanionId) : false
+  const partyFull = state.party.length >= 3
+  const partyPosition = selectedCompanionId ? state.party.indexOf(selectedCompanionId) : -1
+  const evolutionTarget = evolution?.nextMonsterId ? MONSTER_BY_ID[evolution.nextMonsterId] : null
+
+  const partyCards = useMemo(() => (state.party || []).map((companionId) => {
+    const companion = state.companions[companionId]
+    return companion ? { companionId, companion, visual: visualMonster(companion.currentMonsterId) } : null
+  }).filter(Boolean), [state.party, state.companions])
+
+  const tap = (monster, isUnlocked) => {
+    if (!isUnlocked) {
+      sfx.star(); speak('まだ であって いない なかま。バトルで さがそう！'); return
     }
+    let seed = 0
+    for (const char of monster.id) seed += char.charCodeAt(0)
+    sfx.cry(seed)
+    setSelectedMonsterId(monster.id)
+    speak(`${monster.name}。 ${monster.desc}`)
+  }
+
+  const evolve = () => {
+    if (!evolution?.ready) return
+    const next = MONSTER_BY_ID[evolution.nextMonsterId]
+    dispatch({ type: 'EVOLVE_COMPANION', companionId: selectedCompanionId })
+    sfx.fanfare(); speak(`おめでとう！ ${next.name}に しんかしたよ！`)
+  }
+
+  const unlockMonsterForm = (kind, status) => {
+    if (!status?.ready) return
+    dispatch({ type: 'UNLOCK_MONSTER_FORM', companionId: selectedCompanionId, kind })
+    sfx.fanfare()
+    speak(kind === 'awakening' ? 'スターかくせいが できるように なったよ！' : 'ギガスターが できるように なったよ！')
   }
 
   return (
-    <div className="screen fade-in">
+    <div className="screen fade-in collection-screen">
       <Starfield />
-      <AppHeader
-        onBack={onBack}
-        title="📒 なかま ずかん"
-        right={<div className="pill">{unlocked.size} / {MONSTERS.length}</div>}
-      />
+      <AppHeader onBack={onBack} title="📒 なかま・そだてる" right={<div className="pill">{unlocked.size} / {MONSTERS.length}</div>} />
 
-      {/* ページ切替（100体ずつ） */}
-      <div className="row" style={{ justifyContent: 'center', gap: 12, padding: '2px 0 8px' }}>
-        <button
-          className="btn btn--ghost"
-          style={{ minHeight: 56, padding: '8px 20px' }}
-          disabled={page === 0}
-          onClick={() => { sfx.tap(); setPage((p) => p - 1) }}
-        >
-          ◀
-        </button>
-        <div className="pill">
-          {page + 1} / {pageCount}ページ（このページ {unlockedInPage}/{pageMonsters.length}）
+      <section className="party-strip" aria-label="いまのチーム">
+        <div className="party-strip__title">⭐ チーム {partyCards.length}/3</div>
+        <div className="party-strip__members">
+          {partyCards.map(({ companionId, companion, visual }, index) => {
+            const type = TYPES[typeOfElement(visual.element)]
+            return (
+            <button key={companionId} className={`party-chip${state.activeCompanionId === companionId ? ' party-chip--active' : ''}`} onClick={() => setSelectedMonsterId(companion.currentMonsterId)}>
+              <Monster monster={visual} size={54} bounce={false} />
+              <span>{index + 1}. {visual.name}</span><small>{type.emoji} {type.name}・Lv.{companionLevel(companion.xp)}</small>
+            </button>
+            )
+          })}
         </div>
-        <button
-          className="btn btn--ghost"
-          style={{ minHeight: 56, padding: '8px 20px' }}
-          disabled={page >= pageCount - 1}
-          onClick={() => { sfx.tap(); setPage((p) => p + 1) }}
-        >
-          ▶
-        </button>
+        <div className="party-strip__hint">「たたかう」を えらんだ こが バトルに でるよ</div>
+      </section>
+
+      <div className="row collection-pager">
+        <button className="btn btn--ghost" disabled={page === 0} onClick={() => { sfx.tap(); setPage((value) => value - 1) }}>◀</button>
+        <div className="pill">{page + 1}/{pageCount}（{unlockedInPage}/{pageMonsters.length}）</div>
+        <button className="btn btn--ghost" disabled={page >= pageCount - 1} onClick={() => { sfx.tap(); setPage((value) => value + 1) }}>▶</button>
       </div>
 
-      <div className="scroll-y" style={{ flex: 1, padding: '6px 4px 24px' }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-            gap: 16,
-            maxWidth: 980,
-            margin: '0 auto'
-          }}
-        >
-          {pageMonsters.map((m) => {
-            const isUnlocked = unlocked.has(m.id)
+      <div className="scroll-y collection-scroll">
+        <div className="collection-grid">
+          {pageMonsters.map((monster) => {
+            const isUnlocked = unlocked.has(monster.id)
+            const pair = isUnlocked ? companionForMonster(state, monster.id) : null
+            const isActive = pair?.[0] === state.activeCompanionId
+            const evolution = pair ? evolutionStatus(state, pair[0]) : null
+            const type = TYPES[typeOfElement(monster.element)]
             return (
-              <button
-                key={m.id}
-                className="card"
-                onClick={() => tap(m, isUnlocked)}
-                style={{
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  opacity: isUnlocked ? 1 : 0.6,
-                  border: m.role === 'partner' ? '3px solid var(--accent)' : undefined
-                }}
-              >
-                {isUnlocked ? (
-                  <Monster monster={m} size={110} bounce={false} />
-                ) : (
-                  <div
-                    style={{
-                      height: 110,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 70,
-                      filter: 'grayscale(1) brightness(0.5)'
-                    }}
-                  >
-                    ❔
-                  </div>
-                )}
-                <div style={{ fontWeight: 900, marginTop: 6, fontSize: 'clamp(15px,2.6vw,20px)' }}>
-                  {isUnlocked ? m.name : '？？？'}
-                </div>
-                <div className="muted" style={{ fontSize: 12 }}>
-                  {isUnlocked ? m.element : 'みっけよう'}
-                </div>
+              <button key={monster.id} className={`card collection-card${isActive ? ' collection-card--active' : ''}`} onClick={() => tap(monster, isUnlocked)}>
+                {isUnlocked ? <Monster monster={visualMonster(monster.id)} size={104} bounce={false} /> : <div className="collection-unknown">❔</div>}
+                <div className="collection-card__name">{isUnlocked ? monster.name : '？？？'}</div>
+                <div className="muted collection-card__meta">{isUnlocked ? `${type.emoji} ${type.name}${pair ? `・Lv.${companionLevel(pair[1].xp)}` : ''}` : 'みっけよう'}</div>
+                {isActive && <span className="collection-card__active">⚔️ たたかう</span>}
+                {evolution?.ready && <span className="collection-card__evolve">🌱 しんか できる！</span>}
               </button>
             )
           })}
         </div>
       </div>
+
+      {selectedVisual && (
+        <div className="monster-detail-backdrop" role="presentation" onClick={() => setSelectedMonsterId(null)}>
+          <section className="monster-detail" role="dialog" aria-modal="true" aria-label={`${selectedVisual.name}の育成`} onClick={(event) => event.stopPropagation()}>
+            <button className="monster-detail__close" onClick={() => setSelectedMonsterId(null)} aria-label="とじる">✕</button>
+            <div className="monster-detail__hero">
+              <Monster monster={selectedVisual} size={150} bounce={false} />
+              <div><h2>{selectedVisual.name}</h2><div className="pill">Lv.{level}</div><div className="muted">{selectedType.emoji} {selectedType.name}タイプ</div></div>
+            </div>
+            <div className="monster-detail__description">{selectedVisual.desc}</div>
+
+            {selectedCompanion ? (
+              <>
+                <div className="monster-xp-bar"><span style={{ width: level >= 99 ? '100%' : `${Math.max(4, 100 - nextXp / Math.max(1, xpForLevel(level + 1) - xpForLevel(level)) * 100)}%` }} /></div>
+                <div className="monster-detail__goal">{level >= 99 ? 'さいこうレベル！' : `つぎまで あと ${nextXp} XP`}</div>
+                <div className="monster-detail__power"><span>❤️ げんき {battleStats.hp}</span><span>⚔️ ちから {battleStats.attack}</span></div>
+                <div className="monster-detail__affinity">{selectedType.emoji} {selectedType.name}の わざは <strong>1.25ばい</strong>！　レベルアップで げんき・ちからUP</div>
+                {evolution?.available ? (
+                  <div className={`evolution-panel${evolution.ready ? ' evolution-panel--ready' : ''}`}>
+                    <strong>🌱 しんか：{evolutionTarget?.name}</strong>
+                    <span>{requirementDetails(evolution)}</span>
+                    <button className="btn btn--primary" disabled={!evolution.ready} onClick={evolve}>{evolution.ready ? `🌱 ${evolutionTarget?.name}に しんか！` : '🌱 しんかまで がんばろう'}</button>
+                  </div>
+                ) : <div className="evolution-panel evolution-panel--complete">🌱 しんか：このこは さいごの すがた！</div>}
+                <div className="monster-detail__stats"><span>📚 {selectedCompanion.learningXp} XP</span><span>⚔️ {selectedCompanion.battleXp} XP</span><span>📅 {selectedCompanion.trainedDays}にち</span><span>📖 {subjectCount(selectedCompanion.domainMask)}きょうか</span></div>
+                <div className="monster-detail__actions">
+                  <button className="btn btn--primary" disabled={state.activeCompanionId === selectedCompanionId} onClick={() => dispatch({ type: 'SET_ACTIVE_COMPANION', companionId: selectedCompanionId })}>{state.activeCompanionId === selectedCompanionId ? '⚔️ いま たたかう' : '⚔️ このこで たたかう'}</button>
+                  <button className="btn btn--ghost" disabled={(selectedInParty && state.party.length <= 1) || (!selectedInParty && partyFull)} onClick={() => dispatch({ type: 'TOGGLE_PARTY_COMPANION', companionId: selectedCompanionId })}>{selectedInParty ? (state.party.length <= 1 ? 'ひとりは のこそう' : 'チームから はずす') : (partyFull ? 'チームは 3びき' : 'チームに いれる')}</button>
+                </div>
+                {selectedInParty && <div className="party-order-actions" aria-label="チームのならびかえ">
+                  <span>⭐ チーム {partyPosition + 1}ばんめ</span>
+                  <button className="btn btn--ghost" disabled={partyPosition <= 0} onClick={() => dispatch({ type: 'MOVE_PARTY_COMPANION', companionId: selectedCompanionId, direction: 'forward' })}>⬅️ まえへ</button>
+                  <button className="btn btn--ghost" disabled={partyPosition < 0 || partyPosition >= state.party.length - 1} onClick={() => dispatch({ type: 'MOVE_PARTY_COMPANION', companionId: selectedCompanionId, direction: 'back' })}>➡️ うしろへ</button>
+                </div>}
+                {awakening?.available && <button className="growth-goal" disabled={!awakening.ready || awakening.unlocked} onClick={() => unlockMonsterForm('awakening', awakening)}><strong>✨ スターかくせい</strong><span>{awakening.unlocked ? 'つかえるよ！' : requirementText(awakening)}</span></button>}
+                {giga?.available && <button className="growth-goal" disabled={!giga.ready || giga.unlocked} onClick={() => unlockMonsterForm('giga', giga)}><strong>🌟 ギガスター</strong><span>{giga.unlocked ? 'つかえるよ！' : requirementText(giga)}</span></button>}
+              </>
+            ) : <div className="muted">バトルで つかまえると そだてられるよ</div>}
+          </section>
+        </div>
+      )}
     </div>
   )
 }

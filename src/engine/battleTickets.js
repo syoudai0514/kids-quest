@@ -7,6 +7,24 @@
 
 export const BATTLE_TICKET_TTL_DAYS = 7
 
+// バトルは「勉強を終えた日のごほうび」。前日までに取ったチケットも、
+// 当日のミッションを終えるまでは使えないようにして、ゲームだけ先に
+// 遊べてしまう抜け道をなくす。
+export function dailyBattleUnlocked(daily) {
+  return daily?.coreDone === true
+}
+
+export function basicBattlePlaysLeft(battle = {}, daily) {
+  if (!dailyBattleUnlocked(daily)) return 0
+  const limit = Math.max(0, Math.floor(Number(battle.dailyLimit) || 0))
+  const used = Math.max(0, Math.floor(Number(battle.playsUsed) || 0))
+  return Math.max(0, limit - used)
+}
+
+export function canBattleToday(battle = {}, daily) {
+  return dailyBattleUnlocked(daily) && (basicBattlePlaysLeft(battle, daily) > 0 || (battle.tickets || 0) > 0)
+}
+
 function dateFromKey(dateKey) {
   return new Date(`${dateKey}T12:00:00`)
 }
@@ -46,6 +64,8 @@ export function normalizeBattleTickets(battle = {}, today) {
 }
 
 export function grantBattleTicket(battle, today) {
+  // 日ごとの上限は設けない。条件を満たす追加問題を続けて解けた分だけ、
+  // 7日間使えるチケットとして積み上がる。
   const current = normalizeBattleTickets(battle, today)
   const ticket = { earnedOn: today, expiresOn: dateKeyAfter(today, BATTLE_TICKET_TTL_DAYS) }
   const ticketGrants = [...current.ticketGrants, ticket]

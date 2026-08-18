@@ -49,6 +49,9 @@ function pick(arr) {
 
 export default function ActivityPlayer({ task, onDone }) {
   const { state, dispatch } = useGame()
+  const monsterRewardKeyRef = useRef(
+    `${state.daily.date}:${task.kind}:${state.daily.tasksClearedToday}:${task.domainId || 'mixed'}:${Date.now().toString(36)}`
+  )
   // とっくんタスクは1問ごとに分野が変わる
   const isReviewTask = task.kind === 'review' && Array.isArray(task.plan)
   const focusUnitRef = useRef(
@@ -287,7 +290,15 @@ export default function ActivityPlayer({ task, onDone }) {
       const accuracy = t.total ? t.correct / t.total : 1
       // 「読まずに連打」が半分以上なら 不正あつかい
       const suspicious = t.total >= 2 && t.fastWrong >= Math.ceil(t.total / 2)
-      dispatch({ type: 'CLEAR_TASK', kind: task.kind, accuracy, suspicious })
+      dispatch({
+        type: 'CLEAR_TASK',
+        kind: task.kind,
+        domainId: task.domainId,
+        accuracy,
+        correctCount: t.correct,
+        suspicious,
+        rewardKey: monsterRewardKeyRef.current
+      })
       sfx.reward()
       // 追加問題でチケット条件を満たした場合は、この後に報酬オーバーレイが
       // チケット獲得文を読み上げる。ここでも同じ文を読むと、完了音声の途中で
@@ -404,6 +415,7 @@ export default function ActivityPlayer({ task, onDone }) {
     dispatch({
       type: 'ANSWER',
       domainId: domainIdRef.current,
+      taskKind: task.kind,
       correct,
       itemKey,
       unitId: question.unitId,

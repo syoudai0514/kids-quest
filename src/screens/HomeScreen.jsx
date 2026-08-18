@@ -16,10 +16,11 @@ import {
   equippedWeapon,
   starTrialInfo
 } from '../state/GameContext.jsx'
-import { getPartner, partnerStage, MONSTERS } from '../data/monsters.js'
+import { getPartner, partnerStage } from '../data/monsters.js'
 import { currentPlanet, nextPlanet } from '../data/planets.js'
 import { GRADES, gradeOf, MAX_GRADE } from '../data/grades.js'
 import { buildOkawariTask, buildExtraTask, OKAWARI_MAX } from '../engine/missions.js'
+import { basicBattlePlaysLeft, canBattleToday, dailyBattleUnlocked } from '../engine/battleTickets.js'
 import { domainsForGrade, DOMAIN_BY_ID, domainName } from '../engine/activities.js'
 import Monster from '../components/Monster.jsx'
 import { Starfield, useSpeakOnMount } from '../components/common.jsx'
@@ -74,9 +75,10 @@ export default function HomeScreen({ onStartTask, onGo }) {
   const coreLeft = daily.coreTasks.length - daily.coreIndex
   const okawariLeft = OKAWARI_MAX - daily.okawariIndex
 
-  const battlePlaysLeft = Math.max(0, state.battle.dailyLimit - state.battle.playsUsed)
+  const battleUnlocked = dailyBattleUnlocked(daily)
+  const battlePlaysLeft = basicBattlePlaysLeft(state.battle, daily)
   const battleTickets = state.battle.tickets
-  const canBattle = battlePlaysLeft > 0 || battleTickets > 0
+  const canBattle = canBattleToday(state.battle, daily)
 
   const [bubble, setBubble] = useState(null)
   const [showGradePicker, setShowGradePicker] = useState(false)
@@ -121,8 +123,13 @@ export default function HomeScreen({ onStartTask, onGo }) {
     onStartTask(buildOkawariTask(daily.okawariIndex, state.grade))
   }
   const startExtra = () => {
+    if (!battleUnlocked) {
+      sfx.wrongSoft()
+      speak('ついかもんだいは、きょうの ミッションを クリアしてから。クリアすると バトルが 3かい あそべるよ！')
+      return
+    }
     sfx.tap()
-    speak('ついか もんだいに ちょうせん！ 3もん中 2もん できたら、バトルチケットが もらえるよ。ゆっくり よんで こたえよう！')
+    speak('ついか もんだいに ちょうせん！ 3もん中 2もん できたら、バトルチケットが もらえるよ。同じ きょうかは、できるほど むずかしく なるよ！')
     onStartTask(buildExtraTask(daily.extraIndex, state.grade))
   }
 
@@ -284,7 +291,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
             <span className="menu-tile__emoji">⚔️</span>
             <span className="menu-tile__label">バトル</span>
             <span className="menu-tile__sub">
-              {canBattle ? `あと ${battlePlaysLeft + battleTickets}かい` : 'ついかもんだいで ふやせる！'}
+              {canBattle ? `あと ${battlePlaysLeft + battleTickets}かい` : battleUnlocked ? 'ついかもんだいで ふやせる！' : `ミッション あと ${coreLeft}つで 3かい！`}
             </span>
             {battleTickets > 0 && <span className="notice-badge">🎟{battleTickets}</span>}
           </button>
@@ -296,7 +303,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
           >
             <span className="menu-tile__emoji">🎟️</span>
             <span className="menu-tile__label">ついかもんだい</span>
-            <span className="menu-tile__sub">2/3せいかいで チケット</span>
+            <span className="menu-tile__sub">{battleUnlocked ? '2/3せいかいで チケット' : 'ミッションの あとで！'}</span>
           </button>
 
           <button
@@ -321,8 +328,8 @@ export default function HomeScreen({ onStartTask, onGo }) {
             }}
           >
             <span className="menu-tile__emoji">📒</span>
-            <span className="menu-tile__label">ずかん</span>
-            <span className="menu-tile__sub">{state.unlockedMonsters.length} / {MONSTERS.length}</span>
+            <span className="menu-tile__label">なかま・そだてる</span>
+            <span className="menu-tile__sub">チーム {state.party?.length || 1}/3・ゲージ {state.starGauge || 0}</span>
           </button>
 
           <button

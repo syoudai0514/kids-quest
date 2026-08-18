@@ -15,7 +15,8 @@ import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../src/engine/pr
 import { questionForUnit } from '../src/engine/unitQuestions.js'
 import { makeTrialQuestions } from '../src/engine/trialQuestions.js'
 import { reinforcementExtraCount, reinforcementTargetIndex } from '../src/engine/reinforcement.js'
-import { BATTLE_TICKET_TTL_DAYS, grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../src/engine/battleTickets.js'
+import { BATTLE_TICKET_TTL_DAYS, basicBattlePlaysLeft, canBattleToday, dailyBattleUnlocked, grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../src/engine/battleTickets.js'
+import { applyResult, makeSkill } from '../src/engine/difficulty.js'
 import { lowerGradeProgress } from '../src/engine/gradeReset.js'
 import { scheduleAnswer } from '../src/engine/srs.js'
 
@@ -212,6 +213,14 @@ must(normalizeBattleTickets({ tickets: 2 }, ticketToday).tickets === 2, '旧セ�
 must(normalizeBattleTickets(earnedTicket, '2026-08-12').tickets === 1, '日付をまたぐとチケットが消える')
 must(normalizeBattleTickets(earnedTicket, '2026-08-19').tickets === 0, '期限切れチケットが残る')
 must(spendBattleTicket({ tickets: 2, ticketGrants: [{ expiresOn: '2026-08-12' }, { expiresOn: '2026-08-18' }] }, '2026-08-11').ticketGrants[0].expiresOn === '2026-08-18', '期限が近いチケットから使わない')
+const lockedBattleDaily = { coreDone: false }
+const unlockedBattleDaily = { coreDone: true }
+const dailyBattle = { dailyLimit: 3, playsUsed: 1, tickets: 4 }
+must(!dailyBattleUnlocked(lockedBattleDaily) && basicBattlePlaysLeft(dailyBattle, lockedBattleDaily) === 0 && !canBattleToday(dailyBattle, lockedBattleDaily), '勉強ノルマ前に基本バトルやチケットを使えてしまう')
+must(dailyBattleUnlocked(unlockedBattleDaily) && basicBattlePlaysLeft(dailyBattle, unlockedBattleDaily) === 2 && canBattleToday(dailyBattle, unlockedBattleDaily), '勉強ノルマ後に基本3戦を正しく解放できない')
+let favoriteSubject = makeSkill()
+for (let index = 0; index < 4; index++) favoriteSubject = applyResult(favoriteSubject, true).skill
+must(favoriteSubject.level > makeSkill().level, '同じ得意教科を続けても難易度が上がらない')
 
 const practiceState = { unitStats: { 3: { rika: { a: { attempts: 2, nextDue: 10, lastPresentedDate: 9, firstAttemptCorrect: 2 }, b: { attempts: 2, nextDue: 30, lastPresentedDate: 1, firstAttemptCorrect: 0 } } } } }
 must(selectPracticeUnit(practiceState, 3, 'rika', ['a', 'b'], 20) === 'a', '期限到来単元を混合練習で優先できない')

@@ -82,16 +82,21 @@ export function battleHpBonus(weapon) {
 
 /** わざのダメージ。そうびの こうげき力(weapon.atk)が そのまま のる。
  *  → 良い武器を そうびすると少し有利。ただし属性を選ぶ方が大事。 */
-export function rollDamage(move, enemyType, partnerLv = 1, weapon = null) {
+export function moveAffinityMultiplier(moveType, companionType) {
+  return moveType && companionType && moveType === companionType ? 1.25 : 1
+}
+
+export function rollDamage(move, enemyType, partnerLv = 1, weapon = null, attackBonus = 0, companionType = null) {
   // レベルが上がるほど わざも強くなる（相棒の成長を実感できるように）
   const growth = 1 + partnerLv * 0.018
   const base =
     Math.floor((move.min + Math.random() * (move.max - move.min + 1)) * growth) +
-    battleAttackBonus(weapon)
+    battleAttackBonus(weapon) + Math.max(0, Math.floor(attackBonus || 0))
   const mult = effectiveness(move.type, enemyType)
+  const affinityMult = moveAffinityMultiplier(move.type, companionType)
   const crit = Math.random() < CRIT_CHANCE
-  const dmg = Math.max(1, Math.round(base * mult * (crit ? CRIT_MULT : 1)))
-  return { dmg, mult, crit }
+  const dmg = Math.max(1, Math.round(base * mult * affinityMult * (crit ? CRIT_MULT : 1)))
+  return { dmg, mult, affinityMult, crit }
 }
 
 // 敵のレベル: 相棒のレベルより ややゆっくり上がる（×0.85）。
@@ -117,8 +122,8 @@ export function enemyMaxHp(enemyLevel, elite = false) {
   const base = 36 + enemyLevel * 4
   return Math.round(elite ? base * 1.28 : base)
 }
-export function partnerMaxHp(level, weapon = null) {
-  return 58 + level * 6 + battleHpBonus(weapon)
+export function partnerMaxHp(level, weapon = null, hpBonus = 0) {
+  return Math.max(36, 58 + level * 6 + battleHpBonus(weapon) + Math.round(hpBonus || 0))
 }
 export function enemyDamage(enemyLevel, elite = false) {
   const base = 3 + enemyLevel * 0.65

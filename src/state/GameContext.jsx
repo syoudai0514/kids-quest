@@ -25,9 +25,22 @@ import { advanceEnglishProgress, emptyEnglishProgress, englishDueEntries } from 
 import { recordUnitResult, promotionResult, unitLedger, unitReady } from '../engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../engine/englishMigration.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../engine/progressMigration.js'
-import { grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../engine/battleTickets.js'
+import { basicBattlePlaysLeft, dailyBattleUnlocked, grantBattleTicket, normalizeBattleTickets, spendBattleTicket } from '../engine/battleTickets.js'
 import { freshDailyMission, lowerGradeProgress } from '../engine/gradeReset.js'
 import { activeReviewSrs, activeStatsDomainId } from '../engine/reviewMode.js'
+import {
+  catchCompanion,
+  consumeStarGauge,
+  evolveCompanion,
+  grantBattleResult,
+  grantLearningAnswerXp,
+  grantLearningTaskXp,
+  movePartyCompanion,
+  normalizeMonsterProgress,
+  setActiveCompanion,
+  togglePartyCompanion,
+  unlockForm
+} from '../engine/monsterProgress.js'
 export { activeReviewSrs, activeStatsDomainId } from '../engine/reviewMode.js'
 
 // 1日3戦は自由に遊べる。さらに、教科をやりきる・追加問題を正解すると
@@ -203,7 +216,7 @@ function migrateOld(saved) {
 // v3 はそのまま引き継ぎ、旧 v1/v2 は移行、未知は新規から作る。
 function normalizeProfileSaved(saved) {
   let base
-  if (saved && saved.version === 3) {
+  if (saved && (saved.version === 3 || saved.version === 4)) {
     const fresh = createInitialState()
     base = {
       ...fresh,
@@ -292,12 +305,21 @@ function normalizeProfileSaved(saved) {
       battleTutorialsSeen: base.rewardProgress.battleTutorialsSeen || 0
     }
   }
+  const normalizedDaily = { ...freshDailyMission(base.daily?.date || todayKey(), base.grade || 0), ...(base.daily || {}) }
   base = {
     ...base,
-    daily: { ...freshDailyMission(base.daily?.date || todayKey(), base.grade || 0), ...(base.daily || {}) },
+    // coreDone がなかった古い当日セーブも、すでに最後まで終えていれば
+    // 今日の基本3戦を失わないように補完する。
+    daily: {
+      ...normalizedDaily,
+      coreDone: normalizedDaily.coreDone === true || normalizedDaily.coreIndex >= normalizedDaily.coreTasks.length
+    },
     battle: { ...freshBattle(base.battle?.date || todayKey()), ...(base.battle || {}), dailyLimit: BATTLE_DAILY_LIMIT }
   }
   base = { ...base, battle: normalizeBattleTickets(base.battle, todayKey()) }
+  // セーブv4の仲間rosterは既存項目へ加えるだけにする。旧図鑑・全体XP・
+  // 学習/SRS/チケットは変更せず、既捕獲IDから冪等に補完する。
+  base = normalizeMonsterProgress(base, base.partnerId || 'hoshu')
   // すでに先の学年へ進んでいた子が、テスト制になって戻されないようにする
   //（これまでの解放は そのまま みとめる）
   if (base.gradeMax > 0) {
@@ -545,7 +567,7 @@ function reduceProfile(state, action) {
       let acc = { c: prevAcc.c + (correct ? 1 : 0), n: prevAcc.n + 1 }
       if (acc.n > 20) acc = { c: Math.round(acc.c / 2), n: Math.round(acc.n / 2) } // 直近を重く見る
 
-      return {
+      const next = {
         ...state,
         domainAccuracy: { ...state.domainAccuracy, [accKey]: acc },
         skills: { ...state.skills, [grade]: newGradeSkills },
@@ -567,6 +589,11 @@ function reduceProfile(state, action) {
           perDomainToday: addDomainTally(state.daily.perDomainToday, domainId, correct)
         }
       }
+      // 追加問題はタスク完了時に連打判定できるまで保留する。
+      // 合格時だけ CLEAR_TASK で正解分をまとめて付与するため、
+      // suspicious な追加問題から育成XPが漏れない。
+      const isExtraTask = ['extra', 'okawari', 'free'].includes(action.taskKind)
+      return isExtraTask ? next : grantLearningAnswerXp(next, { xpGain, domainId, dayKey: today })
     }
 
     case 'ENGLISH_SPEAKING_DONE': {
@@ -606,19 +633,12 @@ function reduceProfile(state, action) {
       if (kind === 'core') {
         const coreIndex = state.daily.coreIndex + 1
         daily = { ...daily, coreIndex, coreDone: coreIndex >= state.daily.coreTasks.length }
-        // 1日3戦は自由。2教科・5教科を終えると追加戦を1回ずつ解放する。
-        // 「正解数」ではなく教科を最後までやった行動に対して渡すので、連打の近道にならない。
-        if ([2, state.daily.coreTasks.length].includes(coreIndex) && !(daily.battleUnlocks || []).includes(coreIndex)) {
-          battle = grantBattleTicket(battle, todayKey())
-          daily = {
-            ...daily,
-            ticketsEarnedToday: daily.ticketsEarnedToday + 1,
-            battleUnlocks: [...(daily.battleUnlocks || []), coreIndex]
-          }
-          celebration.ticket = true
-          celebration.ticketMessage = coreIndex === 2
-            ? '2つの きょうかを がんばったから、ついかバトルが あそべるよ！'
-            : 'きょうの きょうかを ぜんぶ がんばったから、ついかバトルが あそべるよ！'
+        // きょうのノルマを全部終えたら、はじめて基本3戦を解放する。
+        // コア途中でチケットを渡すと、追加問題を経由してゲームだけを
+        // 先に遊べてしまうため、チケットは「ノルマ後の追加問題」専用にする。
+        if (daily.coreDone && !dailyBattleUnlocked(state.daily)) {
+          daily = { ...daily, battleUnlocks: [...(daily.battleUnlocks || []), coreIndex] }
+          celebration.battleUnlocked = true
         }
       } else if (kind === 'okawari') {
         daily = { ...daily, okawariIndex: state.daily.okawariIndex + 1 }
@@ -629,7 +649,9 @@ function reduceProfile(state, action) {
         // 能力ではなく行動だけを調整するため、苦手でも安心して取り組める。
         daily = { ...daily, extraIndex: state.daily.extraIndex + 1 }
         const acc = typeof action.accuracy === 'number' ? action.accuracy : 0
-        if (action.suspicious) {
+        if (!dailyBattleUnlocked(state.daily)) {
+          celebration.ticketReason = 'まずは きょうの ミッションを クリアしよう！ クリアしたら ついかもんだいで チケットが もらえるよ'
+        } else if (action.suspicious) {
           const lost = Math.min(1, battle.tickets)
           battle = lost ? spendBattleTicket(battle, todayKey()) : battle
           celebration.ticketPenalty = lost > 0 ? lost : 0
@@ -667,7 +689,7 @@ function reduceProfile(state, action) {
         celebration.gradeUp = state.pendingGradeUp
       }
 
-      return {
+      const next = {
         ...state,
         totalClears,
         xp: state.xp + celebration.xpGain,
@@ -678,6 +700,14 @@ function reduceProfile(state, action) {
         pendingGradeUp: null,
         pendingCelebration: celebration
       }
+      return grantLearningTaskXp(next, {
+        kind,
+        domainId: action.domainId,
+        dayKey: today,
+        correctCount: action.correctCount,
+        suspicious: action.suspicious,
+        rewardKey: action.rewardKey
+      })
     }
 
     case 'CLEAR_CELEBRATION':
@@ -685,7 +715,8 @@ function reduceProfile(state, action) {
 
     case 'CONSUME_BATTLE_PLAY': {
       const b = state.battle
-      if (b.playsUsed < b.dailyLimit) {
+      if (!dailyBattleUnlocked(state.daily)) return state
+      if (basicBattlePlaysLeft(b, state.daily) > 0) {
         return {
           ...state,
           battle: { ...b, playsUsed: b.playsUsed + 1 },
@@ -723,7 +754,7 @@ function reduceProfile(state, action) {
         if (weaponScore(got) > weaponScore(getWeapon(equipped))) equipped = action.weaponId
       }
 
-      return {
+      let next = {
         ...state,
         starShards: state.starShards + shardGain,
         rewardProgress: {
@@ -741,7 +772,31 @@ function reduceProfile(state, action) {
           ? [...state.unlockedMonsters, action.caughtId]
           : state.unlockedMonsters
       }
+      next = grantBattleResult(next, { won: true, enemyId: action.enemyId, elite: action.elite })
+      if (caught) next = catchCompanion(next, action.caughtId)
+      return next
     }
+
+    case 'BATTLE_LOST':
+      return grantBattleResult(state, { won: false, enemyId: action.enemyId, elite: action.elite })
+
+    case 'SET_ACTIVE_COMPANION':
+      return setActiveCompanion(state, action.companionId)
+
+    case 'TOGGLE_PARTY_COMPANION':
+      return togglePartyCompanion(state, action.companionId)
+
+    case 'MOVE_PARTY_COMPANION':
+      return movePartyCompanion(state, action.companionId, action.direction)
+
+    case 'EVOLVE_COMPANION':
+      return evolveCompanion(state, action.companionId)
+
+    case 'UNLOCK_MONSTER_FORM':
+      return unlockForm(state, action.companionId, action.kind)
+
+    case 'CONSUME_STAR_GAUGE':
+      return consumeStarGauge(state)
 
     // ミッションでやる教科を えらぶ（順番の入れかえだけ）。
     // 全教科をひととおり やる のは変わらないので バランスは保たれる。
