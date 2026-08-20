@@ -46,7 +46,7 @@ export { activeReviewSrs, activeStatsDomainId } from '../engine/reviewMode.js'
 // 1日3戦は自由に遊べる。さらに、教科をやりきる・追加問題を正解すると
 // チケットで増えていく。「がんばるほど遊べる」を保ちつつ、以前より
 // 遊べる回数が減らないようにしている（連打でチケットを稼ぐ対策は別途）。
-const BATTLE_DAILY_LIMIT = 3
+const BATTLE_DAILY_LIMIT = 0
 // 1回のとっくんで出す上限（溜まりすぎて心が折れないように）
 export const REVIEW_BATCH_MAX = 8
 
@@ -315,6 +315,14 @@ function normalizeProfileSaved(saved) {
       coreDone: normalizedDaily.coreDone === true || normalizedDaily.coreIndex >= normalizedDaily.coreTasks.length
     },
     battle: { ...freshBattle(base.battle?.date || todayKey()), ...(base.battle || {}), dailyLimit: BATTLE_DAILY_LIMIT }
+  }
+  // v4以前の「当日3回」は、達成済みのノルマ分を失わせない。未使用分だけを
+  // 一度だけ期限付きチケットへ移す（再起動しても二重に増やさない）。
+  if (!base.battle.basicTicketsMigrated && !Array.isArray(saved?.battle?.ticketGrants)) {
+    const remaining = base.daily.coreDone ? Math.max(0, (Number(saved?.battle?.dailyLimit) || 3) - (Number(saved?.battle?.playsUsed) || 0)) : 0
+    let migratedBattle = base.battle
+    for (let i = 0; i < remaining; i += 1) migratedBattle = grantBattleTicket(migratedBattle, todayKey())
+    base = { ...base, battle: { ...migratedBattle, basicTicketsMigrated: true } }
   }
   base = { ...base, battle: normalizeBattleTickets(base.battle, todayKey()) }
   // セーブv4の仲間rosterは既存項目へ加えるだけにする。旧図鑑・全体XP・
@@ -638,6 +646,9 @@ function reduceProfile(state, action) {
         // 先に遊べてしまうため、チケットは「ノルマ後の追加問題」専用にする。
         if (daily.coreDone && !dailyBattleUnlocked(state.daily)) {
           daily = { ...daily, battleUnlocks: [...(daily.battleUnlocks || []), coreIndex] }
+          // 基本ノルマ達成の報酬は「その日だけの回数」ではなく、7日間保持する
+          // チケット3枚。既存セーブの dailyLimit は移行で0へ寄せ、0時に消えない。
+          battle = grantBattleTicket(grantBattleTicket(grantBattleTicket(battle, todayKey()), todayKey()), todayKey())
           celebration.battleUnlocked = true
         }
       } else if (kind === 'okawari') {
@@ -652,13 +663,9 @@ function reduceProfile(state, action) {
         if (!dailyBattleUnlocked(state.daily)) {
           celebration.ticketReason = 'まずは きょうの ミッションを クリアしよう！ クリアしたら ついかもんだいで チケットが もらえるよ'
         } else if (action.suspicious) {
-          const lost = Math.min(1, battle.tickets)
-          battle = lost ? spendBattleTicket(battle, todayKey()) : battle
-          celebration.ticketPenalty = lost > 0 ? lost : 0
-          celebration.ticketReason = lost > 0
-            ? 'はやおしが つづいたから、チケットが 1まい へったよ'
-            : 'はやおしが つづいたから、こんかいは チケットなしだよ'
-          celebration.xpGain = 1
+          // 疑わしい回答ではXPを減らさず、追加チケットだけ保留する。
+          // 既に得たチケットを奪わないので、苦手な子の挑戦意欲を壊さない。
+          celebration.ticketReason = 'ゆっくり もんだいを みて 3もん とこう！ できたら ごほうび さいかい！'
         } else if (acc >= 2 / 3) {
           battle = grantBattleTicket(battle, todayKey())
           daily = { ...daily, ticketsEarnedToday: daily.ticketsEarnedToday + 1 }
@@ -714,6 +721,10 @@ function reduceProfile(state, action) {
       return { ...state, pendingCelebration: null }
 
     case 'CONSUME_BATTLE_PLAY': {
+      // チケットは開始時ではなく勝利確定時にだけ使う。遭遇の固定は
+      // manaEvo.js の状態遷移で保持するため、敗北・逃走・再読込で減らない。
+      return state
+      /* legacy daily-play path (kept below for migration reference)
       const b = state.battle
       if (!dailyBattleUnlocked(state.daily)) return state
       if (basicBattlePlaysLeft(b, state.daily) > 0) {
@@ -737,10 +748,11 @@ function reduceProfile(state, action) {
         }
       }
       return state
+      */
     }
 
     case 'BATTLE_WON': {
-      const b = state.battle
+      const b = spendBattleTicket(state.battle, todayKey())
       const caught = action.caughtId && !state.unlockedMonsters.includes(action.caughtId)
       const shardGain = action.elite ? 12 : 6
 

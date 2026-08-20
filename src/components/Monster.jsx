@@ -244,7 +244,7 @@ export default function Monster({ monster, colorsOverride, size = 160, bounce = 
   const animation = pose === 'attack' ? 'monsterAttack 0.42s ease-out' : pose === 'hurt' ? 'monsterHurt 0.42s ease' : pose === 'win' ? 'monsterWin 0.7s ease-in-out infinite' : bounce ? 'twinkle 2.4s ease-in-out infinite' : 'none'
   const [heroImageFailed, setHeroImageFailed] = useState(false)
 
-  // GitHub Pages ではアプリが /kids-quest/ 配下で公開される。
+  // GitHub Pages ではアプリが /mana-evo/ 配下で公開される。
   // `/monsters/...` のような先頭スラッシュ付きURLだと github.io の最上位を
   // 見にいってしまうため、Vite が公開先ごとに設定する BASE_URL を必ず通す。
   const heroAssetUrl = monster.heroAsset

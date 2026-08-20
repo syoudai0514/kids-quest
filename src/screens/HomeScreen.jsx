@@ -86,7 +86,7 @@ export default function HomeScreen({ onStartTask, onGo }) {
 
   const greeting = useMemo(() => {
     if (coreDone) return 'きょうの ミッション ぜんぶ クリア！ すごい！'
-    if (daily.coreIndex === 0) return `${planet.name}から しゅっぱつ！ きょうの ミッションだ！`
+    if (daily.coreIndex === 0) return `まなぶと マナが うまれる。${planet.name}から しゅっぱつ！`
     return `あと ${coreLeft}こで つぎの ほしに ちかづくよ！`
   }, [coreDone, daily.coreIndex, coreLeft, planet.name])
 

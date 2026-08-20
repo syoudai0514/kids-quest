@@ -1,9 +1,9 @@
 {
-  "name": "kids-quest",
+  "name": "mana-evo",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "宇宙と恐竜を旅する5歳児向け毎日ミッション学習アプリ",
+  "description": "まなびが、進化になる。子ども向け学習アドベンチャーPWA",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -21,8 +21,9 @@
     "test:monster-art-converter": "python scripts/test-monster-art-converter.py",
     "test:monster-identity-gate": "node scripts/verify-monster-identity-base.mjs",
     "test:content": "node scripts/verify-content.mjs",
+    "test:mana-evo": "node scripts/test-mana-evo.mjs",
     "test:english": "node scripts/verify-english.mjs",
-    "check": "npm run test:monster-identity-gate && npm run test:monster-master && npm run test:monster-progress && npm run test:monster-art && npm run test:monster-art-converter && npm run test:content && npm run test:english && npm run test:learning-integrity && npm run test:tts-cache && npm run build"
+    "check": "npm run test:mana-evo && npm run test:monster-identity-gate && npm run test:monster-master && npm run test:monster-progress && npm run test:monster-art && npm run test:monster-art-converter && npm run test:content && npm run test:english && npm run test:learning-integrity && npm run test:tts-cache && npm run build"
   },
   "dependencies": {
     "onnxruntime-web": "^1.24.3",
