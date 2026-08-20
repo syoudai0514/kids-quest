@@ -3,18 +3,13 @@
 // 進捗・収集・設定をまとめて1キーに保存する。
 // ============================================================
 
-import { LEGACY_STORAGE_KEY, MANA_EVO_STORAGE_KEY, migrateManaEvoState } from './manaEvo.js'
-
-const KEY = MANA_EVO_STORAGE_KEY
+const KEY = 'hoshizora-quest:v1'
 
 export function loadState() {
   try {
-    const raw = localStorage.getItem(KEY) || localStorage.getItem(LEGACY_STORAGE_KEY)
+    const raw = localStorage.getItem(KEY)
     if (!raw) return null
-    const migrated = migrateManaEvoState(JSON.parse(raw), todayKey())
-    // 旧キーは消さない。書込み前の失敗時でも、次回起動で安全に再試行できる。
-    localStorage.setItem(KEY, JSON.stringify(migrated))
-    return migrated
+    return JSON.parse(raw)
   } catch (_) {
     return null
   }
@@ -38,8 +33,7 @@ export function clearState() {
 
 // ---- 機種変更用: データのエクスポート / インポート ----
 // 端末内保存なので、引っ越し（機種変更）のために手動で書き出し／読み込みできる。
-export const EXPORT_MARKER = 'mana-evo-save'
-const LEGACY_EXPORT_MARKER = 'hoshizora-quest-save'
+export const EXPORT_MARKER = 'hoshizora-quest-save'
 
 export function serializeForExport(state) {
   return JSON.stringify(
@@ -53,12 +47,12 @@ export function serializeForExport(state) {
 export function parseImport(text) {
   const obj = JSON.parse(text) // 不正な JSON はここで例外
   // 正式なエクスポート封筒
-  if (obj && (obj.marker === EXPORT_MARKER || obj.marker === LEGACY_EXPORT_MARKER) && obj.state && typeof obj.state === 'object') {
-    return migrateManaEvoState(obj.state, todayKey())
+  if (obj && obj.marker === EXPORT_MARKER && obj.state && typeof obj.state === 'object') {
+    return obj.state
   }
   // 素のセーブ本体（念のため受け入れる）
   if (obj && typeof obj === 'object' && (obj.version || obj.skills || obj.unlockedMonsters)) {
-    return migrateManaEvoState(obj, todayKey())
+    return obj
   }
   throw new Error('ひきつぎデータの形式が ちがいます')
 }

@@ -682,7 +682,7 @@ export default function ParentScreen({ onBack }) {
                   <button
                     className="btn btn--ghost"
                     style={{ minHeight: 44, padding: '7px 14px' }}
-                    onClick={() => speak('こんにちは。マナエボだよ！ ゆっくり きいてね。')}
+                    onClick={() => speak('こんにちは。ほしぞらクエストだよ！ ゆっくり きいてね。')}
                   >
                     🔊 ためす
                   </button>

@@ -29,8 +29,6 @@ export default function App() {
   const [screen, setScreen] = useState('home')
   const [activeTask, setActiveTask] = useState(null)
 
-  useEffect(() => { document.title = 'マナエボ' }, [])
-
   // 最初のタップで音声と効果音を解錠（ブラウザの自動再生制限対策）
   useEffect(() => {
     const unlock = () => {

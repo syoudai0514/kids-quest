@@ -41,7 +41,7 @@ export default function OnboardingScreen() {
 
   const start = () => {
     sfx.fanfare()
-    speak('しゅっぱつ しんこう！ マナエボの はじまりだ！ まなぶと マナが うまれるよ。')
+    speak('しゅっぱつ しんこう！ ほしぞらクエストの はじまりだ！')
     dispatch({ type: 'ONBOARD', color })
   }
 
@@ -51,10 +51,10 @@ export default function OnboardingScreen() {
       <Confetti pieces={20} />
       <div className="center-col">
         <div style={{ fontSize: 'clamp(24px,4.5vw,40px)', fontWeight: 900, textAlign: 'center' }}>
-          ✨ マナエボ
+          🚀 ほしぞらクエスト
         </div>
 
-        <div className="bubble">まなぶと「マナ」が生まれる。マナの力で冒険し、仲間を育て、進化させよう。</div>
+        <div className="bubble">こんにちは！ ぼく、ホッシュ！ いっしょに うちゅうを たびしよう！</div>
 
         <Monster monster={partner} colorsOverride={colors} size={180} />
 
