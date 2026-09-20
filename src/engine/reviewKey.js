@@ -78,12 +78,24 @@ export function snapshotQuestion(question, reviewKey = reviewKeyFor(question)) {
   return { ...snapshot, reviewKey, reinforcement: true }
 }
 
+const DYNAMIC_RELATIVE_ITEM_KEYS = new Set(['s:todayDate', 's:todayWeek', 's:relativeDay'])
+
+function isDynamicRelativeQuestion(domainId, question) {
+  if (domainId !== 'seikatsu' || !question) return false
+  return DYNAMIC_RELATIVE_ITEM_KEYS.has(String(question.itemKey || '').split('#')[0])
+}
+
 // 算数の翌日以降は同じskillIdの類題を作るので、式のスナップショットは永続化しない。
+// 「きょう／きのう／あした」を含む生活問題も、保存した設問を翌日に再利用すると
+// 日付・曜日の正解が古いまま残るため、知識IDだけ保持して毎回その日の問題を再生成する。
 export function persistentReviewSnapshot(domainId, question, reviewKey = reviewKeyFor(question)) {
-  return domainId === 'suuji' ? null : snapshotQuestion(question, reviewKey)
+  if (domainId === 'suuji' || isDynamicRelativeQuestion(domainId, question)) return null
+  return snapshotQuestion(question, reviewKey)
 }
 
 export function savedReviewQuestion(state, domainId, reviewKey) {
   const question = state.reviewQuestions?.[domainId]?.[reviewKey]
+  // 旧saveに残っている相対日付スナップショットも無効化し、現在日で再生成する。
+  if (isDynamicRelativeQuestion(domainId, question)) return null
   return question ? withQuestionIds({ ...question, reviewKey }) : null
 }
