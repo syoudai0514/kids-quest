@@ -200,16 +200,42 @@ export function trialUnlocked(state, grade = state.grade) {
 }
 
 // 画面表示・保存・学年解放で必ず同じ判定を使う。
+// しれんは「別日2回」が契約なので、同じ日のroundを2回分として数えない。
+// candidateRound は結果画面の保存前評価にも使うため day が無ければ今日を補う。
 export function promotionResult(state, grade, candidateRound = null) {
-  const rounds = [...(state.starTrials?.[grade]?.rounds || []).slice(-1), ...(candidateRound ? [candidateRound] : [])]
+  const saved = state.starTrials?.[grade]?.rounds || []
+  const candidate = candidateRound ? { ...candidateRound, day: candidateRound.day ?? dayNumber() } : null
+  const allRounds = candidate ? [...saved, candidate] : [...saved]
+  const distinctByDay = new Map()
+  allRounds.forEach((round, index) => {
+    const key = round?.day == null ? `legacy:${index}` : `day:${round.day}`
+    distinctByDay.set(key, round)
+  })
+  const rounds = [...distinctByDay.values()].slice(-2)
   const correct = rounds.reduce((sum, round) => sum + (round.correct || 0), 0)
   const total = rounds.reduce((sum, round) => sum + (round.total || 0), 0)
   const gate = trialUnlocked(state, grade)
-  const scorePassed = total >= 12 && correct >= 9
+  const scoredOnTwoDays = rounds.length === 2 && rounds.every((round) => round?.day != null)
+    ? rounds[0].day !== rounds[1].day
+    : rounds.length === 2
+  const scorePassed = scoredOnTwoDays && total >= 12 && correct >= 9
   const requiredDomains = unitLedger(grade).map((entry) => entry.domainId).filter((id, index, all) => all.indexOf(id) === index)
   const correctDomains = new Set(rounds.flatMap((round) => round.correctDomains || []))
   const domainsPassed = requiredDomains.every((id) => correctDomains.has(id))
   return { rounds, correct, total, scorePassed, domainsPassed, requiredDomains, correctDomains: [...correctDomains], missingUnits: gate.missing, passed: scorePassed && domainsPassed && gate.unlocked }
+}
+
+function itemRequirementForUnit(grade, domainId, unitId, previousRequirement) {
+  // 算数は同じ技能の別日類題で確認するため、通常／hardとも1つのskillIdでよい。
+  if (domainId === 'suuji' || domainId === 'hard:suuji') return 1
+  // 生成済み書字グループに1文字だけの端数があっても、存在しない2文字目を
+  // 要求して進級不能にしない。複数文字グループは従来どおり異なる2文字を要求する。
+  if (domainId === 'kaku') {
+    const groupId = String(unitId || '').match(/^writing:\d+:(.+)$/)?.[1]
+    const group = groupId && (WRITING_GROUPS_BY_GRADE[grade] || []).find((entry) => entry.id === groupId)
+    if (group?.chars?.length) return Math.min(2, group.chars.length)
+  }
+  return previousRequirement
 }
 
 export function recordUnitResult(stats, grade, domainId, unitId, correct, day, itemKey) {
@@ -219,6 +245,15 @@ export function recordUnitResult(stats, grade, domainId, unitId, correct, day, i
   const previous = byDomain[unitId] || { attempts: 0, firstAttemptCorrect: 0, successDays: [], itemKeys: [], lastPresentedDate: null, nextDue: null }
   const successDays = correct && !previous.successDays?.includes(day) ? [...(previous.successDays || []), day].slice(-12) : previous.successDays || []
   const itemKeys = itemKey && !previous.itemKeys?.includes(itemKey) ? [...(previous.itemKeys || []), itemKey].slice(-24) : previous.itemKeys || []
-  const next = { ...previous, attempts: (previous.attempts || 0) + 1, firstAttemptCorrect: (previous.firstAttemptCorrect || 0) + (correct ? 1 : 0), successDays, itemKeys, itemRequirement: domainId === 'suuji' ? 1 : previous.itemRequirement, lastPresentedDate: day, nextDue: correct ? day + 1 : day }
+  const next = {
+    ...previous,
+    attempts: (previous.attempts || 0) + 1,
+    firstAttemptCorrect: (previous.firstAttemptCorrect || 0) + (correct ? 1 : 0),
+    successDays,
+    itemKeys,
+    itemRequirement: itemRequirementForUnit(grade, domainId, unitId, previous.itemRequirement),
+    lastPresentedDate: day,
+    nextDue: correct ? day + 1 : day
+  }
   return { ...stats, [grade]: { ...byGrade, [domainId]: { ...byDomain, [unitId]: next } } }
 }
