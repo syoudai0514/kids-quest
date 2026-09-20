@@ -68,13 +68,19 @@ export default function ActivityPlayer({ task, onDone }) {
       if (isReviewTask || task.kind !== 'core') return null
       const g = state.grade
       const dId = task.domainId
+      const focusUnit = focusUnitRef.current
+      // 英語・道徳はunit台帳を持たないため、空の「を ならおう」授業を作らない。
+      if (!focusUnit) return null
+      // hard専用台帳を使う教科にnormal単元の授業を混ぜない。hard教材側の
+      // 専用導入が定義されるまでは、そのまま問題へ進む方が誤学習を防げる。
+      if (activeStatsDomainId(state, dId) !== dId) return null
       const seen = state.lessonSeen?.[`${g}:${dId}`] || 0
       const review = needsReviewLesson(state, dId, g)
-      const unitSeen = unitStatsFor(state, g, dId)[focusUnitRef.current]
+      const unitSeen = unitStatsFor(state, g, dId)[focusUnit]
       if (unitSeen?.attempts > 0 && seen > 0 && !review) return null
       // 既存レッスンを seed=0 で流用すると、分数の前にわり算を教える。
       // 単元専用が無い場合も、別単元の説明ではなくこの単元の導入を表示する。
-      return { lesson: lessonForUnit(focusUnitRef.current), isReview: review && seen > 0, domainId: dId, grade: g }
+      return { lesson: lessonForUnit(focusUnit, g), isReview: review && seen > 0, domainId: dId, grade: g }
     })()
   ).current
   const [inLesson, setInLesson] = useState(!!lessonPlan)
