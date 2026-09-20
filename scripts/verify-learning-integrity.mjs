@@ -7,8 +7,9 @@ import { DOMAIN_BY_ID } from '../src/engine/activities.js'
 import { unitLedger, requiredUnitIds, unitReady, recordUnitResult, promotionResult, lessonForUnit, selectPracticeUnit, withLearningUnit } from '../src/engine/learningUnits.js'
 import { migrateEnglishWordStats } from '../src/engine/englishMigration.js'
 import { englishDueEntries } from '../src/engine/englishProgress.js'
-import { generatorReviewKey, questionIds, withQuestionIds, persistentReviewSnapshot, snapshotQuestion } from '../src/engine/reviewKey.js'
+import { generatorReviewKey, questionIds, withQuestionIds, persistentReviewSnapshot, savedReviewQuestion, snapshotQuestion } from '../src/engine/reviewKey.js'
 import { generateHardRikaQuestion } from '../src/data/content/hard/rika-hard.js'
+import { generateHardPuzzleQuestion } from '../src/data/content/hard/suuji-puzzle-hard.js'
 import { activeReviewSrs, activeStatsDomainId } from '../src/engine/reviewMode.js'
 import { buildCoreMission } from '../src/engine/missions.js'
 import { migrateLearningProgress, UNIT_PROGRESS_VERSION } from '../src/engine/progressMigration.js'
@@ -38,6 +39,14 @@ for (let i = 0; i < 40 && mathB.questionInstanceId === mathA.questionInstanceId;
 must(mathA.knowledgeId === 'skill:math:add3digit' && mathB.knowledgeId === mathA.knowledgeId, '算数knowledgeIdがskillId単位でない')
 must(mathB.questionInstanceId !== mathA.questionInstanceId, '算数の異なる数値をquestionInstanceIdで分けられない')
 must(persistentReviewSnapshot('suuji', mathA, mathA.knowledgeId) === null, '算数SRSに同じ式のスナップショットを保存している')
+
+// 日付・曜日が変わる生活問題は設問スナップショットを永続化せず、旧saveも再利用しない。
+for (const itemKey of ['s:todayDate', 's:todayWeek', 's:relativeDay']) {
+  const dynamic = withQuestionIds({ domain: 'seikatsu', itemKey, answerId: 'old', choices: [{ id: 'old', label: 'old' }] })
+  const key = dynamic.knowledgeId
+  must(persistentReviewSnapshot('seikatsu', dynamic, key) === null, `${itemKey}: 相対日付問題を永続化した`)
+  must(savedReviewQuestion({ reviewQuestions: { seikatsu: { [key]: dynamic } } }, 'seikatsu', key) === null, `${itemKey}: 旧saveの相対日付問題を再利用した`)
+}
 
 // hard算数のSRSは通常算数と混ぜず、保存したknowledgeIdから同じhard問題を
 // とっくんで再生成できる。反対モードの記録は消さず、一覧だけ切り替える。
@@ -80,6 +89,13 @@ must(normalReviewSrs.rika && !normalReviewSrs['hard:rika'], 'normalモードの�
 must(normalReviewSrs.shakai && !normalReviewSrs['hard:shakai'], 'normalモードのとっくんにhardしゃかいが混入')
 must(normalReviewSrs.doutoku, 'normalモードでどうとくのとっくんが消えた')
 
+// hard算数もnormal算数と同じく「技能の別日確認」でMASTERできる。
+let hardMathStats = {}
+for (const day of [1, 1, 2, 2]) {
+  hardMathStats = recordUnitResult(hardMathStats, 1, 'hard:suuji', 'hard:math:jrOokisaKurabe', true, day, 'skill:hard:math:jrOokisaKurabe')
+}
+must(unitReady(hardMathStats[1]['hard:suuji']['hard:math:jrOokisaKurabe']), 'hard算数が2日成功してもMASTERにならない')
+
 // 英語キー・図鑑指定練習・アルファベット22項目。
 for (const [raw, normalized] of [['en:ew001', 'enw:ew001'], ['enw:ew001', 'enw:ew001'], ['enp:ep001', 'enp:ep001'], ['ena:A-B', 'ena:A-B']]) must(normalizeEnglishKey(raw) === normalized, `${raw}: 英語キーの正規化に失敗`)
 const alphabetOrder = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -96,6 +112,16 @@ for (const pair of alphabetPairs) {
 }
 const firstAlphabetGroup = new Set(['ena:A-B', 'ena:B-C', 'ena:C-D', 'ena:D-E'])
 for (let i = 0; i < 80; i++) must(firstAlphabetGroup.has(generateEnglishQuestion({ grade: 0, englishAudioAvailable: true, taskForm: 'alphabet', englishAlphabetStats: {}, questionIndex: i }, null).itemKey), 'アルファベットがAからの小グループで始まらない')
+// 音声が使えない端末では、stage=2でもListen専用の文字名問題へ入らない。
+const noAudioAlphabet = generateEnglishQuestion({ grade: 0, englishAudioAvailable: false, reviewKey: 'ena:A-B', englishAlphabetStats: { 'A-B': { stage: 2 } } }, 'ena:A-B')
+must(noAudioAlphabet.form !== 'alphabet-name' && !noAudioAlphabet.promptEnglishAudio, '音声なし端末でListen専用アルファベット問題を出した')
+
+const catWord = ENGLISH_WORDS.find((word) => word.english.toLowerCase() === 'cat')
+if (catWord) {
+  const spelling = generateEnglishQuestion({ grade: 1, englishAudioAvailable: false, forceForm: 'spelling', reviewKey: `enw:${catWord.id}` }, `enw:${catWord.id}`)
+  must(spelling.form === 'spelling' && spelling.visual?.text?.includes(catWord.japanese), 'スペル穴埋めに意味手掛かりがなく正解が一意に定まらない')
+}
+
 const learnedFirstGroup = Object.fromEntries([...firstAlphabetGroup].map((key) => [key.slice(4), { stage: 1, nextDue: 99999 }]))
 const secondAlphabetGroup = new Set(['ena:E-F', 'ena:F-G', 'ena:G-H', 'ena:H-I'])
 for (let i = 0; i < 80; i++) must(secondAlphabetGroup.has(generateEnglishQuestion({ grade: 0, englishAudioAvailable: true, taskForm: 'alphabet', englishAlphabetStats: learnedFirstGroup, questionIndex: i }, null).itemKey), '次のアルファベット小グループを順に解放できない')
@@ -178,6 +204,14 @@ for (const [name, expectations] of [['理科', RIKA_UNIT_EXPECTATIONS], ['社会
 let mathStats = {}
 for (const day of [1, 1, 2, 2]) mathStats = recordUnitResult(mathStats, 0, 'suuji', 'math:add10', true, day, 'skill:math:add10')
 must(unitReady(mathStats[0].suuji['math:add10']), '算数のskillId単位の別日習得を判定できない')
+// 1文字だけの端数書字単元でも、存在しない2文字目を要求して進級不能にしない。
+const singleWritingGroup = (WRITING_GROUPS_BY_GRADE[0] || []).find((group) => group.chars.length === 1)
+if (singleWritingGroup) {
+  const unitId = `writing:0:${singleWritingGroup.id}`
+  let writingStats = {}
+  for (const day of [1, 1, 2, 2]) writingStats = recordUnitResult(writingStats, 0, 'kaku', unitId, true, day, `char:0:${singleWritingGroup.chars[0]}`)
+  must(unitReady(writingStats[0].kaku[unitId]), `${unitId}: 1文字単元が2種類条件で永久にMASTERできない`)
+}
 let sameDay = {}
 for (let i = 0; i < 4; i++) sameDay = recordUnitResult(sameDay, 0, 'suuji', 'math:add10', true, 1, 'skill:math:add10')
 must(!unitReady(sameDay[0].suuji['math:add10']), '同日連打で単元を習得した')
@@ -227,6 +261,15 @@ must(selectPracticeUnit(practiceState, 3, 'rika', ['a', 'b'], 20) === 'a', '期�
 
 // しれん: 6問、主要教科を全て含み、前日単元を可能な限り避ける。
 const trialBase = { skills: { 3: {} }, starTrials: {} }
+// Astra LQ-03: 年長・小1でランダム生成を繰り返しても、試練は必ず6問になる。
+for (const grade of [0, 1]) {
+  for (let i = 0; i < 500; i++) {
+    const trial = makeTrialQuestions({ skills: { [grade]: {} }, starTrials: {} }, grade)
+    must(trial.length === 6, `小${grade}: しれんが6問未満になった (${trial.length}/6)`)
+    must(trial.every((q) => q.type === 'choice' || q.type === 'trace'), `小${grade}: 採点不能形式がしれんへ混入した`)
+  }
+}
+
 const firstTrial = makeTrialQuestions(trialBase, 3)
 must(firstTrial.length === 6 && new Set(firstTrial.map((q) => q.unitId)).size === 6, 'しれんを6問の異なる単元で層化できない')
 const requiredDomains3 = new Set(unitLedger(3).map((unit) => unit.domainId))
@@ -252,6 +295,13 @@ const major0 = [...new Set(unitLedger(0).map((unit) => unit.domainId))]
 const promotionState = { unitStats: { 0: readyByDomain }, starTrials: { 0: { rounds: [{ correct: 5, total: 6, correctDomains: major0 }] } } }
 must(promotionResult(promotionState, 0, { correct: 4, total: 6, correctDomains: major0 }).passed, '共通進級判定が合格にならない')
 must(!promotionResult({ ...promotionState, starTrials: { 0: { rounds: [{ correct: 5, total: 6, correctDomains: ['yomu'] }] } } }, 0, { correct: 4, total: 6, correctDomains: ['yomu'] }).passed, '主要教科ゼロ正解でも進級できた')
+const datedRound1 = { correct: 5, total: 6, correctDomains: major0, day: 100 }
+const datedRound2 = { correct: 4, total: 6, correctDomains: major0, day: 101 }
+const datedState = { ...promotionState, starTrials: { 0: { rounds: [datedRound1, datedRound2] } } }
+must(promotionResult(datedState, 0).passed, '保存済みの別日2roundを共通進級判定が読めない')
+must(!promotionResult({ ...promotionState, starTrials: { 0: { rounds: [datedRound1] } } }, 0, { ...datedRound2, day: 100 }).passed, '同日の2roundで進級できた')
+const deduped = promotionResult(datedState, 0, datedRound2)
+must(deduped.total === 12 && deduped.correct === 9 && deduped.passed, '保存済みroundとcandidateを二重加算した')
 
 for (let grade = 0; grade <= 6; grade++) for (const { unitId } of unitLedger(grade)) {
   const lesson = lessonForUnit(unitId)
@@ -270,6 +320,17 @@ for (let grade = 0; grade <= 6; grade++) {
   }
   must(sameCounts(tasks, grade <= 2 ? expectedLowTasks : expectedHighTasks), `小${grade}: 週間タスク固定期待値が不一致 ${JSON.stringify(tasks)}`)
   must(sameCounts(questions, grade <= 2 ? expectedLowQuestions : expectedHighQuestions), `小${grade}: 週間問題数が不一致 ${JSON.stringify(questions)}`)
+}
+
+// Astra LQ-01: 2つの比較ヒントから最大が必ず一意に決まる。
+for (let i = 0; i < 1000; i++) {
+  const q = generateHardPuzzleQuestion({ grade: 1, choiceCount: 4 }, 'hard:n:jrOokisaKurabe')
+  const labels = q.choices.map((choice) => choice.id)
+  const objects = new Set()
+  const relation = /(あかい ボール|あおい ボール|きいろい ボール)は (あかい ボール|あおい ボール|きいろい ボール)より (?:おもい|おおきい)/g
+  for (const match of q.visual.text.matchAll(relation)) objects.add(match[2])
+  const possibleMax = labels.filter((label) => !objects.has(label))
+  must(possibleMax.length === 1 && possibleMax[0] === q.answerId, `おおきさくらべの最大が一意でない: ${q.visual.text}`)
 }
 
 const moral = new Map()
