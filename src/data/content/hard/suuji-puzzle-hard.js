@@ -121,23 +121,22 @@ const PUZZLE_BUILDERS = {
     })
   },
 
-  // おおきさくらべ: 2つのヒントから、いちばん おおきい（おもい）ものを すいりする。
+  // おおきさくらべ: 2つのヒントだけで大小順が一意に決まる推理問題。
+  // ランダムな2比較を作ると A>B かつ B<C のように A/C が比較不能になり、
+  // 正答が一つに定まらないケースが生まれる。必ず「1位>2位>3位」の鎖を作る。
   jrOokisaKurabe() {
-    const labels = shuffle(['あかい ボール', 'あおい ボール', 'きいろい ボール'])
-    const [a, b, c] = labels
-    const ranks = shuffle([1, 2, 3])
-    const vmap = new Map([[a, ranks[0]], [b, ranks[1]], [c, ranks[2]]])
+    const [first, second, third] = shuffle(['あかい ボール', 'あおい ボール', 'きいろい ボール'])
     const attr = pick([{ big: 'おもい', small: 'かるい' }, { big: 'おおきい', small: 'ちいさい' }])
-    const cmp1 = vmap.get(a) > vmap.get(b) ? attr.big : attr.small
-    const cmp2 = vmap.get(b) > vmap.get(c) ? attr.big : attr.small
-    const order = [a, b, c].sort((x, y) => vmap.get(y) - vmap.get(x))
-    const [first, second, third] = order
+    const clues = shuffle([
+      `${first}は ${second}より ${attr.big}`,
+      `${second}は ${third}より ${attr.big}`
+    ])
     return choiceQ('jrOokisaKurabe', {
-      visual: { kind: 'sentence', text: `${a}は ${b}より ${cmp1}。${b}は ${c}より ${cmp2}。` },
+      visual: { kind: 'sentence', text: `${clues[0]}。${clues[1]}。` },
       instruction: `いちばん ${attr.big}のは どれ？`,
-      speak: `${a}は ${b}より ${cmp1}です。${b}は ${c}より ${cmp2}です。いちばん ${attr.big}のは どれでしょう？`,
+      speak: `${clues[0]}です。${clues[1]}です。いちばん ${attr.big}のは どれでしょう？`,
       answer: first,
-      choices: [a, b, c].map((label) => ({ id: label, label })),
+      choices: shuffle([first, second, third]).map((label) => ({ id: label, label })),
       explain: `${first}が いちばん ${attr.big}、${second}が つぎ、${third}が いちばん ${attr.small}だよ`
     })
   },
