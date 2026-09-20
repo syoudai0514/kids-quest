@@ -284,9 +284,19 @@ function spellingQuestion(word) {
   const answer = word.english[index].toLowerCase()
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const options = shuffle([answer, ...shuffle(alphabet.filter((letter) => letter !== answer)).slice(0, 3)])
-  // ここで単語を音で読んでしまうと、空欄の答えまで先に教えてしまう。
-  // スペル問題は、見えている文字だけを手がかりに考えさせる。
-  return { ...wordBase(word), type: 'choice', form: 'spelling', visual: { kind: 'bigtext', text: `${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` }, instruction: 'ぬけた アルファベットを えらぼう', speak: 'ぬけた アルファベットを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })), answerId: `letter:${answer}`, explain: `${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ` }
+  // c_t のように複数の実在語が成立する穴埋めは、見えている綴りだけでは正解が
+  // 一意に決まらない。日本語の意味を必ず添え、どの単語を完成させるかを明示する。
+  return {
+    ...wordBase(word),
+    type: 'choice',
+    form: 'spelling',
+    visual: { kind: 'sentence', text: `${word.japanese}\n${word.english.slice(0, index)} _ ${word.english.slice(index + 1)}` },
+    instruction: `「${word.japanese}」の ぬけた アルファベットを えらぼう`,
+    speak: `${word.japanese}。ぬけた アルファベットを えらぼう。`,
+    choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter.toUpperCase() })),
+    answerId: `letter:${answer}`,
+    explain: `${word.japanese} は ${word.english}。${word.english} の まんなかの もじは ${answer.toUpperCase()} だよ`
+  }
 }
 function alphabetQuestion(params = {}, reviewKey = null) {
   const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -313,7 +323,7 @@ function alphabetQuestion(params = {}, reviewKey = null) {
     const options = shuffle([answer, ...shuffle(lower.filter((letter) => letter !== answer)).slice(0, 3)])
     return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-lowercase', visual: { kind: 'bigtext', text: base }, instruction: 'おなじ もじの こもじを えらぼう', speak: 'おなじ もじの こもじを えらぼう。', choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${answer}`, answerWord: { text: `${base}, ${answer}` }, explain: `${base} の こもじは ${answer} だよ` }
   }
-  if (variant === 2) {
+  if (variant === 2 && params.englishAudioAvailable !== false) {
     const options = shuffle([base, ...shuffle(order.filter((letter) => letter !== base)).slice(0, 3)])
     return { domain: 'english', itemKey, type: 'choice', form: 'alphabet-name', visual: { kind: 'bigtext', text: '🔊 Listen!' }, instruction: 'きこえた もじを えらぼう', speak: 'えいごの もじの なまえを きこう。', promptEnglishAudio: base, autoPlayPrompt: true, practiceEnglish: base, choices: options.map((letter) => ({ id: `letter:${letter}`, label: letter })), answerId: `letter:${base}`, answerWord: { text: base }, explain: `きこえた もじは ${base} だよ` }
   }
