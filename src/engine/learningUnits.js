@@ -135,11 +135,28 @@ const MATH_LESSON_GROUPS = [
 ]
 const MATH_LESSONS = Object.fromEntries(MATH_LESSON_GROUPS.flatMap(([kinds, points]) => kinds.map((kind) => [kind, points])))
 
-export function lessonForUnit(unitId) {
+export function lessonForUnit(unitId, grade = null) {
   const label = unitLabel(unitId)
   const id = String(unitId || '')
   const topic = id.split(':').at(-1)
   let points = MATH_LESSONS[topic] || RIKA_LESSON_POINTS[id] || SHAKAI_LESSON_POINTS[id]
+  // 年長では位取り・くり上がりを未習の前提にし、今の単元だけを具体物で説明する。
+  // 同じkindを上の学年でも使うため、教材本体ではなくlesson表示だけ学年で分ける。
+  if (grade === 0 && id.startsWith('math:')) {
+    if (['count', 'countKeypad'].includes(topic)) {
+      points = [
+        'ものを1こずつ指さしながら、1・2・3…と一つずつ数える',
+        'たとえば ●●●● なら、最後に言った「4」がぜんぶの数',
+        '数えたものを飛ばしたり、同じものを2回数えたりしないようにしよう'
+      ]
+    } else if (['add10', 'addKeypad'].includes(topic)) {
+      points = [
+        'たし算は、二つのグループをいっしょにして「ぜんぶでいくつ」を考える',
+        '3こと2こをいっしょにすると、1・2・3・4・5で 3+2=5',
+        '10までなら、絵や指で一つずつ確かめながら答えて大丈夫'
+      ]
+    }
+  }
   if (id.startsWith('life:')) points = ({
     calendar: ['カレンダーは月・日・曜日を組み合わせて読む', '前の日と次の日は、月をまたぐと数字が大きく変わる', '月ごとの日数と行事を、実際のカレンダーで確かめよう'],
     weekday: ['曜日は月・火・水・木・金・土・日の7日でくり返す', '今日の次が明日、今日の前が昨日の曜日', '日付が変わると曜日も一つ進むことを忘れない'],
