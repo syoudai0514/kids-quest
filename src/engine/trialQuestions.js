@@ -22,41 +22,61 @@ export function makeTrialQuestions(state, grade, questionCount = 6) {
   const order = shuffle(choiceDomains)
 
   const makeForUnit = (domain, unitId, forceWriting = false) => {
-    const params = { ...difficultyParams(state.skills?.[grade]?.[domain.id] || {}), grade, unitId }
-    const mathKind = unitId?.match(/^math:(.+)$/)?.[1]
-    const generated = domain.generateQuestion(params, mathKind ? `n:${mathKind}` : null)
-    if (!generated) return null
-    const enriched = withQuestionIds(withLearningUnit(forceWriting ? { ...generated, stage: 'free' } : generated, grade))
-    if (enriched.unitId !== unitId) return null
-    if (forceWriting) return enriched.type === 'trace' ? enriched : null
-    return enriched.type === 'choice' && enriched.choices?.length ? enriched : null
+    // 同じ単元でもgeneratorが複数形式を返すことがある。試練画面が採点できる
+    // choice / trace が出るまで少数回だけ再生成し、1回の不適合で6問全体を欠損させない。
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const params = { ...difficultyParams(state.skills?.[grade]?.[domain.id] || {}), grade, unitId }
+      const mathKind = unitId?.match(/^math:(.+)$/)?.[1]
+      const generated = domain.generateQuestion(params, mathKind ? `n:${mathKind}` : null)
+      if (!generated) continue
+      const enriched = withQuestionIds(withLearningUnit(forceWriting ? { ...generated, stage: 'free' } : generated, grade))
+      if (enriched.unitId !== unitId) continue
+      if (forceWriting) {
+        if (enriched.type === 'trace') return enriched
+        continue
+      }
+      if (enriched.type === 'choice' && enriched.choices?.length) return enriched
+    }
+    return null
   }
 
-  const chooseUnit = (domainId) => {
+  const orderedUnits = (domainId) => {
     const units = unitLedger(grade).filter((entry) => entry.domainId === domainId).map((entry) => entry.unitId)
-    return shuffle(units).sort((a, b) => Number(previousUnits.has(a)) - Number(previousUnits.has(b)))
-      .find((unitId) => !usedUnits.has(unitId)) || units[0]
+    return shuffle(units).sort((a, b) =>
+      Number(usedUnits.has(a)) - Number(usedUnits.has(b)) ||
+      Number(previousUnits.has(a)) - Number(previousUnits.has(b))
+    )
   }
 
-  for (let i = 0; i < questionCount - 1; i++) {
+  const makeForDomain = (domain, forceWriting = false) => {
+    for (const unitId of orderedUnits(domain.id)) {
+      const question = makeForUnit(domain, unitId, forceWriting)
+      if (question) return question
+    }
+    return null
+  }
+
+  for (let i = 0; i < questionCount - 1 && order.length; i++) {
     const domain = order[i % order.length]
-    const unitId = chooseUnit(domain.id)
-    const question = makeForUnit(domain, unitId)
+    const question = makeForDomain(domain)
     if (question) { usedUnits.add(question.unitId); list.push({ ...question, _domainId: domain.id }) }
   }
 
   const writing = domains.find((domain) => domain.id === 'kaku')
   if (writing) {
-    const unitId = chooseUnit(writing.id)
-    const question = makeForUnit(writing, unitId, true)
+    const question = makeForDomain(writing, true)
     if (question) { usedUnits.add(question.unitId); list.push({ ...question, _domainId: writing.id }) }
   }
 
-  while (list.length < questionCount && choiceDomains.length) {
-    const domain = choiceDomains[list.length % choiceDomains.length]
-    const unitId = chooseUnit(domain.id)
-    const question = makeForUnit(domain, unitId)
-    if (!question) break
+  // 補充は1つの不適合domainでbreakしない。全domain/単元を巡回し、
+  // 6問契約を満たすまで別の採点可能問題を探す。
+  let refillAttempt = 0
+  const maxRefillAttempts = Math.max(24, questionCount * Math.max(1, choiceDomains.length) * 4)
+  while (list.length < questionCount && choiceDomains.length && refillAttempt < maxRefillAttempts) {
+    const domain = choiceDomains[refillAttempt % choiceDomains.length]
+    const question = makeForDomain(domain)
+    refillAttempt += 1
+    if (!question) continue
     usedUnits.add(question.unitId)
     list.push({ ...question, _domainId: domain.id })
   }
