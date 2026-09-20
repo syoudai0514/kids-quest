@@ -304,9 +304,13 @@ const deduped = promotionResult(datedState, 0, datedRound2)
 must(deduped.total === 12 && deduped.correct === 9 && deduped.passed, '保存済みroundとcandidateを二重加算した')
 
 for (let grade = 0; grade <= 6; grade++) for (const { unitId } of unitLedger(grade)) {
-  const lesson = lessonForUnit(unitId)
+  const lesson = lessonForUnit(unitId, grade)
   must(lesson.title && lesson.points?.length === 3 && !lesson.points[0].includes('ルールを例といっしょ'), `${unitId}: 単元別の実教材がない`)
 }
+const preschoolCountLesson = lessonForUnit('math:count', 0)
+must(!preschoolCountLesson.points.join(' ').includes('23') && !preschoolCountLesson.points.join(' ').includes('位'), '年長の数え方授業が十進位取りを先取りしている')
+const preschoolAddLesson = lessonForUnit('math:add10', 0)
+must(!preschoolAddLesson.points.join(' ').includes('28+7') && !preschoolAddLesson.points.join(' ').includes('くり上'), '年長のたし算授業がくり上がりを先取りしている')
 
 const expectedLowTasks = { yomu: 7, suuji: 7, kaku: 6, seikatsu: 6, english: 7, doutoku: 2 }
 const expectedHighTasks = { yomu: 7, suuji: 7, kaku: 5, rika: 4, shakai: 7, english: 3, doutoku: 2 }
